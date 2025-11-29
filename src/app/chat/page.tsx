@@ -372,7 +372,7 @@ export default function ChatPage() {
                   type="text"
                   value={chatTitle}
                   onChange={(e) => setChatTitle(e.target.value)}
-                  className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors"
+                  className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors"
                   style={{ width: "fit-content", minWidth: "100px" }}
                   placeholder="Chat title..."
                 />
