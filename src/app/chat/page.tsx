@@ -152,22 +152,138 @@ export default function ChatPage() {
           {/* Chat List */}
           <ScrollArea className="flex-1 p-3">
             <div className="space-y-1">
-              <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800">
-                <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Current Chat</span>
-              </button>
-              <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Previous conversation</span>
-              </button>
-              <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Design system discussion</span>
-              </button>
-              <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
-                <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">API integration help</span>
-              </button>
+              <div className="group w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800">
+                <span className="truncate flex-1">Current Chat</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity dark:hover:bg-gray-700"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 dark:bg-gray-900 dark:border-gray-800"
+                  >
+                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="group w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <span className="truncate flex-1">Previous conversation</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity dark:hover:bg-gray-700"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 dark:bg-gray-900 dark:border-gray-800"
+                  >
+                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="group w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <span className="truncate flex-1">Design system discussion</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity dark:hover:bg-gray-700"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 dark:bg-gray-900 dark:border-gray-800"
+                  >
+                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="group w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                <span className="truncate flex-1">API integration help</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity dark:hover:bg-gray-700"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 dark:bg-gray-900 dark:border-gray-800"
+                  >
+                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Rename
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </ScrollArea>
 
@@ -249,15 +365,64 @@ export default function ChatPage() {
                 <PanelLeft className="h-4 w-4 dark:text-gray-400" />
               </Button>
             )}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <input
                 type="text"
                 value={chatTitle}
                 onChange={(e) => setChatTitle(e.target.value)}
-                className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors w-auto"
+                className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors"
+                style={{ width: 'fit-content', minWidth: '100px' }}
                 placeholder="Chat title..."
-                size={Math.max(chatTitle.length || 10, 10)}
               />
+              <DropdownMenu>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 dark:hover:bg-gray-800"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-gray-600 dark:text-gray-400"
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Chat options</p>
+                  </TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-48 dark:bg-gray-900 dark:border-gray-800"
+                >
+                  <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
