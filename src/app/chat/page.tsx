@@ -1,6 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import { TextStreamChatTransport } from "ai";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -18,10 +19,21 @@ export default function ChatPage() {
     sendMessage,
     stop,
     regenerate,
-  } = useChat();
+  } = useChat({
+    transport: new TextStreamChatTransport({
+      api: "/api/chat",
+    }),
+  });
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isLoading = status === "submitted" || status === "streaming";
+
+  // Debug logging
+  useEffect(() => {
+    console.log("[Chat UI] Messages updated:", messages);
+    console.log("[Chat UI] Status:", status);
+    console.log("[Chat UI] Error:", error);
+  }, [messages, status, error]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
