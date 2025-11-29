@@ -4,6 +4,15 @@ import { useChat } from "@ai-sdk/react";
 import { TextStreamChatTransport } from "ai";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Loader2,
   Sparkles,
@@ -28,8 +37,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/contexts/ThemeContext";
+import Image from "next/image";
 
 export default function ChatPage() {
   const [input, setInput] = useState("");
@@ -82,107 +93,146 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-0"
-        } transition-all duration-300 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden`}
-      >
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-              <span className="font-semibold text-gray-900 dark:text-gray-100">
-                Lume
-              </span>
+    <TooltipProvider>
+      <div className="flex h-screen bg-white dark:bg-gray-950">
+        {/* Sidebar */}
+        <aside
+          className={`${
+            sidebarOpen ? "w-64" : "w-0"
+          } transition-all duration-300 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden`}
+        >
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/logo.png"
+                  alt="Lume"
+                  width={20}
+                  height={20}
+                  className="object-contain"
+                />
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  Lume
+                </span>
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 dark:hover:bg-gray-800"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <PanelLeftClose className="h-4 w-4 dark:text-gray-400" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <p>Close sidebar</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 dark:hover:bg-gray-800"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <PanelLeftClose className="h-4 w-4 dark:text-gray-400" />
-            </Button>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="w-full justify-start gap-2 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+                  size="sm"
+                >
+                  <MessageSquarePlus className="h-4 w-4" />
+                  New Chat
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Start a new conversation</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
 
-          <Button
-            className="w-full justify-start gap-2 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-            size="sm"
-          >
-            <MessageSquarePlus className="h-4 w-4" />
-            New Chat
-          </Button>
-        </div>
-
-        {/* Chat List */}
-        <div className="flex-1 overflow-y-auto p-3">
-          <div className="space-y-1">
-            <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800">
-              <MessageSquare className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">Current Chat</span>
-            </button>
-            <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
-              <MessageSquare className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">Previous conversation</span>
-            </button>
-            <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
-              <MessageSquare className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">Design system discussion</span>
-            </button>
-            <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
-              <MessageSquare className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">API integration help</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-3">
-          {/* Theme Toggle */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-            <button
-              onClick={() => setTheme("light")}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                theme === "light"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-              }`}
-            >
-              <Sun className="h-3.5 w-3.5" />
-              Light
-            </button>
-            <button
-              onClick={() => setTheme("dark")}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                theme === "dark"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-              }`}
-            >
-              <Moon className="h-3.5 w-3.5" />
-              Dark
-            </button>
-          </div>
-
-          {/* User Profile */}
-          <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-semibold text-white">EK</span>
+          {/* Chat List */}
+          <ScrollArea className="flex-1 p-3">
+            <div className="space-y-1">
+              <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800">
+                <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Current Chat</span>
+              </button>
+              <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Previous conversation</span>
+              </button>
+              <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Design system discussion</span>
+              </button>
+              <button className="w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-3 text-gray-600 dark:text-gray-400">
+                <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">API integration help</span>
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                Elizabeth Keen
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                hey@unspace.agency
-              </p>
-            </div>
+          </ScrollArea>
+
+          {/* Sidebar Footer */}
+          <div className="p-3 border-t border-gray-200 dark:border-gray-800 space-y-3">
+            {/* Theme Toggle */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                  <button
+                    onClick={() => setTheme("light")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      theme === "light"
+                        ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    <Sun className="h-3.5 w-3.5" />
+                    Light
+                  </button>
+                  <button
+                    onClick={() => setTheme("dark")}
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      theme === "dark"
+                        ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    <Moon className="h-3.5 w-3.5" />
+                    Dark
+                  </button>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Switch theme</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Separator />
+
+            {/* User Profile */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
+                      EK
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                      Elizabeth Keen
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      hey@unspace.agency
+                    </p>
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Account settings</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-        </div>
-      </aside>
+        </aside>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -199,28 +249,36 @@ export default function ChatPage() {
                 <PanelLeft className="h-4 w-4 dark:text-gray-400" />
               </Button>
             )}
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={chatTitle}
                 onChange={(e) => setChatTitle(e.target.value)}
-                className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors flex-1 min-w-0"
+                className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors w-auto"
                 placeholder="Chat title..."
+                size={Math.max(chatTitle.length || 10, 10)}
               />
             </div>
           </div>
 
           <div className="flex items-center gap-1">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 dark:hover:bg-gray-800"
-                >
-                  <MoreVertical className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                </Button>
-              </DropdownMenuTrigger>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 dark:hover:bg-gray-800"
+                    >
+                      <MoreVertical className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Chat options</p>
+                </TooltipContent>
+              </Tooltip>
               <DropdownMenuContent
                 align="end"
                 className="w-48 dark:bg-gray-900 dark:border-gray-800"
@@ -233,6 +291,7 @@ export default function ChatPage() {
                   <Share2 className="h-4 w-4 mr-2" />
                   Share
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
@@ -322,30 +381,53 @@ export default function ChatPage() {
               <div className="relative border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-gray-900/50 transition-shadow focus-within:border-gray-300 dark:focus-within:border-gray-600 flex items-end">
                 {/* Input Actions - Left Side */}
                 <div className="flex items-center gap-0.5 pl-3 pr-2 pb-1.5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <ImageIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Attach file</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add image</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        <BookOpen className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Browse prompts</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
                 {/* Textarea */}
@@ -363,18 +445,25 @@ export default function ChatPage() {
 
                 {/* Submit Button - Right Side */}
                 <div className="px-2.5 pb-2">
-                  <Button
-                    type="submit"
-                    disabled={isLoading || !input.trim()}
-                    size="icon"
-                    className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ArrowUp className="h-4 w-4" />
-                    )}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="submit"
+                        disabled={isLoading || !input.trim()}
+                        size="icon"
+                        className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900"
+                      >
+                        {isLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <ArrowUp className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Send message</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </form>
@@ -387,5 +476,6 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
