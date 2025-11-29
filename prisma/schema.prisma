@@ -1,0 +1,134 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// MASTRA TABLES - Required by Mastra framework for conversation memory
+// ============================================================================
+
+model MastraThread {
+  id         String   @id @default(uuid())
+  resourceId String   // Links to user
+  title      String?  // Auto-generated or custom thread title
+  metadata   Json?    // Custom metadata
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  messages MastraMessage[]
+
+  @@map("mastra_threads")
+  @@index([resourceId])
+}
+
+model MastraMessage {
+  id         String   @id @default(uuid())
+  threadId   String   @map("thread_id")
+  resourceId String?  @map("resource_id")
+  content    Json     // Stores message in V2 JSON format
+  role       String   // 'user', 'assistant', 'system', 'tool'
+  type       String?  // 'text' | 'tool-call' | 'tool-result'
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  thread MastraThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@map("mastra_messages")
+  @@index([threadId])
+  @@index([resourceId])
+  @@index([createdAt])
+}
+
+model MastraResource {
+  id            String   @id
+  workingMemory String?  @map("working_memory") // Markdown or JSON
+  metadata      Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("mastra_resources")
+}
+
+// ============================================================================
+// CUSTOM TABLES - Lume-specific business logic
+// ============================================================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  preferences  UserPreference?
+  modelUsage   ModelUsage[]
+  conversations Conversation[]
+
+  @@map("users")
+}
+
+model UserPreference {
+  id           String  @id @default(uuid())
+  userId       String  @unique @map("user_id")
+  defaultModel String  @default("claude-3-5-sonnet-20241022") @map("default_model")
+  theme        String  @default("light") // 'light' | 'dark'
+  settings     Json?   // Additional user settings
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id") // Nullable for anonymous users
+  threadId  String   @map("thread_id") // Link to Mastra thread
+  title     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  modelUsage ModelUsage[]
+
+  @@map("conversations")
+  @@index([userId])
+  @@index([threadId])
+}
+
+model ModelUsage {
+  id               String   @id @default(uuid())
+  conversationId   String   @map("conversation_id")
+  userId           String?  @map("user_id") // Nullable for anonymous users
+  modelId          String   @map("model_id") // e.g., 'claude-3-5-sonnet-20241022'
+  modelProvider    String   @map("model_provider") // 'openai' | 'anthropic' | 'google'
+  inputTokens      Int      @default(0) @map("input_tokens")
+  outputTokens     Int      @default(0) @map("output_tokens")
+  totalTokens      Int      @default(0) @map("total_tokens")
+  estimatedCost    Float    @default(0) @map("estimated_cost") // In USD
+  responseTimeMs   Int?     @map("response_time_ms") // Response time in milliseconds
+  success          Boolean  @default(true)
+  errorMessage     String?  @map("error_message")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("model_usage")
+  @@index([conversationId])
+  @@index([userId])
+  @@index([modelId])
+  @@index([createdAt])
+}
