@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const modelMessages = convertToModelMessages(messages);
 
     // Model configuration
-    const languageModel = anthropic("claude-3-5-haiku-latest");
+    const languageModel = anthropic("claude-3-7-sonnet-20250219");
     // Track request start time for metrics
     const startTime = Date.now();
 
@@ -100,7 +100,9 @@ export async function POST(req: Request) {
       },
     });
 
-    return result.toTextStreamResponse();
+    return result.toUIMessageStreamResponse({
+      sendReasoning: true,
+    });
   } catch (error) {
     console.error("[Chat API] Error:", error);
 
