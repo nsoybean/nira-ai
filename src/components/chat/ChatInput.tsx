@@ -84,7 +84,7 @@ export function ChatInput({
             />
 
             {/* Bottom Actions Bar */}
-            <div className="flex items-center justify-between px-3 pb-3">
+            <div className="flex items-center justify-between px-3 pb-3 bg-white dark:bg-input/30">
               {/* Left Side Actions */}
               <div className="flex items-center gap-1">
                 <Tooltip>
