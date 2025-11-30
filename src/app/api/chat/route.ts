@@ -1,5 +1,5 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { streamText, convertToModelMessages } from "ai";
+import { streamText, convertToModelMessages, UIMessage } from "ai";
 import { prisma } from "@/lib/prisma";
 
 // Allow streaming responses up to 30 seconds
@@ -9,72 +9,44 @@ export const maxDuration = 30;
  * POST /api/chat
  *
  * Handles streaming chat completions with Claude 3.5 Sonnet.
+ * Implements message persistence using Vercel AI SDK UIMessage format.
  *
  * Request body:
- * - message: UIMessage - The latest user message
- * - id: string - Conversation ID for persistence
+ * - messages: UIMessage[] - All messages including the latest user message
+ * - conversationId: string - Conversation ID for persistence
  *
  * Response:
  * - Server-Sent Events stream with chat completion
  */
 export async function POST(req: Request) {
   try {
-    const { message, id: conversationId } = await req.json();
+    const {
+      messages,
+      conversationId,
+    }: { messages: UIMessage[]; conversationId: string } = await req.json();
 
-    // Validate message
-    if (!message) {
-      return new Response("Missing message", { status: 400 });
+    // Validate messages
+    if (!messages || messages.length === 0) {
+      return new Response("Missing messages", { status: 400 });
     }
 
-    // Get or create conversation
-    let conversation;
-
+    // Validate conversation ID
     if (!conversationId) {
-      // First message - create new conversation with linked thread
-      const thread = await prisma.mastraThread.create({
-        data: {
-          resourceId: 'anonymous',
-          title: 'New Chat',
-        },
-      });
-
-      conversation = await prisma.conversation.create({
-        data: {
-          threadId: thread.id,
-          userId: null,
-          title: 'New Chat',
-        },
-      });
-    } else {
-      // Existing conversation - verify it exists
-      conversation = await prisma.conversation.findUnique({
-        where: { id: conversationId },
-      });
-
-      if (!conversation) {
-        return new Response("Conversation not found", { status: 404 });
-      }
+      return new Response("Conversation ID is required", { status: 400 });
     }
 
-    // Load existing messages from database
-    const existingMessages = await prisma.mastraMessage.findMany({
-      where: { threadId: conversation.threadId },
-      orderBy: { createdAt: 'asc' },
+    // Verify conversation exists
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
     });
 
-    // Build full message history: existing + new user message
-    const allUIMessages = [
-      ...existingMessages.map((msg) => ({
-        id: msg.id,
-        role: msg.role,
-        parts: msg.content as any,
-      })),
-      message, // The new user message
-    ];
+    if (!conversation) {
+      return new Response("Conversation not found", { status: 404 });
+    }
 
-    // Convert UIMessage[] to ModelMessage[] format
+    // Convert UIMessage[] to ModelMessage[] format for the AI model
     // useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
-    const modelMessages = convertToModelMessages(allUIMessages);
+    const modelMessages = convertToModelMessages(messages);
 
     // Model configuration
     const languageModel = anthropic("claude-3-7-sonnet-20250219");
@@ -89,52 +61,26 @@ export async function POST(req: Request) {
       temperature: 0.7,
       maxOutputTokens: 4000,
       onFinish: async (event) => {
-        // Calculate response time
-        const responseTimeMs = Date.now() - startTime;
 
-        // Calculate token costs (Claude 3.7 Sonnet pricing - update as needed)
+        // Calculate token costs (Claude 3.7 Sonnet pricing)
         const inputTokens = event.usage.inputTokens || 0;
         const outputTokens = event.usage.outputTokens || 0;
         const inputCost = (inputTokens / 1000) * 0.003;
         const outputCost = (outputTokens / 1000) * 0.015;
         const estimatedCost = inputCost + outputCost;
+        const responseTimeMs = Date.now() - startTime;
 
         try {
-          // Save both user message and assistant response to database
-          const userMessage = await prisma.mastraMessage.create({
-            data: {
-              threadId: conversation.threadId,
-              role: 'user',
-              content: message.parts, // Store parts array
-              type: 'text',
-            },
-          });
-
-          // Get assistant response text from event
-          const assistantMessage = await prisma.mastraMessage.create({
-            data: {
-              threadId: conversation.threadId,
-              role: 'assistant',
-              content: [{ type: 'text', text: event.text }], // Convert to parts format
-              type: 'text',
-            },
-          });
-
-          // Update conversation's updatedAt timestamp
-          await prisma.conversation.update({
-            where: { id: conversationId },
-            data: { updatedAt: new Date() },
-          });
-
           // Track model usage for analytics
           await prisma.modelUsage.create({
             data: {
               conversationId,
               modelId: languageModel.modelId,
-              modelProvider: 'anthropic',
+              modelProvider: "anthropic",
               inputTokens,
               outputTokens,
-              totalTokens: event.usage.totalTokens || inputTokens + outputTokens,
+              totalTokens:
+                event.usage.totalTokens || inputTokens + outputTokens,
               estimatedCost,
               responseTimeMs,
               success: true,
@@ -151,7 +97,49 @@ export async function POST(req: Request) {
               totalTokens: event.usage.totalTokens,
               cost: `$${estimatedCost.toFixed(4)}`,
               responseTime: `${responseTimeMs}ms`,
-              messagesSaved: [userMessage.id, assistantMessage.id],
+            });
+          }
+        } catch (error) {
+          console.error("[Chat API] Error tracking usage:", error);
+        }
+      },
+    });
+
+    // Return stream with message persistence
+    const response = result.toUIMessageStreamResponse({
+      sendReasoning: true,
+      originalMessages: messages, // Pass original messages for context
+      async onFinish({ messages: allMessages }) {
+        try {
+          // Save all messages to database in UIMessage format
+          // allMessages includes both user messages and assistant response
+          await Promise.all(
+            allMessages.map((msg) =>
+              prisma.message.upsert({
+                where: { id: msg.id },
+                create: {
+                  id: msg.id,
+                  conversationId,
+                  role: msg.role,
+                  parts: msg.parts as any, // Cast to satisfy Prisma's Json type
+                },
+                update: {
+                  parts: msg.parts as any, // Cast to satisfy Prisma's Json type
+                },
+              })
+            )
+          );
+
+          // Update conversation's updatedAt timestamp
+          await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { updatedAt: new Date() },
+          });
+
+          if (process.env.NODE_ENV === "development") {
+            console.log("[Chat API] Messages saved:", {
+              conversationId,
+              messagesSaved: allMessages.length,
             });
           }
         } catch (error) {
@@ -161,13 +149,8 @@ export async function POST(req: Request) {
       },
     });
 
-    // Return stream with conversation ID in headers for client to update URL
-    const response = result.toUIMessageStreamResponse({
-      sendReasoning: true,
-    });
-
     // Add conversation ID to response headers
-    response.headers.set('X-Conversation-Id', conversation.id);
+    response.headers.set("X-Conversation-Id", conversation.id);
 
     return response;
   } catch (error) {

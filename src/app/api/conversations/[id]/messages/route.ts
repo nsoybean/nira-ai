@@ -12,8 +12,7 @@ import { prisma } from '@/lib/prisma';
  *   {
  *     "id": "msg-uuid",
  *     "role": "user",
- *     "parts": [{ "type": "text", "text": "Hello!" }],
- *     "createdAt": "2025-11-30T..."
+ *     "parts": [{ "type": "text", "text": "Hello!" }]
  *   }
  * ]
  */
@@ -24,7 +23,7 @@ export async function GET(
   try {
     const { id: conversationId } = await params;
 
-    // Get conversation to find threadId
+    // Verify conversation exists
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
     });
@@ -36,18 +35,17 @@ export async function GET(
       );
     }
 
-    // Get all messages for this thread
-    const messages = await prisma.mastraMessage.findMany({
-      where: { threadId: conversation.threadId },
+    // Get all messages for this conversation
+    const messages = await prisma.message.findMany({
+      where: { conversationId },
       orderBy: { createdAt: 'asc' },
     });
 
-    // Transform to UIMessage format
+    // Transform to UIMessage format (already in the correct format from DB)
     const uiMessages = messages.map((msg) => ({
       id: msg.id,
       role: msg.role,
-      parts: msg.content as any, // Content is already in V2 format with parts
-      createdAt: msg.createdAt,
+      parts: msg.parts, // Already stored as UIMessagePart[]
     }));
 
     return NextResponse.json(uiMessages);

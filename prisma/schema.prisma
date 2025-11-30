@@ -12,50 +12,22 @@ datasource db {
 }
 
 // ============================================================================
-// MASTRA TABLES - Required by Mastra framework for conversation memory
+// MESSAGE TABLES - Based on Vercel AI SDK UIMessage format
 // ============================================================================
 
-model MastraThread {
-  id         String   @id @default(uuid())
-  resourceId String   // Links to user
-  title      String?  // Auto-generated or custom thread title
-  metadata   Json?    // Custom metadata
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model Message {
+  id             String   @id // UUID from AI SDK
+  conversationId String   @map("conversation_id")
+  role           String   // 'user' | 'assistant' | 'system'
+  parts          Json     // Array of message parts (UIMessagePart[])
+  createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations
-  messages MastraMessage[]
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  @@map("mastra_threads")
-  @@index([resourceId])
-}
-
-model MastraMessage {
-  id         String   @id @default(uuid())
-  threadId   String   @map("thread_id")
-  resourceId String?  @map("resource_id")
-  content    Json     // Stores message in V2 JSON format
-  role       String   // 'user', 'assistant', 'system', 'tool'
-  type       String?  // 'text' | 'tool-call' | 'tool-result'
-  createdAt  DateTime @default(now()) @map("created_at")
-
-  // Relations
-  thread MastraThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-
-  @@map("mastra_messages")
-  @@index([threadId])
-  @@index([resourceId])
+  @@map("messages")
+  @@index([conversationId])
   @@index([createdAt])
-}
-
-model MastraResource {
-  id            String   @id
-  workingMemory String?  @map("working_memory") // Markdown or JSON
-  metadata      Json?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  @@map("mastra_resources")
 }
 
 // ============================================================================
@@ -93,18 +65,18 @@ model UserPreference {
 model Conversation {
   id        String   @id @default(uuid())
   userId    String?  @map("user_id") // Nullable for anonymous users
-  threadId  String   @map("thread_id") // Link to Mastra thread
-  title     String?
+  title     String   @default("New Chat")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages   Message[]
   modelUsage ModelUsage[]
 
   @@map("conversations")
   @@index([userId])
-  @@index([threadId])
+  @@index([createdAt])
 }
 
 model ModelUsage {
