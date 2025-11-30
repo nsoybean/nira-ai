@@ -47,7 +47,6 @@ export default function ChatPage() {
     transport: new DefaultChatTransport({
       api: "/api/chat",
       prepareSendMessagesRequest({ messages, id, body }) {
-        console.log("🚀 ~ prepareSendMessagesRequest ~ body:", body);
         return {
           body: {
             message: messages[messages.length - 1],
@@ -58,10 +57,6 @@ export default function ChatPage() {
       },
     }),
   });
-
-  useEffect(() => {
-    console.log("🚀 ~ ChatPage ~ messages:", messages);
-  }, [messages]);
 
   const { conversations, isLoadingConversations, refreshConversations } =
     useConversations();
@@ -81,7 +76,6 @@ export default function ChatPage() {
     if (!isNewChat && actualConversationId) {
       const pendingMessage = sessionStorage.getItem("pendingMessage");
 
-      console.log("🚀 ~ ChatPage ~ pendingMessage:", pendingMessage);
       if (pendingMessage) {
         // Clear it immediately to prevent double-sending
         sessionStorage.removeItem("pendingMessage");
