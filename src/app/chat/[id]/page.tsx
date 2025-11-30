@@ -26,6 +26,13 @@ export default function ChatPage() {
     string | null
   >(isNewChat ? null : conversationId);
 
+  // Sync actualConversationId with URL changes
+  useEffect(() => {
+    if (!isNewChat && conversationId !== actualConversationId) {
+      setActualConversationId(conversationId);
+    }
+  }, [conversationId, isNewChat, actualConversationId]);
+
   const {
     messages,
     setMessages,
@@ -35,11 +42,26 @@ export default function ChatPage() {
     stop,
     regenerate,
   } = useChat({
+    id: actualConversationId || undefined, // Associate messages with this conversation ID
     experimental_throttle: 50, // to make streaming smoother
     transport: new DefaultChatTransport({
       api: "/api/chat",
+      prepareSendMessagesRequest({ messages, id, body }) {
+        console.log("🚀 ~ prepareSendMessagesRequest ~ body:", body);
+        return {
+          body: {
+            message: messages[messages.length - 1],
+            id,
+            conversationId: body?.conversationId,
+          },
+        };
+      },
     }),
   });
+
+  useEffect(() => {
+    console.log("🚀 ~ ChatPage ~ messages:", messages);
+  }, [messages]);
 
   const { conversations, isLoadingConversations, refreshConversations } =
     useConversations();
@@ -49,10 +71,29 @@ export default function ChatPage() {
   const { handleSubmit: submitChat, isCreatingConversation } = useChatSubmit({
     isNewChat,
     actualConversationId,
-    setActualConversationId,
     sendMessage,
     refreshConversations,
   });
+
+  // Send pending message after mounting from new chat creation
+  useEffect(() => {
+    // Only run for existing conversations (not "new")
+    if (!isNewChat && actualConversationId) {
+      const pendingMessage = sessionStorage.getItem("pendingMessage");
+
+      console.log("🚀 ~ ChatPage ~ pendingMessage:", pendingMessage);
+      if (pendingMessage) {
+        // Clear it immediately to prevent double-sending
+        sessionStorage.removeItem("pendingMessage");
+
+        // Send the message after the component has fully mounted
+        sendMessage(
+          { text: pendingMessage },
+          { body: { conversationId: actualConversationId } }
+        );
+      }
+    }
+  }, [isNewChat, actualConversationId, sendMessage]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const isLoading = status === "submitted" || status === "streaming";

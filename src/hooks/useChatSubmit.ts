@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 interface UseChatSubmitProps {
   isNewChat: boolean;
   actualConversationId: string | null;
-  setActualConversationId: (id: string) => void;
   sendMessage: (message: { text: string }, options?: any) => void;
   refreshConversations: () => void;
 }
@@ -12,7 +11,6 @@ interface UseChatSubmitProps {
 export function useChatSubmit({
   isNewChat,
   actualConversationId,
-  setActualConversationId,
   sendMessage,
   refreshConversations,
 }: UseChatSubmitProps) {
@@ -26,13 +24,12 @@ export function useChatSubmit({
   ) => {
     if (!input.trim() || isLoading || isCreatingConversation) return;
 
-    // If this is a new chat, we need to create the conversation first
+    // If this is a new chat, create the conversation and navigate
     if (isNewChat && !actualConversationId) {
       setIsCreatingConversation(true);
-      setInput(""); // Clear input immediately
 
       try {
-        // Create the conversation first using dedicated API
+        // Create the conversation first
         const createResponse = await fetch("/api/conversations/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -43,23 +40,21 @@ export function useChatSubmit({
         }
 
         const { id: newConversationId } = await createResponse.json();
+        console.log(
+          "🚀 ~ handleSubmit ~ newConversationId:",
+          newConversationId
+        );
 
         if (newConversationId) {
-          // Update state with the new ID
-          setActualConversationId(newConversationId);
+          // Store the pending message in sessionStorage so the new page can send it
+          sessionStorage.setItem("pendingMessage", input);
+          console.log("🚀 ~ handleSubmit ~ input:", input);
 
-          // Navigate immediately to the new chat with the conversation ID
-          router.replace(`/chat/${newConversationId}`, { scroll: false });
+          // Clear input immediately for better UX
+          setInput("");
 
-          // Now send the message using sendMessage with custom body fields
-          sendMessage(
-            { text: input },
-            {
-              body: {
-                conversationId: newConversationId, // Override the conversation ID
-              },
-            }
-          );
+          // Navigate to the new conversation
+          router.push(`/chat/${newConversationId}`);
 
           // Reload conversations list
           refreshConversations();

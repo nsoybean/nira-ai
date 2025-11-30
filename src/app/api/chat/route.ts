@@ -1,5 +1,10 @@
 import { anthropic } from "@ai-sdk/anthropic";
-import { streamText, convertToModelMessages, UIMessage } from "ai";
+import {
+  streamText,
+  convertToModelMessages,
+  UIMessage,
+  createIdGenerator,
+} from "ai";
 import { prisma } from "@/lib/prisma";
 
 // Allow streaming responses up to 30 seconds
@@ -21,12 +26,12 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   try {
     const {
-      messages,
       conversationId,
-    }: { messages: UIMessage[]; conversationId: string } = await req.json();
+      message,
+    }: { message: UIMessage; conversationId: string } = await req.json();
 
     // Validate messages
-    if (!messages || messages.length === 0) {
+    if (!message || !message?.parts.length) {
       return new Response("Missing messages", { status: 400 });
     }
 
@@ -44,9 +49,25 @@ export async function POST(req: Request) {
       return new Response("Conversation not found", { status: 404 });
     }
 
+    // Fetch all existing messages for conversation
+    const existingMessages = await prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Combine existing messages with the new message
+    const allMessages: UIMessage[] = [
+      ...existingMessages.map((msg) => ({
+        id: msg.id,
+        role: msg.role as any,
+        parts: msg.parts as any, // Cast to satisfy UIMessage format
+      })),
+      message,
+    ];
+
     // Convert UIMessage[] to ModelMessage[] format for the AI model
     // useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
-    const modelMessages = convertToModelMessages(messages);
+    const modelMessages = convertToModelMessages(allMessages);
 
     // Model configuration
     const languageModel = anthropic("claude-3-7-sonnet-20250219");
@@ -61,7 +82,6 @@ export async function POST(req: Request) {
       temperature: 0.7,
       maxOutputTokens: 4000,
       onFinish: async (event) => {
-
         // Calculate token costs (Claude 3.7 Sonnet pricing)
         const inputTokens = event.usage.inputTokens || 0;
         const outputTokens = event.usage.outputTokens || 0;
@@ -108,27 +128,23 @@ export async function POST(req: Request) {
     // Return stream with message persistence
     const response = result.toUIMessageStreamResponse({
       sendReasoning: true,
-      originalMessages: messages, // Pass original messages for context
-      async onFinish({ messages: allMessages }) {
+      generateMessageId: createIdGenerator({
+        prefix: "msg",
+        size: 16,
+      }),
+      async onFinish({ messages }) {
         try {
           // Save all messages to database in UIMessage format
           // allMessages includes both user messages and assistant response
-          await Promise.all(
-            allMessages.map((msg) =>
-              prisma.message.upsert({
-                where: { id: msg.id },
-                create: {
-                  id: msg.id,
-                  conversationId,
-                  role: msg.role,
-                  parts: msg.parts as any, // Cast to satisfy Prisma's Json type
-                },
-                update: {
-                  parts: msg.parts as any, // Cast to satisfy Prisma's Json type
-                },
-              })
-            )
-          );
+          await prisma.message.createMany({
+            data: [message, ...messages].map((msg) => ({
+              id: msg.id,
+              conversationId,
+              role: msg.role,
+              parts: msg.parts as any,
+            })),
+            skipDuplicates: true,
+          });
 
           // Update conversation's updatedAt timestamp
           await prisma.conversation.update({
