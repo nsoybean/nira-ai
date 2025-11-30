@@ -545,58 +545,7 @@ export default function ChatPage() {
             <div className="max-w-3xl mx-auto px-4 py-4">
               <form onSubmit={handleSubmit} className="relative">
                 {/* Input Container */}
-                <div className="relative border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-gray-900/50 transition-shadow focus-within:border-gray-300 dark:focus-within:border-gray-600 flex items-end">
-                  {/* Input Actions - Left Side */}
-                  <div className="flex items-center gap-0.5 pl-3 pr-2 pb-1.5">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        >
-                          <Paperclip className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Attach file</p>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        >
-                          <ImageIcon className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Add image</p>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                        >
-                          <BookOpen className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Browse prompts</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-
+                <div className="relative border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-900 shadow-sm hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-gray-900/50 transition-shadow focus-within:border-gray-300 dark:focus-within:border-gray-600 overflow-hidden">
                   {/* Textarea */}
                   <Textarea
                     ref={textareaRef}
@@ -606,19 +555,71 @@ export default function ChatPage() {
                     placeholder="Ask me anything..."
                     disabled={isLoading}
                     rows={1}
-                    className="flex-1 resize-none bg-transparent border-0 px-2 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 max-h-32 overflow-y-auto shadow-none"
-                    style={{ minHeight: "44px" }}
+                    className="w-full resize-none bg-transparent border-0 px-4 pt-4 pb-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 max-h-48 overflow-y-auto shadow-none"
+                    style={{ minHeight: "52px" }}
                   />
 
-                  {/* Submit Button - Right Side */}
-                  <div className="px-2.5 pb-2">
+                  {/* Bottom Actions Bar */}
+                  <div className="flex items-center justify-between px-3 pb-3">
+                    {/* Left Side Actions */}
+                    <div className="flex items-center gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Attach file</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          >
+                            <ImageIcon className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Add image</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          >
+                            <BookOpen className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Prompt Library</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+
+                    {/* Right Side - Submit Button */}
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           type="submit"
                           disabled={isLoading || !input.trim()}
                           size="icon"
-                          className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900"
+                          className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900 transition-all"
                         >
                           {isLoading ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
