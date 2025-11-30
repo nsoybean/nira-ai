@@ -58,8 +58,12 @@ export default function ChatPage() {
     }),
   });
 
-  const { conversations, isLoadingConversations, refreshConversations } =
-    useConversations();
+  const {
+    conversations,
+    isLoadingConversations,
+    refreshConversations,
+    deleteConversation,
+  } = useConversations();
 
   useMessageLoader(conversationId, isNewChat, setMessages);
 
@@ -118,6 +122,7 @@ export default function ChatPage() {
           isLoadingConversations={isLoadingConversations}
           currentConversationId={conversationId}
           onNewChat={handleNewChat}
+          onDeleteConversation={deleteConversation}
         />
 
         <div className="flex-1 flex flex-col">

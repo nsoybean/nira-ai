@@ -17,6 +17,16 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Loader2,
   PanelLeftClose,
   MessageSquarePlus,
@@ -27,9 +37,9 @@ import {
   Trash2,
   Edit3,
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useState } from "react";
 
 interface Conversation {
   id: string;
@@ -43,6 +53,7 @@ interface SidebarProps {
   isLoadingConversations: boolean;
   currentConversationId: string;
   onNewChat: () => void;
+  onDeleteConversation: (conversationId: string) => Promise<boolean>;
 }
 
 export function Sidebar({
@@ -52,9 +63,37 @@ export function Sidebar({
   isLoadingConversations,
   currentConversationId,
   onNewChat,
+  onDeleteConversation,
 }: SidebarProps) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
+    e.stopPropagation();
+    setConversationToDelete(conversationId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!conversationToDelete) return;
+
+    setIsDeleting(true);
+    const success = await onDeleteConversation(conversationToDelete);
+
+    if (success) {
+      // If the deleted conversation is the current one, redirect to new chat
+      if (conversationToDelete === currentConversationId) {
+        router.push("/chat/new");
+      }
+    }
+
+    setIsDeleting(false);
+    setDeleteDialogOpen(false);
+    setConversationToDelete(null);
+  };
 
   return (
     <aside
@@ -151,7 +190,10 @@ export function Sidebar({
                       Share
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800">
+                    <DropdownMenuItem
+                      className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800"
+                      onClick={(e) => handleDeleteClick(e, conv.id)}
+                    >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
                     </DropdownMenuItem>
@@ -224,6 +266,42 @@ export function Sidebar({
           </TooltipContent>
         </Tooltip>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent className="dark:bg-gray-900 dark:border-gray-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="dark:text-gray-100">
+              Delete conversation?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="dark:text-gray-400">
+              This will permanently delete this conversation and all its messages. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isDeleting}
+              className="dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }

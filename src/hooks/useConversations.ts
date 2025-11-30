@@ -36,9 +36,30 @@ export function useConversations() {
     loadConversations();
   };
 
+  const deleteConversation = async (conversationId: string) => {
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        console.error("Failed to delete conversation");
+        return false;
+      }
+
+      // Refresh the conversation list after successful deletion
+      await loadConversations();
+      return true;
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      return false;
+    }
+  };
+
   return {
     conversations,
     isLoadingConversations,
     refreshConversations,
+    deleteConversation,
   };
 }
