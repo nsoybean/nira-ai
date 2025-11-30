@@ -144,8 +144,8 @@ export function Sidebar({
       </div>
 
       {/* Chat List */}
-      <ScrollArea className="flex-1 p-3">
-        <div className="space-y-1">
+      <ScrollArea className="flex-1 overflow-hidden">
+        <div className="space-y-1 p-3">
           {isLoadingConversations ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -206,7 +206,7 @@ export function Sidebar({
       </ScrollArea>
 
       {/* Sidebar Footer */}
-      <div className="p-3 space-y-3">
+      <div className="p-3 space-y-3 border-t border-gray-200 dark:border-gray-800">
         {/* Theme Toggle */}
         <Tooltip>
           <TooltipTrigger asChild>
