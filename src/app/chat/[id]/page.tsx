@@ -33,6 +33,13 @@ export default function ChatPage() {
     }
   }, [conversationId, isNewChat, actualConversationId]);
 
+  // Clear input when starting a new chat
+  useEffect(() => {
+    if (isNewChat) {
+      setInput("");
+    }
+  }, [isNewChat]);
+
   const {
     messages,
     setMessages,

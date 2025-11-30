@@ -42,6 +42,20 @@ export function ChatInput({
     }
   }, [input]);
 
+  // Auto-focus input on mount and after message is sent
+  useEffect(() => {
+    if (textareaRef.current && !isLoading && !isCreatingConversation) {
+      textareaRef.current.focus();
+    }
+  }, [isLoading, isCreatingConversation]);
+
+  // Focus input when input is cleared (after sending message)
+  useEffect(() => {
+    if (input === "" && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [input]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -64,6 +78,7 @@ export function ChatInput({
               placeholder="Ask me anything..."
               disabled={isLoading}
               rows={1}
+              autoFocus
               className="w-full resize-none bg-transparent border-0 px-4 pt-4 pb-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0 max-h-48 overflow-y-auto shadow-none"
               style={{ minHeight: "52px" }}
             />
