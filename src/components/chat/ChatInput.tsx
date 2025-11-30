@@ -50,7 +50,7 @@ export function ChatInput({
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+    <div className="bg-white dark:bg-gray-950">
       <div className="max-w-3xl mx-auto px-4 py-4">
         <form onSubmit={onSubmit} className="relative">
           {/* Input Container */}
