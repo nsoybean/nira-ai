@@ -5,6 +5,9 @@ interface Conversation {
   title: string;
 }
 
+/**
+ * hook to fetch, delete and refresh conversations
+ */
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);

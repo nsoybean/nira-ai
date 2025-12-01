@@ -1,16 +1,22 @@
 "use client";
 
-import { UIMessage } from "ai";
+import { ChatState, ChatStatus, UIMessage } from "ai";
 import { Sparkles, Loader2 } from "lucide-react";
 import { forwardRef } from "react";
 
 interface MessageListProps {
   messages: UIMessage[];
-  isLoading: boolean;
+  status: ChatStatus;
 }
 
 export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
-  ({ messages, isLoading }, ref) => {
+  ({ messages, status }, ref) => {
+    const isLoading = status === "submitted" || status === "streaming";
+
+    function renderAiResponse() {
+      return;
+    }
+
     return (
       <div className="flex-1 overflow-hidden">
         <div ref={ref} className="h-full overflow-y-auto">
@@ -47,8 +53,8 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     ) : (
                       // AI message - clean without bubble
                       <div className="flex gap-3 mb-6">
-                        <div className="flex-shrink-0 mt-0.5">
-                          <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
+                        <div className="shrink-0 mt-0.5">
+                          <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
                             <Sparkles className="h-4 w-4 text-white" />
                           </div>
                         </div>
@@ -65,10 +71,12 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     )}
                   </div>
                 ))}
-                {isLoading && (
+
+                {/* loading */}
+                {status === "submitted" && (
                   <div className="flex gap-3 mb-6">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
+                    <div className="shrink-0 mt-0.5">
+                      <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
                         <Sparkles className="h-4 w-4 text-white" />
                       </div>
                     </div>

@@ -7,6 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ChatStatus } from "ai";
 import {
   Loader2,
   Paperclip,
@@ -20,7 +21,7 @@ interface ChatInputProps {
   input: string;
   onInputChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
-  isLoading: boolean;
+  status: ChatStatus;
   isCreatingConversation: boolean;
 }
 
@@ -28,9 +29,10 @@ export function ChatInput({
   input,
   onInputChange,
   onSubmit,
-  isLoading,
+  status,
   isCreatingConversation,
 }: ChatInputProps) {
+  const isLoading = status === "submitted" || status === "streaming";
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize textarea

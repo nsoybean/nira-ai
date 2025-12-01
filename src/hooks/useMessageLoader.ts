@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
 import { UIMessage } from "ai";
 
-export function useMessageLoader(
-  conversationId: string,
-  isNewChat: boolean,
-  setMessages: (messages: UIMessage[]) => void
-) {
+// load messages for a conversation
+export function useMessageLoader(conversationId: string, isNewChat: boolean) {
   const [isLoadingMessages, setIsLoadingMessages] = useState(!isNewChat);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
 
   useEffect(() => {
     async function loadMessages() {
@@ -33,10 +31,11 @@ export function useMessageLoader(
       }
     }
 
+    // fetch messages only if not a new chat
     if (!isNewChat && conversationId) {
       loadMessages();
     }
   }, [conversationId, isNewChat, setMessages]);
 
-  return { isLoadingMessages };
+  return { isLoadingMessages, messages };
 }

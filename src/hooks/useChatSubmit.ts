@@ -3,14 +3,14 @@ import { useRouter } from "next/navigation";
 
 interface UseChatSubmitProps {
   isNewChat: boolean;
-  actualConversationId: string | null;
+  conversationId: string | null;
   sendMessage: (message: { text: string }, options?: any) => void;
   refreshConversations: () => void;
 }
 
 export function useChatSubmit({
   isNewChat,
-  actualConversationId,
+  conversationId: actualConversationId,
   sendMessage,
   refreshConversations,
 }: UseChatSubmitProps) {
@@ -19,10 +19,9 @@ export function useChatSubmit({
 
   const handleSubmit = async (
     input: string,
-    setInput: (value: string) => void,
-    isLoading: boolean
+    setInput: (value: string) => void
   ) => {
-    if (!input.trim() || isLoading || isCreatingConversation) return;
+    if (!input.trim() || isCreatingConversation) return;
 
     // If this is a new chat, create the conversation and navigate
     if (isNewChat && !actualConversationId) {

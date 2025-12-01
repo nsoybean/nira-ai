@@ -22,16 +22,6 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatTitle, setChatTitle] = useState("New Chat");
-  const [actualConversationId, setActualConversationId] = useState<
-    string | null
-  >(isNewChat ? null : conversationId);
-
-  // Sync actualConversationId with URL changes
-  useEffect(() => {
-    if (!isNewChat && conversationId !== actualConversationId) {
-      setActualConversationId(conversationId);
-    }
-  }, [conversationId, isNewChat, actualConversationId]);
 
   // Clear input when starting a new chat
   useEffect(() => {
@@ -44,15 +34,16 @@ export default function ChatPage() {
     messages,
     setMessages,
     status,
-    error,
     sendMessage,
+    error,
     stop,
     regenerate,
   } = useChat({
-    id: actualConversationId || undefined, // Associate messages with this conversation ID
+    id: conversationId || undefined,
     experimental_throttle: 50, // to make streaming smoother
     transport: new DefaultChatTransport({
       api: "/api/chat",
+      // send only last message
       prepareSendMessagesRequest({ messages, id, body }) {
         return {
           body: {
@@ -65,6 +56,7 @@ export default function ChatPage() {
     }),
   });
 
+  // conversations for sidebar
   const {
     conversations,
     isLoadingConversations,
@@ -72,19 +64,30 @@ export default function ChatPage() {
     deleteConversation,
   } = useConversations();
 
-  useMessageLoader(conversationId, isNewChat, setMessages);
+  // conversation messages
+  const { isLoadingMessages, messages: loadedMessages } = useMessageLoader(
+    conversationId,
+    isNewChat
+  );
 
+  // chat
   const { handleSubmit: submitChat, isCreatingConversation } = useChatSubmit({
     isNewChat,
-    actualConversationId,
+    conversationId,
     sendMessage,
     refreshConversations,
   });
 
+  useEffect(() => {
+    if (loadedMessages.length) {
+      setMessages(loadedMessages);
+    }
+  }, [loadedMessages]);
+
   // Send pending message after mounting from new chat creation
   useEffect(() => {
     // Only run for existing conversations (not "new")
-    if (!isNewChat && actualConversationId) {
+    if (!isNewChat) {
       const pendingMessage = sessionStorage.getItem("pendingMessage");
 
       if (pendingMessage) {
@@ -92,16 +95,12 @@ export default function ChatPage() {
         sessionStorage.removeItem("pendingMessage");
 
         // Send the message after the component has fully mounted
-        sendMessage(
-          { text: pendingMessage },
-          { body: { conversationId: actualConversationId } }
-        );
+        sendMessage({ text: pendingMessage }, { body: { conversationId } });
       }
     }
-  }, [isNewChat, actualConversationId, sendMessage]);
+  }, [isNewChat, conversationId, sendMessage]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const isLoading = status === "submitted" || status === "streaming";
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -112,7 +111,11 @@ export default function ChatPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await submitChat(input, setInput, isLoading);
+    if (status === "streaming" || status === "submitted") {
+      return;
+    }
+
+    await submitChat(input, setInput);
   };
 
   const handleNewChat = () => {
@@ -143,14 +146,14 @@ export default function ChatPage() {
           <MessageList
             ref={scrollAreaRef}
             messages={messages}
-            isLoading={isLoading}
+            status={status}
           />
 
           <ChatInput
             input={input}
             onInputChange={setInput}
             onSubmit={handleSubmit}
-            isLoading={isLoading}
+            status={status}
             isCreatingConversation={isCreatingConversation}
           />
         </div>
