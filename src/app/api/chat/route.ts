@@ -55,6 +55,12 @@ export async function POST(req: Request) {
       orderBy: { createdAt: "asc" },
     });
 
+    // if no previous message, means is a new conversation, generate short title
+    if (existingMessages.length === 0) {
+      // Generate a short title for the new conversation
+      // (Implementation for title generation can be added here)
+    }
+
     // Combine existing messages with the new message
     const allMessages: UIMessage[] = [
       ...existingMessages.map((msg) => ({

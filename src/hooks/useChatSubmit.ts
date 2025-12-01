@@ -39,15 +39,10 @@ export function useChatSubmit({
         }
 
         const { id: newConversationId } = await createResponse.json();
-        console.log(
-          "🚀 ~ handleSubmit ~ newConversationId:",
-          newConversationId
-        );
 
         if (newConversationId) {
           // Store the pending message in sessionStorage so the new page can send it
           sessionStorage.setItem("pendingMessage", input);
-          console.log("🚀 ~ handleSubmit ~ input:", input);
 
           // Clear input immediately for better UX
           setInput("");
