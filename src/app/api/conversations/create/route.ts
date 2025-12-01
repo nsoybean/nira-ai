@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { DEFAULT_MODEL_ID } from '@/lib/models';
 
 /**
  * POST /api/conversations/create
@@ -7,6 +8,11 @@ import { prisma } from '@/lib/prisma';
  * Creates a new conversation.
  * This endpoint is called when a user starts a new chat.
  * Returns the conversation ID immediately so the UI can navigate.
+ *
+ * Request body (optional):
+ * {
+ *   "modelId": "claude-3-7-sonnet-20250219"
+ * }
  *
  * Response:
  * {
@@ -16,11 +22,23 @@ import { prisma } from '@/lib/prisma';
  */
 export async function POST(req: Request) {
   try {
+    // Parse request body to get optional modelId
+    let modelId = DEFAULT_MODEL_ID;
+    try {
+      const body = await req.json();
+      if (body.modelId) {
+        modelId = body.modelId;
+      }
+    } catch {
+      // If no body or invalid JSON, use default model
+    }
+
     // Create a new conversation
     const conversation = await prisma.conversation.create({
       data: {
         userId: null, // Anonymous for now
         title: 'New Chat',
+        modelId,
       },
     });
 

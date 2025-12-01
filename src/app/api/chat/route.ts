@@ -1,11 +1,14 @@
 import { anthropic } from "@ai-sdk/anthropic";
+import { openai } from "@ai-sdk/openai";
 import {
   streamText,
   convertToModelMessages,
   UIMessage,
   createIdGenerator,
+  LanguageModel,
 } from "ai";
 import { prisma } from "@/lib/prisma";
+import { getModelById, calculateCost } from "@/lib/models";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -13,12 +16,13 @@ export const maxDuration = 30;
 /**
  * POST /api/chat
  *
- * Handles streaming chat completions with Claude 3.5 Sonnet.
+ * Handles streaming chat completions with multiple AI providers.
  * Implements message persistence using Vercel AI SDK UIMessage format.
  *
  * Request body:
- * - messages: UIMessage[] - All messages including the latest user message
+ * - message: UIMessage - The latest user message
  * - conversationId: string - Conversation ID for persistence
+ * - modelId: string (optional) - Model ID to use for this request
  *
  * Response:
  * - Server-Sent Events stream with chat completion
@@ -28,7 +32,9 @@ export async function POST(req: Request) {
     const {
       conversationId,
       message,
-    }: { message: UIMessage; conversationId: string } = await req.json();
+      modelId,
+    }: { message: UIMessage; conversationId: string; modelId?: string } =
+      await req.json();
 
     // Validate messages
     if (!message || !message?.parts.length) {
@@ -47,6 +53,14 @@ export async function POST(req: Request) {
 
     if (!conversation) {
       return new Response("Conversation not found", { status: 404 });
+    }
+
+    // Determine which model to use: provided modelId, conversation's model, or default
+    const selectedModelId = modelId || conversation.modelId || "claude-3-7-sonnet-20250219";
+    const modelConfig = getModelById(selectedModelId);
+
+    if (!modelConfig) {
+      return new Response(`Invalid model ID: ${selectedModelId}`, { status: 400 });
     }
 
     // Fetch all existing messages for conversation
@@ -75,8 +89,16 @@ export async function POST(req: Request) {
     // useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
     const modelMessages = convertToModelMessages(allMessages);
 
-    // Model configuration
-    const languageModel = anthropic("claude-3-7-sonnet-20250219");
+    // Get the language model instance based on provider
+    let languageModel: LanguageModel;
+    if (modelConfig.provider === "anthropic") {
+      languageModel = anthropic(selectedModelId);
+    } else if (modelConfig.provider === "openai") {
+      languageModel = openai(selectedModelId);
+    } else {
+      return new Response(`Unsupported provider: ${modelConfig.provider}`, { status: 400 });
+    }
+
     // Track request start time for metrics
     const startTime = Date.now();
 
@@ -88,12 +110,10 @@ export async function POST(req: Request) {
       temperature: 0.7,
       maxOutputTokens: 4000,
       onFinish: async (event) => {
-        // Calculate token costs (Claude 3.7 Sonnet pricing)
+        // Calculate token costs using model-specific pricing
         const inputTokens = event.usage.inputTokens || 0;
         const outputTokens = event.usage.outputTokens || 0;
-        const inputCost = (inputTokens / 1000) * 0.003;
-        const outputCost = (outputTokens / 1000) * 0.015;
-        const estimatedCost = inputCost + outputCost;
+        const estimatedCost = calculateCost(selectedModelId, inputTokens, outputTokens);
         const responseTimeMs = Date.now() - startTime;
 
         try {
@@ -101,8 +121,8 @@ export async function POST(req: Request) {
           await prisma.modelUsage.create({
             data: {
               conversationId,
-              modelId: languageModel.modelId,
-              modelProvider: "anthropic",
+              modelId: selectedModelId,
+              modelProvider: modelConfig.provider,
               inputTokens,
               outputTokens,
               totalTokens:
@@ -117,7 +137,8 @@ export async function POST(req: Request) {
           if (process.env.NODE_ENV === "development") {
             console.log("[Chat API] Completion metrics:", {
               conversationId,
-              model: languageModel.modelId,
+              model: selectedModelId,
+              provider: modelConfig.provider,
               inputTokens,
               outputTokens,
               totalTokens: event.usage.totalTokens,

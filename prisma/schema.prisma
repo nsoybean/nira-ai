@@ -66,6 +66,7 @@ model Conversation {
   id        String   @id @default(uuid())
   userId    String?  @map("user_id") // Nullable for anonymous users
   title     String   @default("New Chat")
+  modelId   String   @default("claude-3-7-sonnet-20250219") @map("model_id") // Selected AI model
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

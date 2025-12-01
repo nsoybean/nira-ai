@@ -12,6 +12,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { useConversations } from "@/hooks/useConversations";
 import { useMessageLoader } from "@/hooks/useMessageLoader";
 import { useChatSubmit } from "@/hooks/useChatSubmit";
+import { DEFAULT_MODEL_ID } from "@/lib/models";
 
 export default function ChatPage() {
   const params = useParams();
@@ -22,6 +23,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatTitle, setChatTitle] = useState("New Chat");
+  const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL_ID);
 
   // Clear input when starting a new chat
   useEffect(() => {
@@ -43,13 +45,14 @@ export default function ChatPage() {
     experimental_throttle: 50, // to make streaming smoother
     transport: new DefaultChatTransport({
       api: "/api/chat",
-      // send only last message
+      // send only last message with model info
       prepareSendMessagesRequest({ messages, id, body }) {
         return {
           body: {
             message: messages[messages.length - 1],
             id,
             conversationId: body?.conversationId,
+            modelId: body?.modelId,
           },
         };
       },
@@ -76,6 +79,7 @@ export default function ChatPage() {
     conversationId,
     sendMessage,
     refreshConversations,
+    selectedModel,
   });
 
   useEffect(() => {
@@ -83,6 +87,22 @@ export default function ChatPage() {
       setMessages(loadedMessages);
     }
   }, [loadedMessages]);
+
+  // Load conversation details including model when viewing existing chat
+  useEffect(() => {
+    if (!isNewChat && conversationId) {
+      fetch(`/api/conversations/${conversationId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.modelId) {
+            setSelectedModel(data.modelId);
+          }
+        })
+        .catch((error) => {
+          console.error("Error loading conversation:", error);
+        });
+    }
+  }, [conversationId, isNewChat]);
 
   // Send pending message after mounting from new chat creation
   useEffect(() => {
@@ -155,6 +175,8 @@ export default function ChatPage() {
             onSubmit={handleSubmit}
             status={status}
             isCreatingConversation={isCreatingConversation}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
           />
         </div>
       </div>

@@ -2,6 +2,46 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 /**
+ * GET /api/conversations/[id]
+ *
+ * Fetches conversation details by ID
+ */
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        modelId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!conversation) {
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(conversation);
+  } catch (error) {
+    console.error('[Get Conversation API] Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch conversation' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/conversations/[id]
  *
  * Deletes a conversation and all associated messages.

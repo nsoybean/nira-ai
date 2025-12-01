@@ -6,6 +6,7 @@ interface UseChatSubmitProps {
   conversationId: string | null;
   sendMessage: (message: { text: string }, options?: any) => void;
   refreshConversations: () => void;
+  selectedModel: string;
 }
 
 export function useChatSubmit({
@@ -13,6 +14,7 @@ export function useChatSubmit({
   conversationId,
   sendMessage,
   refreshConversations,
+  selectedModel,
 }: UseChatSubmitProps) {
   const router = useRouter();
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
@@ -28,10 +30,11 @@ export function useChatSubmit({
       setIsCreatingConversation(true);
 
       try {
-        // Create the conversation first
+        // Create the conversation first with the selected model
         const createResponse = await fetch("/api/conversations/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ modelId: selectedModel }),
         });
 
         if (!createResponse.ok) {
@@ -64,8 +67,11 @@ export function useChatSubmit({
       return;
     }
 
-    // For existing conversations, use normal flow
-    sendMessage({ text: input }, { body: { conversationId: conversationId } });
+    // For existing conversations, use normal flow and pass the selected model
+    sendMessage(
+      { text: input },
+      { body: { conversationId: conversationId, modelId: selectedModel } }
+    );
     setInput("");
   };
 

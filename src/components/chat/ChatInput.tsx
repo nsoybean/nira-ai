@@ -16,6 +16,7 @@ import {
   ArrowUp,
 } from "lucide-react";
 import { useRef, useEffect } from "react";
+import { ModelSelectorInline } from "./ModelSelectorInline";
 
 interface ChatInputProps {
   input: string;
@@ -23,6 +24,8 @@ interface ChatInputProps {
   onSubmit: (e: React.FormEvent) => void;
   status: ChatStatus;
   isCreatingConversation: boolean;
+  selectedModel: string;
+  onModelChange: (modelId: string) => void;
 }
 
 export function ChatInput({
@@ -31,6 +34,8 @@ export function ChatInput({
   onSubmit,
   status,
   isCreatingConversation,
+  selectedModel,
+  onModelChange,
 }: ChatInputProps) {
   const isLoading = status === "submitted" || status === "streaming";
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -138,32 +143,40 @@ export function ChatInput({
                 </Tooltip>
               </div>
 
-              {/* Right Side - Submit Button */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="submit"
-                    disabled={
-                      isLoading || isCreatingConversation || !input.trim()
-                    }
-                    size="icon"
-                    className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900 transition-all"
-                  >
-                    {isLoading || isCreatingConversation ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <ArrowUp className="h-4 w-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {isCreatingConversation
-                      ? "Creating chat..."
-                      : "Send message"}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
+              {/* Right Side - Model Selector and Submit Button */}
+              <div className="flex items-center gap-2">
+                <ModelSelectorInline
+                  selectedModel={selectedModel}
+                  onModelChange={onModelChange}
+                  disabled={isLoading || isCreatingConversation}
+                />
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="submit"
+                      disabled={
+                        isLoading || isCreatingConversation || !input.trim()
+                      }
+                      size="icon"
+                      className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900 transition-all"
+                    >
+                      {isLoading || isCreatingConversation ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <ArrowUp className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {isCreatingConversation
+                        ? "Creating chat..."
+                        : "Send message"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
           </div>
         </form>
