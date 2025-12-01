@@ -59,11 +59,8 @@ export default function ChatPage() {
     }),
   });
 
-  // conversations for sidebar
-  const { isLoadingConversations, refreshConversations } = useConversations();
-
   // conversation messages
-  const { isLoadingMessages, messages: loadedMessages } = useMessageLoader(
+  const { messages: loadedMessages } = useMessageLoader(
     conversationId,
     isNewChat
   );
@@ -73,7 +70,6 @@ export default function ChatPage() {
     isNewChat,
     conversationId,
     sendMessage,
-    refreshConversations,
     selectedModel,
   });
 
@@ -143,7 +139,6 @@ export default function ChatPage() {
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          isLoadingConversations={isLoadingConversations}
           currentConversationId={conversationId}
           onNewChat={handleNewChat}
         />

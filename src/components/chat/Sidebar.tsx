@@ -41,7 +41,6 @@ interface Conversation {
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  isLoadingConversations: boolean;
   currentConversationId: string;
   onNewChat: () => void;
 }
@@ -49,7 +48,6 @@ interface SidebarProps {
 export function Sidebar({
   isOpen,
   onClose,
-  isLoadingConversations,
   currentConversationId,
   onNewChat,
 }: SidebarProps) {
@@ -63,8 +61,12 @@ export function Sidebar({
   // hook
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { conversations, deleteConversation, refreshConversations } =
-    useConversations();
+  const {
+    conversations,
+    deleteConversation,
+    refreshConversations,
+    isLoadingConversations,
+  } = useConversations();
 
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();

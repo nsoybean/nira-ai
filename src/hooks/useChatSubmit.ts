@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useConversations } from "./useConversations";
 
 interface UseChatSubmitProps {
   isNewChat: boolean;
   conversationId: string | null;
   sendMessage: (message: { text: string }, options?: any) => void;
-  refreshConversations: () => void;
   selectedModel: string;
 }
 
@@ -13,10 +13,13 @@ export function useChatSubmit({
   isNewChat,
   conversationId,
   sendMessage,
-  refreshConversations,
   selectedModel,
 }: UseChatSubmitProps) {
+  // hook
   const router = useRouter();
+  const { refreshConversations } = useConversations();
+
+  // state
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
   const handleSubmit = async (
