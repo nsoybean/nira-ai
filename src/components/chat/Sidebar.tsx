@@ -41,7 +41,6 @@ interface Conversation {
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  conversations: Conversation[];
   isLoadingConversations: boolean;
   currentConversationId: string;
   onNewChat: () => void;
@@ -50,7 +49,6 @@ interface SidebarProps {
 export function Sidebar({
   isOpen,
   onClose,
-  conversations,
   isLoadingConversations,
   currentConversationId,
   onNewChat,
@@ -65,7 +63,8 @@ export function Sidebar({
   // hook
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { deleteConversation, refreshConversations } = useConversations();
+  const { conversations, deleteConversation, refreshConversations } =
+    useConversations();
 
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
@@ -244,7 +243,7 @@ export function Sidebar({
           <TooltipTrigger asChild>
             <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors">
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
+                <AvatarFallback className="bg-linear-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
                   EK
                 </AvatarFallback>
               </Avatar>
