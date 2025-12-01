@@ -17,16 +17,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Loader2,
   PanelLeftClose,
   MessageSquarePlus,
@@ -40,6 +30,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState } from "react";
+import { useConversations } from "@/hooks/useConversations";
+import { DeleteConversationDialog } from "./DeleteConversationDialog";
 
 interface Conversation {
   id: string;
@@ -53,7 +45,6 @@ interface SidebarProps {
   isLoadingConversations: boolean;
   currentConversationId: string;
   onNewChat: () => void;
-  onDeleteConversation: (conversationId: string) => Promise<boolean>;
 }
 
 export function Sidebar({
@@ -63,13 +54,18 @@ export function Sidebar({
   isLoadingConversations,
   currentConversationId,
   onNewChat,
-  onDeleteConversation,
 }: SidebarProps) {
+  // state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState<
+    string | null
+  >(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // hook
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [conversationToDelete, setConversationToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { deleteConversation, refreshConversations } = useConversations();
 
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
@@ -81,7 +77,7 @@ export function Sidebar({
     if (!conversationToDelete) return;
 
     setIsDeleting(true);
-    const success = await onDeleteConversation(conversationToDelete);
+    const success = await deleteConversation(conversationToDelete);
 
     if (success) {
       // If the deleted conversation is the current one, redirect to new chat
@@ -93,6 +89,7 @@ export function Sidebar({
     setIsDeleting(false);
     setDeleteDialogOpen(false);
     setConversationToDelete(null);
+    refreshConversations();
   };
 
   return (
@@ -268,40 +265,12 @@ export function Sidebar({
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="dark:bg-gray-900 dark:border-gray-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="dark:text-gray-100">
-              Delete conversation?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="dark:text-gray-400">
-              This will permanently delete this conversation and all its messages. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              disabled={isDeleting}
-              className="dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Delete"
-              )}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConversationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
     </aside>
   );
 }

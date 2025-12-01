@@ -60,12 +60,8 @@ export default function ChatPage() {
   });
 
   // conversations for sidebar
-  const {
-    conversations,
-    isLoadingConversations,
-    refreshConversations,
-    deleteConversation,
-  } = useConversations();
+  const { conversations, isLoadingConversations, refreshConversations } =
+    useConversations();
 
   // conversation messages
   const { isLoadingMessages, messages: loadedMessages } = useMessageLoader(
@@ -152,7 +148,6 @@ export default function ChatPage() {
           isLoadingConversations={isLoadingConversations}
           currentConversationId={conversationId}
           onNewChat={handleNewChat}
-          onDeleteConversation={deleteConversation}
         />
 
         <div className="flex-1 flex flex-col">
