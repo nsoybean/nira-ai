@@ -10,7 +10,7 @@ interface UseChatSubmitProps {
 
 export function useChatSubmit({
   isNewChat,
-  conversationId: actualConversationId,
+  conversationId,
   sendMessage,
   refreshConversations,
 }: UseChatSubmitProps) {
@@ -24,7 +24,7 @@ export function useChatSubmit({
     if (!input.trim() || isCreatingConversation) return;
 
     // If this is a new chat, create the conversation and navigate
-    if (isNewChat && !actualConversationId) {
+    if (isNewChat) {
       setIsCreatingConversation(true);
 
       try {
@@ -65,10 +65,7 @@ export function useChatSubmit({
     }
 
     // For existing conversations, use normal flow
-    sendMessage(
-      { text: input },
-      { body: { conversationId: actualConversationId } }
-    );
+    sendMessage({ text: input }, { body: { conversationId: conversationId } });
     setInput("");
   };
 
