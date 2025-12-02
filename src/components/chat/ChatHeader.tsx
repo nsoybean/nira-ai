@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { PanelLeft, Share2, Trash2, Edit3 } from "lucide-react";
-import { useState, memo } from "react";
+import { useState, memo, useRef, useEffect } from "react";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
 import { toast } from "sonner";
@@ -48,6 +48,35 @@ export const ChatHeader = memo(function ChatHeader({
   >(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
+  const originalTitleRef = useRef(chatTitle);
+
+  // Update the ref when chatTitle changes from external sources
+  useEffect(() => {
+    originalTitleRef.current = chatTitle;
+  }, [chatTitle]);
+
+  const handleTitleBlur = async () => {
+    if (isNew || !onRename) return;
+
+    const trimmedTitle = chatTitle.trim();
+
+    // If title hasn't changed or is empty, revert to original
+    if (!trimmedTitle || trimmedTitle === originalTitleRef.current) {
+      onTitleChange(originalTitleRef.current);
+      return;
+    }
+
+    // If title changed, save it
+    if (trimmedTitle !== originalTitleRef.current) {
+      const success = await onRename(conversationId, trimmedTitle);
+      if (success) {
+        originalTitleRef.current = trimmedTitle;
+      } else {
+        // Revert to original on failure
+        onTitleChange(originalTitleRef.current);
+      }
+    }
+  };
 
   const handleConfirmDelete = async () => {
     if (!conversationToDelete || !onDelete) return;
@@ -109,6 +138,7 @@ export const ChatHeader = memo(function ChatHeader({
               type="text"
               value={chatTitle}
               onChange={(e) => onTitleChange(e.target.value)}
+              onBlur={handleTitleBlur}
               className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors"
               style={{ width: "fit-content", minWidth: "100px" }}
               placeholder="Chat title..."

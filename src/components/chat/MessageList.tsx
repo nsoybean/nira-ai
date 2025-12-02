@@ -4,6 +4,7 @@ import { ChatState, ChatStatus, UIMessage } from "ai";
 import { Sparkles, Loader2 } from "lucide-react";
 import { forwardRef } from "react";
 import { Streamdown } from "streamdown";
+import { Spinner } from "../ui/spinner";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -45,6 +46,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               </div>
             ) : (
               <div className="space-y-6">
+                {/* messages */}
                 {messages.map((message) => (
                   <div key={message.id}>
                     {message.role === "user" ? (
@@ -90,16 +92,9 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                 ))}
 
                 {/* loading */}
-                {status === "submitted" && (
-                  <div className="flex gap-3 mb-6">
-                    <div className="shrink-0 mt-0.5">
-                      <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
-                        <Sparkles className="h-4 w-4 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1 pt-0.5">
-                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                    </div>
+                {isLoading && (
+                  <div className="flex mt-2 ml-8">
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                   </div>
                 )}
               </div>
