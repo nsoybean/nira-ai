@@ -184,13 +184,17 @@ export default function ChatPage() {
 
       if (success) {
         toast.success("Conversation renamed successfully");
+        // Update the header title if we're renaming the current conversation
+        if (conversationId === params.id) {
+          setChatTitle(newTitle);
+        }
       } else {
         toast.error("Failed to rename conversation");
       }
 
       return success;
     },
-    [updateConversation]
+    [updateConversation, params.id]
   );
 
   return (
