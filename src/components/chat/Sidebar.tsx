@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -32,6 +33,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useState, memo } from "react";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
+import { BetaAuthDialog } from "@/components/BetaAuthDialog";
+import { useBetaAuth } from "@/contexts/BetaAuthContext";
 import { toast } from "sonner";
 
 interface Conversation {
@@ -63,6 +66,7 @@ export const Sidebar = memo(function Sidebar({
   // state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [betaDialogOpen, setBetaDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<
     string | null
   >(null);
@@ -74,6 +78,7 @@ export const Sidebar = memo(function Sidebar({
   // hook
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { isAuthenticated } = useBetaAuth();
 
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
@@ -130,6 +135,13 @@ export const Sidebar = memo(function Sidebar({
             <span className="text-gray-900 dark:text-gray-100 font-bold">
               Nira AI
             </span>
+            <Badge
+              variant={isAuthenticated ? "default" : "outline"}
+              className="cursor-pointer hover:bg-primary/90 hover:text-white dark:hover:text-black"
+              onClick={() => !isAuthenticated && setBetaDialogOpen(true)}
+            >
+              BETA
+            </Badge>
           </div>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -311,6 +323,9 @@ export const Sidebar = memo(function Sidebar({
         currentTitle={conversationToRename?.title || ""}
         isRenaming={isRenaming}
       />
+
+      {/* Beta Auth Dialog */}
+      <BetaAuthDialog open={betaDialogOpen} onOpenChange={setBetaDialogOpen} />
     </aside>
   );
 });
