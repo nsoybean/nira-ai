@@ -33,7 +33,6 @@ import { useState, memo } from "react";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
 import { toast } from "sonner";
-import { useConversations } from "@/contexts/ConversationsContext";
 
 interface Conversation {
   id: string;
@@ -45,6 +44,10 @@ interface SidebarProps {
   onClose: () => void;
   currentConversationId: string;
   onNewChat: () => void;
+  conversations: Conversation[];
+  isLoadingConversations: boolean;
+  onDelete?: (conversationId: string) => Promise<boolean>;
+  onRename?: (conversationId: string, newTitle: string) => Promise<boolean>;
 }
 
 export const Sidebar = memo(function Sidebar({
@@ -52,6 +55,10 @@ export const Sidebar = memo(function Sidebar({
   onClose,
   currentConversationId,
   onNewChat,
+  conversations,
+  isLoadingConversations,
+  onDelete,
+  onRename,
 }: SidebarProps) {
   // state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -67,13 +74,6 @@ export const Sidebar = memo(function Sidebar({
   // hook
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const {
-    conversations,
-    deleteConversation,
-    updateConversation,
-    refreshConversations,
-    isLoadingConversations,
-  } = useConversations();
 
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
     e.stopPropagation();
@@ -82,22 +82,14 @@ export const Sidebar = memo(function Sidebar({
   };
 
   const handleConfirmDelete = async () => {
-    if (!conversationToDelete) return;
+    if (!conversationToDelete || !onDelete) return;
 
     setIsDeleting(true);
-    const success = await deleteConversation(conversationToDelete);
-
-    if (success) {
-      // If the deleted conversation is the current one, redirect to new chat
-      if (conversationToDelete === currentConversationId) {
-        router.push("/chat/new");
-      }
-    }
+    await onDelete(conversationToDelete);
 
     setIsDeleting(false);
     setDeleteDialogOpen(false);
     setConversationToDelete(null);
-    refreshConversations();
   };
 
   const handleRenameClick = (
@@ -110,19 +102,10 @@ export const Sidebar = memo(function Sidebar({
   };
 
   const handleConfirmRename = async (newTitle: string) => {
-    if (!conversationToRename) return;
+    if (!conversationToRename || !onRename) return;
 
     setIsRenaming(true);
-    const success = await updateConversation(conversationToRename.id, {
-      title: newTitle,
-    });
-
-    if (success) {
-      toast.success("Conversation renamed successfully");
-      refreshConversations();
-    } else {
-      toast.error("Failed to rename conversation");
-    }
+    await onRename(conversationToRename.id, newTitle);
 
     setIsRenaming(false);
     setRenameDialogOpen(false);

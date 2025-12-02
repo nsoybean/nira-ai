@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/chat/Sidebar";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -12,8 +12,11 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { useMessageLoader } from "@/hooks/useMessageLoader";
 import { useChatSubmit } from "@/hooks/useChatSubmit";
 import { DEFAULT_MODEL_ID } from "@/lib/models";
+import { useConversations } from "@/contexts/ConversationsContext";
+import { toast } from "sonner";
 
 export default function ChatPage() {
+  console.log("🚀 ~ ChatPage ~ ChatPage:");
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
@@ -24,12 +27,39 @@ export default function ChatPage() {
   const [chatTitle, setChatTitle] = useState("New Chat");
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL_ID);
 
+  const {
+    deleteConversation,
+    updateConversation,
+    conversations,
+    isLoadingConversations,
+  } = useConversations();
+
   // Clear input when starting a new chat
   useEffect(() => {
     if (isNewChat) {
       setInput("");
     }
   }, [isNewChat]);
+
+  // Memoize transport to prevent re-creating on every render
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        // send only last message with model info
+        prepareSendMessagesRequest({ messages, id, body }) {
+          return {
+            body: {
+              message: messages[messages.length - 1],
+              id,
+              conversationId: body?.conversationId,
+              modelId: body?.modelId,
+            },
+          };
+        },
+      }),
+    []
+  );
 
   const {
     messages,
@@ -42,20 +72,7 @@ export default function ChatPage() {
   } = useChat({
     id: conversationId || undefined,
     experimental_throttle: 50, // to make streaming smoother
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      // send only last message with model info
-      prepareSendMessagesRequest({ messages, id, body }) {
-        return {
-          body: {
-            message: messages[messages.length - 1],
-            id,
-            conversationId: body?.conversationId,
-            modelId: body?.modelId,
-          },
-        };
-      },
-    }),
+    transport,
   });
 
   // conversation messages
@@ -76,7 +93,7 @@ export default function ChatPage() {
     if (loadedMessages.length) {
       setMessages(loadedMessages);
     }
-  }, [loadedMessages]);
+  }, [loadedMessages, setMessages]);
 
   // Load conversation details including model when viewing existing chat
   useEffect(() => {
@@ -108,7 +125,8 @@ export default function ChatPage() {
         sendMessage({ text: pendingMessage }, { body: { conversationId } });
       }
     }
-  }, [isNewChat, conversationId, sendMessage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isNewChat, conversationId]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -132,6 +150,36 @@ export default function ChatPage() {
     router.push("/chat/new");
   };
 
+  const handleDelete = async (conversationId: string) => {
+    const success = await deleteConversation(conversationId);
+
+    if (success) {
+      toast.success("Conversation deleted successfully");
+      // If the deleted conversation is the current one, redirect to new chat
+      if (conversationId === params.id) {
+        router.push("/chat/new");
+      }
+    } else {
+      toast.error("Failed to delete conversation");
+    }
+
+    return success;
+  };
+
+  const handleRename = async (conversationId: string, newTitle: string) => {
+    const success = await updateConversation(conversationId, {
+      title: newTitle,
+    });
+
+    if (success) {
+      toast.success("Conversation renamed successfully");
+    } else {
+      toast.error("Failed to rename conversation");
+    }
+
+    return success;
+  };
+
   return (
     <TooltipProvider>
       <div className="flex h-screen bg-white dark:bg-gray-950">
@@ -140,6 +188,10 @@ export default function ChatPage() {
           onClose={() => setSidebarOpen(false)}
           currentConversationId={conversationId}
           onNewChat={handleNewChat}
+          conversations={conversations}
+          isLoadingConversations={isLoadingConversations}
+          onDelete={handleDelete}
+          onRename={handleRename}
         />
 
         <div className="flex-1 flex flex-col">
@@ -148,6 +200,10 @@ export default function ChatPage() {
             onToggleSidebar={() => setSidebarOpen(true)}
             chatTitle={chatTitle}
             onTitleChange={setChatTitle}
+            conversationId={conversationId}
+            isNew={isNewChat}
+            onDelete={handleDelete}
+            onRename={handleRename}
           />
 
           <MessageList
