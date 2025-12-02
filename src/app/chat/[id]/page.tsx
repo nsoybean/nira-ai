@@ -136,10 +136,28 @@ export default function ChatPage() {
   }, [isNewChat, conversationId, sendMessage]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const shouldAutoScrollRef = useRef(true);
 
-  // Auto-scroll to bottom when messages change
+  // Detect when user manually scrolls
   useEffect(() => {
-    if (scrollAreaRef.current) {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollArea;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100; // 100px threshold
+
+      // Update auto-scroll preference based on scroll position
+      shouldAutoScrollRef.current = isNearBottom;
+    };
+
+    scrollArea.addEventListener("scroll", handleScroll);
+    return () => scrollArea.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Auto-scroll to bottom when messages change (only if user hasn't scrolled up)
+  useEffect(() => {
+    if (scrollAreaRef.current && shouldAutoScrollRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
