@@ -127,8 +127,8 @@ export const Sidebar = memo(function Sidebar({
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-900 dark:text-gray-100">
-              Nira
+            <span className="text-gray-900 dark:text-gray-100 font-bold">
+              Nira AI
             </span>
           </div>
           <Tooltip>
