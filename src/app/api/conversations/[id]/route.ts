@@ -42,6 +42,78 @@ export async function GET(
 }
 
 /**
+ * PATCH /api/conversations/[id]
+ *
+ * Updates a conversation's details (e.g., title).
+ *
+ * Request body:
+ * {
+ *   "title"?: string
+ * }
+ *
+ * Response:
+ * {
+ *   "success": true,
+ *   "conversation": { id, title, ... }
+ * }
+ */
+export async function PATCH(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+    const body = await req.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Conversation ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if conversation exists
+    const conversation = await prisma.conversation.findUnique({
+      where: { id },
+    });
+
+    if (!conversation) {
+      return NextResponse.json(
+        { error: 'Conversation not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update the conversation
+    const updatedConversation = await prisma.conversation.update({
+      where: { id },
+      data: {
+        ...(body.title !== undefined && { title: body.title }),
+      },
+      select: {
+        id: true,
+        title: true,
+        modelId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      conversation: updatedConversation,
+    });
+  } catch (error) {
+    console.error('[Conversation API] Error updating conversation:', error);
+
+    return NextResponse.json(
+      { error: 'Failed to update conversation' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * DELETE /api/conversations/[id]
  *
  * Deletes a conversation and all associated messages.

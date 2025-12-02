@@ -59,10 +59,38 @@ export function useConversations() {
     }
   };
 
+  const updateConversation = async (
+    conversationId: string,
+    updates: Partial<Conversation>
+  ) => {
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to update conversation");
+        return false;
+      }
+
+      // Refresh the conversation list after successful update
+      await loadConversations();
+      return true;
+    } catch (error) {
+      console.error("Error updating conversation:", error);
+      return false;
+    }
+  };
+
   return {
     conversations,
     isLoadingConversations,
     refreshConversations,
     deleteConversation,
+    updateConversation,
   };
 }

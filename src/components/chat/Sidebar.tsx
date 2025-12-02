@@ -32,6 +32,8 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useState } from "react";
 import { useConversations } from "@/hooks/useConversations";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
+import { RenameConversationDialog } from "./RenameConversationDialog";
+import { toast } from "sonner";
 
 interface Conversation {
   id: string;
@@ -53,10 +55,15 @@ export function Sidebar({
 }: SidebarProps) {
   // state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<
     string | null
   >(null);
+  const [conversationToRename, setConversationToRename] = useState<
+    Conversation | null
+  >(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
 
   // hook
   const router = useRouter();
@@ -64,6 +71,7 @@ export function Sidebar({
   const {
     conversations,
     deleteConversation,
+    updateConversation,
     refreshConversations,
     isLoadingConversations,
   } = useConversations();
@@ -91,6 +99,37 @@ export function Sidebar({
     setDeleteDialogOpen(false);
     setConversationToDelete(null);
     refreshConversations();
+  };
+
+  const handleRenameClick = (e: React.MouseEvent, conversation: Conversation) => {
+    e.stopPropagation();
+    setConversationToRename(conversation);
+    setRenameDialogOpen(true);
+  };
+
+  const handleConfirmRename = async (newTitle: string) => {
+    if (!conversationToRename) return;
+
+    setIsRenaming(true);
+    const success = await updateConversation(conversationToRename.id, {
+      title: newTitle,
+    });
+
+    if (success) {
+      toast.success("Conversation renamed successfully");
+      refreshConversations();
+    } else {
+      toast.error("Failed to rename conversation");
+    }
+
+    setIsRenaming(false);
+    setRenameDialogOpen(false);
+    setConversationToRename(null);
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast.info("Share feature coming soon!");
   };
 
   return (
@@ -179,11 +218,17 @@ export function Sidebar({
                     align="end"
                     className="w-48 dark:bg-gray-900 dark:border-gray-800"
                   >
-                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                    <DropdownMenuItem
+                      className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200"
+                      onClick={(e) => handleRenameClick(e, conv)}
+                    >
                       <Edit3 className="h-4 w-4 mr-2" />
                       Rename
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                    <DropdownMenuItem
+                      className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200"
+                      onClick={handleShareClick}
+                    >
                       <Share2 className="h-4 w-4 mr-2" />
                       Share
                     </DropdownMenuItem>
@@ -271,6 +316,15 @@ export function Sidebar({
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+      />
+
+      {/* Rename Confirmation Dialog */}
+      <RenameConversationDialog
+        open={renameDialogOpen}
+        onOpenChange={setRenameDialogOpen}
+        onConfirm={handleConfirmRename}
+        currentTitle={conversationToRename?.title || ""}
+        isRenaming={isRenaming}
       />
     </aside>
   );

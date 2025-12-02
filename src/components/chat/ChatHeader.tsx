@@ -13,16 +13,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  PanelLeft,
-  Share2,
-  Trash2,
-  Edit3,
-} from "lucide-react";
+import { PanelLeft, Share2, Trash2, Edit3 } from "lucide-react";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useConversations } from "@/hooks/useConversations";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
+import { RenameConversationDialog } from "./RenameConversationDialog";
+import { toast } from "sonner";
 
 interface ChatHeaderProps {
   sidebarOpen: boolean;
@@ -39,17 +36,20 @@ export function ChatHeader({
 }: ChatHeaderProps) {
   // state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<
     string | null
   >(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
   const isNew = conversationId === "new";
 
   // hook
-  const { deleteConversation } = useConversations();
+  const { deleteConversation, updateConversation, conversations } =
+    useConversations();
 
   const handleConfirmDelete = async () => {
     if (!conversationToDelete) return;
@@ -73,6 +73,33 @@ export function ChatHeader({
     e.stopPropagation();
     setConversationToDelete(conversationId);
     setDeleteDialogOpen(true);
+  };
+
+  const handleRenameClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRenameDialogOpen(true);
+  };
+
+  const handleConfirmRename = async (newTitle: string) => {
+    setIsRenaming(true);
+    const success = await updateConversation(conversationId, {
+      title: newTitle,
+    });
+
+    if (success) {
+      onTitleChange(newTitle);
+      toast.success("Conversation renamed successfully");
+    } else {
+      toast.error("Failed to rename conversation");
+    }
+
+    setIsRenaming(false);
+    setRenameDialogOpen(false);
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast.info("Share feature coming soon!");
   };
 
   return (
@@ -135,11 +162,17 @@ export function ChatHeader({
                   align="start"
                   className="w-48 dark:bg-gray-900 dark:border-gray-800"
                 >
-                  <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                  <DropdownMenuItem
+                    className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200"
+                    onClick={handleRenameClick}
+                  >
                     <Edit3 className="h-4 w-4 mr-2" />
                     Rename
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200">
+                  <DropdownMenuItem
+                    className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200"
+                    onClick={handleShareClick}
+                  >
                     <Share2 className="h-4 w-4 mr-2" />
                     Share
                   </DropdownMenuItem>
@@ -163,6 +196,14 @@ export function ChatHeader({
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+      />
+
+      <RenameConversationDialog
+        open={renameDialogOpen}
+        onOpenChange={setRenameDialogOpen}
+        onConfirm={handleConfirmRename}
+        currentTitle={chatTitle}
+        isRenaming={isRenaming}
       />
     </>
   );
