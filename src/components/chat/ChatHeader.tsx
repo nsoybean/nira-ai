@@ -53,7 +53,7 @@ export const ChatHeader = memo(function ChatHeader({
   // Update the ref when chatTitle changes from external sources
   useEffect(() => {
     originalTitleRef.current = chatTitle;
-  }, []);
+  }, [chatTitle]);
 
   const handleTitleBlur = async () => {
     if (isNew || !onRename) return;

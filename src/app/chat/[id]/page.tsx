@@ -94,7 +94,7 @@ export default function ChatPage() {
     }
   }, [loadedMessages, setMessages]);
 
-  // Load conversation details including model when viewing existing chat
+  // Load conversation details including model and title when viewing existing chat
   useEffect(() => {
     if (!isNewChat && conversationId) {
       fetch(`/api/conversations/${conversationId}`)
@@ -102,6 +102,9 @@ export default function ChatPage() {
         .then((data) => {
           if (data.modelId) {
             setSelectedModel(data.modelId);
+          }
+          if (data.title) {
+            setChatTitle(data.title);
           }
         })
         .catch((error) => {
