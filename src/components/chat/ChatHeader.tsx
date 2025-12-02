@@ -14,12 +14,12 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { PanelLeft, Share2, Trash2, Edit3 } from "lucide-react";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useConversations } from "@/hooks/useConversations";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
 import { toast } from "sonner";
+import { useConversations } from "@/contexts/ConversationsContext";
 
 interface ChatHeaderProps {
   sidebarOpen: boolean;
@@ -28,7 +28,7 @@ interface ChatHeaderProps {
   onTitleChange: (title: string) => void;
 }
 
-export function ChatHeader({
+export const ChatHeader = memo(function ChatHeader({
   sidebarOpen,
   onToggleSidebar,
   chatTitle,
@@ -207,4 +207,4 @@ export function ChatHeader({
       />
     </>
   );
-}
+});

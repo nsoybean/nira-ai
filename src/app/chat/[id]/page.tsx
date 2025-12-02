@@ -9,7 +9,6 @@ import { Sidebar } from "@/components/chat/Sidebar";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { MessageList } from "@/components/chat/MessageList";
 import { ChatInput } from "@/components/chat/ChatInput";
-import { useConversations } from "@/hooks/useConversations";
 import { useMessageLoader } from "@/hooks/useMessageLoader";
 import { useChatSubmit } from "@/hooks/useChatSubmit";
 import { DEFAULT_MODEL_ID } from "@/lib/models";

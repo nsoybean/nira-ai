@@ -29,11 +29,11 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useState } from "react";
-import { useConversations } from "@/hooks/useConversations";
+import { useState, memo } from "react";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
 import { toast } from "sonner";
+import { useConversations } from "@/contexts/ConversationsContext";
 
 interface Conversation {
   id: string;
@@ -47,7 +47,7 @@ interface SidebarProps {
   onNewChat: () => void;
 }
 
-export function Sidebar({
+export const Sidebar = memo(function Sidebar({
   isOpen,
   onClose,
   currentConversationId,
@@ -59,9 +59,8 @@ export function Sidebar({
   const [conversationToDelete, setConversationToDelete] = useState<
     string | null
   >(null);
-  const [conversationToRename, setConversationToRename] = useState<
-    Conversation | null
-  >(null);
+  const [conversationToRename, setConversationToRename] =
+    useState<Conversation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
 
@@ -101,7 +100,10 @@ export function Sidebar({
     refreshConversations();
   };
 
-  const handleRenameClick = (e: React.MouseEvent, conversation: Conversation) => {
+  const handleRenameClick = (
+    e: React.MouseEvent,
+    conversation: Conversation
+  ) => {
     e.stopPropagation();
     setConversationToRename(conversation);
     setRenameDialogOpen(true);
@@ -328,4 +330,4 @@ export function Sidebar({
       />
     </aside>
   );
-}
+});

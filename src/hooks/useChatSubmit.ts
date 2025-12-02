@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useConversations } from "./useConversations";
+import { useConversations } from "@/contexts/ConversationsContext";
 
 interface UseChatSubmitProps {
   isNewChat: boolean;
