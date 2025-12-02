@@ -45,10 +45,14 @@ export function ModelSelectorInline({
   );
 
   return (
-    <Select value={selectedModel} onValueChange={onModelChange} disabled={disabled}>
+    <Select
+      value={selectedModel}
+      onValueChange={onModelChange}
+      disabled={disabled}
+    >
       <SelectTrigger className="h-8 w-auto border-0 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs gap-1.5 px-2 focus:ring-0 focus:ring-offset-0">
         <div className="flex items-center gap-1.5">
-          {selectedModelConfig && getModelIcon(selectedModelConfig.id)}
+          {/* {selectedModelConfig && getModelIcon(selectedModelConfig.id)} */}
           <span className="font-medium">
             {selectedModelConfig?.name || "Select Model"}
           </span>
@@ -62,7 +66,7 @@ export function ModelSelectorInline({
           {anthropicModels.map((model) => (
             <SelectItem key={model.id} value={model.id} className="text-xs">
               <div className="flex items-center gap-2">
-                {getModelIcon(model.id)}
+                {/* {getModelIcon(model.id)} */}
                 <div className="flex flex-col">
                   <span className="font-medium">{model.name}</span>
                   <span className="text-[10px] text-muted-foreground">
@@ -81,7 +85,7 @@ export function ModelSelectorInline({
           {openaiModels.map((model) => (
             <SelectItem key={model.id} value={model.id} className="text-xs">
               <div className="flex items-center gap-2">
-                {getModelIcon(model.id)}
+                {/* {getModelIcon(model.id)} */}
                 <div className="flex flex-col">
                   <span className="font-medium">{model.name}</span>
                   <span className="text-[10px] text-muted-foreground">
