@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "prisma:migrate": "prisma migrate deploy"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.50",
