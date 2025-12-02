@@ -1,8 +1,8 @@
-# Lume - Architecture Documentation
+# Nira - Architecture Documentation
 
 ## Overview
 
-Lume is a modern, multi-model AI chatbot built with Next.js 16, featuring Claude 3.5 Sonnet integration with plans to support multiple AI providers. The application uses a clean, modern architecture with PostgreSQL for persistence and Mastra framework for advanced AI agent capabilities.
+Nira is a modern, multi-model AI chatbot built with Next.js 16, featuring Claude 3.5 Sonnet integration with plans to support multiple AI providers. The application uses a clean, modern architecture with PostgreSQL for persistence and Mastra framework for advanced AI agent capabilities.
 
 ## Tech Stack
 
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
   const result = await streamText({
     model: anthropic('claude-3-5-sonnet-20241022'),
     messages,
-    system: 'You are Lume...',
+    system: 'You are Nira...',
     temperature: 0.7,
     maxTokens: 4000,
   });

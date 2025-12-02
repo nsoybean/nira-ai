@@ -183,7 +183,7 @@ export function ChatInput({
 
         {/* Footer Text */}
         <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-3">
-          Lume can make mistakes. Check important info.
+          Nira can make mistakes. Check important info.
         </p>
       </div>
     </div>

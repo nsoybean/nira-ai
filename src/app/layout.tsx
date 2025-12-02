@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lume - AI Chat Assistant",
-  description: "Chat with Claude 3.5 Sonnet - Illuminate complex topics with clarity",
+  title: "Nira - AI Chat Assistant",
+  description: "Chat with Claude 3.5 Sonnet - Your intelligent AI assistant",
 };
 
 export default function RootLayout({

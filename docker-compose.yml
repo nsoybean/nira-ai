@@ -4,12 +4,12 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: lume-postgres
+    container_name: nira-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: lume
+      POSTGRES_DB: nira
     ports:
       - "5432:5432"
     volumes:
@@ -28,7 +28,7 @@ services:
       target: builder
     command: sh -c "npm run prisma:migrate"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/lume
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nira
     depends_on:
       postgres:
         condition: service_healthy
@@ -38,13 +38,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: lume-app
+    container_name: nira-app
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       # Database
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/lume
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/nira
 
       # AI Provider Keys (will be loaded from .env.local)
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}

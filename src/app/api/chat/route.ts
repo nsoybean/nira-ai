@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     const result = streamText({
       model: languageModel,
       messages: modelMessages,
-      system: `You are Lume, an intelligent AI assistant that illuminates complex topics with clarity and insight. You provide thoughtful, accurate, and helpful responses.`,
+      system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
       temperature: 0.7,
       maxOutputTokens: 4000,
       onFinish: async (event) => {

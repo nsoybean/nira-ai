@@ -1,8 +1,8 @@
-# Lume - API Documentation
+# Nira - API Documentation
 
 ## Overview
 
-Lume's API layer is built with Next.js 16 API Routes, leveraging the Vercel AI SDK v5 for streaming chat completions. The API is designed for real-time, token-based streaming with support for multiple AI providers.
+Nira's API layer is built with Next.js 16 API Routes, leveraging the Vercel AI SDK v5 for streaming chat completions. The API is designed for real-time, token-based streaming with support for multiple AI providers.
 
 ## Base URL
 
@@ -68,7 +68,7 @@ interface MessagePart {
       "parts": [
         {
           "type": "text",
-          "text": "Hello, Lume! What can you help me with?"
+          "text": "Hello, Nira! What can you help me with?"
         }
       ]
     }
@@ -86,7 +86,7 @@ interface MessagePart {
 
 1. **Text Chunks** (streaming)
 ```
-0:"Hello! I'm Lume, your AI assistant. I can help you with:\n\n"
+0:"Hello! I'm Nira, your AI assistant. I can help you with:\n\n"
 0:"1. Answering questions\n"
 0:"2. Writing and editing\n"
 0:"3. Analysis and research\n"
@@ -132,7 +132,7 @@ export async function POST(req: Request) {
   const result = await streamText({
     model: anthropic('claude-3-5-sonnet-20241022'),
     messages,
-    system: `You are Lume, an intelligent AI assistant that illuminates complex topics with clarity and insight.`,
+    system: `You are Nira, an intelligent AI assistant that illuminates complex topics with clarity and insight.`,
     temperature: 0.7,
     maxTokens: 4000,
   });
@@ -557,7 +557,7 @@ curl -X POST http://localhost:3000/api/chat \
         "parts": [
           {
             "type": "text",
-            "text": "Hello, Lume!"
+            "text": "Hello, Nira!"
           }
         ]
       }

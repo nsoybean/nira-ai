@@ -128,7 +128,7 @@ export const Sidebar = memo(function Sidebar({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-gray-900 dark:text-gray-100">
-              Lume
+              Nira
             </span>
           </div>
           <Tooltip>

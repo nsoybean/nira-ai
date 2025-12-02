@@ -1,6 +1,6 @@
-# Lume Documentation (Source of Truth)
+# Nira Documentation (Source of Truth)
 
-This directory contains comprehensive documentation for the Lume project, serving as the **single source of truth** for architecture, design decisions, and implementation details.
+This directory contains comprehensive documentation for the Nira project, serving as the **single source of truth** for architecture, design decisions, and implementation details.
 
 ## Purpose
 
@@ -16,7 +16,7 @@ The `/llm` directory is specifically designed for:
 ### [ARCHITECTURE.md](./ARCHITECTURE.md)
 **System Design & Technical Architecture**
 
-Complete overview of Lume's architecture, including:
+Complete overview of Nira's architecture, including:
 - Tech stack breakdown (Next.js 16, AI SDK v5, Mastra, Prisma)
 - Project structure and file organization
 - Architecture layers (Presentation, API, Data, Agent)
@@ -156,7 +156,7 @@ Visit: http://localhost:3000/chat
 
 ## AI SDK v5 Key Changes
 
-**Important:** Lume uses AI SDK v5, which has significant API changes from v4:
+**Important:** Nira uses AI SDK v5, which has significant API changes from v4:
 
 ### Import Path
 ```typescript
@@ -441,5 +441,5 @@ TBD
 ---
 
 **Last Updated:** 2025-01-29
-**Maintained By:** Lume Development Team
-**Purpose:** Single source of truth for Lume architecture and development
+**Maintained By:** Nira Development Team
+**Purpose:** Single source of truth for Nira architecture and development

@@ -1,8 +1,8 @@
-# Lume - Database Schema Documentation
+# Nira - Database Schema Documentation
 
 ## Overview
 
-Lume uses PostgreSQL with Prisma ORM for type-safe database operations. The schema is designed to integrate Mastra framework's persistence requirements with custom business logic for conversation management, user tracking, and token usage analytics.
+Nira uses PostgreSQL with Prisma ORM for type-safe database operations. The schema is designed to integrate Mastra framework's persistence requirements with custom business logic for conversation management, user tracking, and token usage analytics.
 
 ## Database Provider
 
@@ -99,7 +99,7 @@ model MastraMessage {
   "parts": [
     {
       "type": "text",
-      "text": "Hello, Lume!"
+      "text": "Hello, Nira!"
     }
   ]
 }
@@ -153,7 +153,7 @@ model MastraResource {
 
 ### Custom Application Tables
 
-These tables implement Lume-specific business logic.
+These tables implement Nira-specific business logic.
 
 #### users
 

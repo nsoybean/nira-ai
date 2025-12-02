@@ -1,4 +1,4 @@
-# Lume - Development Guide
+# Nira - Development Guide
 
 ## Quick Start
 
