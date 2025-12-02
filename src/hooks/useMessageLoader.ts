@@ -34,8 +34,10 @@ export function useMessageLoader(conversationId: string, isNewChat: boolean) {
     // fetch messages only if not a new chat
     if (!isNewChat && conversationId) {
       loadMessages();
+    } else {
+      setIsLoadingMessages(false);
     }
-  }, [conversationId, isNewChat, setMessages]);
+  }, [conversationId, isNewChat]);
 
   return { isLoadingMessages, messages };
 }

@@ -173,10 +173,13 @@ export async function POST(req: Request) {
             skipDuplicates: true,
           });
 
-          // Update conversation's updatedAt timestamp
+          // Update conversation's updatedAt and lastMessageAt timestamps
           await prisma.conversation.update({
             where: { id: conversationId },
-            data: { updatedAt: new Date() },
+            data: {
+              updatedAt: new Date(),
+              lastMessageAt: new Date(),
+            },
           });
 
           if (process.env.NODE_ENV === "development") {

@@ -8,21 +8,30 @@ import { Streamdown } from "streamdown";
 interface MessageListProps {
   messages: UIMessage[];
   status: ChatStatus;
+  isLoadingMessages?: boolean;
 }
 
 export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
-  ({ messages, status }, ref) => {
+  ({ messages, status, isLoadingMessages = false }, ref) => {
     const isLoading = status === "submitted" || status === "streaming";
-
-    function renderAiResponse() {
-      return;
-    }
 
     return (
       <div className="flex-1 overflow-hidden">
         <div ref={ref} className="h-full overflow-y-auto">
           <div className="max-w-3xl mx-auto px-4 py-8">
-            {messages.length === 0 ? (
+            {isLoadingMessages ? (
+              <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
+                <Loader2 className="h-12 w-12 text-gray-300 dark:text-gray-700 animate-spin" />
+                <div>
+                  <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
+                    Loading messages...
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Please wait
+                  </p>
+                </div>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
                 <Sparkles className="h-12 w-12 text-gray-300 dark:text-gray-700" />
                 <div>
@@ -101,5 +110,3 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
     );
   }
 );
-
-MessageList.displayName = "MessageList";

@@ -63,12 +63,13 @@ model UserPreference {
 }
 
 model Conversation {
-  id        String   @id @default(uuid())
-  userId    String?  @map("user_id") // Nullable for anonymous users
-  title     String   @default("New Chat")
-  modelId   String   @default("claude-3-7-sonnet-20250219") @map("model_id") // Selected AI model
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid())
+  userId        String?  @map("user_id") // Nullable for anonymous users
+  title         String   @default("New Chat")
+  modelId       String   @default("claude-3-7-sonnet-20250219") @map("model_id") // Selected AI model
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  lastMessageAt DateTime @default(now()) @map("last_message_at") // Last time a message was added
 
   // Relations
   user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -78,6 +79,7 @@ model Conversation {
   @@map("conversations")
   @@index([userId])
   @@index([createdAt])
+  @@index([lastMessageAt])
 }
 
 model ModelUsage {

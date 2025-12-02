@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useRef, useEffect, useState, useMemo } from "react";
+import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/chat/Sidebar";
 import { ChatHeader } from "@/components/chat/ChatHeader";
@@ -16,7 +16,6 @@ import { useConversations } from "@/contexts/ConversationsContext";
 import { toast } from "sonner";
 
 export default function ChatPage() {
-  console.log("🚀 ~ ChatPage ~ ChatPage:");
   const params = useParams();
   const router = useRouter();
   const conversationId = params.id as string;
@@ -76,7 +75,7 @@ export default function ChatPage() {
   });
 
   // conversation messages
-  const { messages: loadedMessages } = useMessageLoader(
+  const { messages: loadedMessages, isLoadingMessages } = useMessageLoader(
     conversationId,
     isNewChat
   );
@@ -112,12 +111,18 @@ export default function ChatPage() {
   }, [conversationId, isNewChat]);
 
   // Send pending message after mounting from new chat creation
+  // Use a ref to track if we've already processed the pending message
+  const pendingMessageProcessedRef = useRef(false);
+
   useEffect(() => {
     // Only run for existing conversations (not "new")
-    if (!isNewChat) {
+    if (!isNewChat && !pendingMessageProcessedRef.current) {
       const pendingMessage = sessionStorage.getItem("pendingMessage");
 
       if (pendingMessage) {
+        // Mark as processed
+        pendingMessageProcessedRef.current = true;
+
         // Clear it immediately to prevent double-sending
         sessionStorage.removeItem("pendingMessage");
 
@@ -125,8 +130,7 @@ export default function ChatPage() {
         sendMessage({ text: pendingMessage }, { body: { conversationId } });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNewChat, conversationId]);
+  }, [isNewChat, conversationId, sendMessage]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -137,48 +141,57 @@ export default function ChatPage() {
     }
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (status === "streaming" || status === "submitted") {
-      return;
-    }
-
-    await submitChat(input, setInput);
-  };
-
-  const handleNewChat = () => {
-    router.push("/chat/new");
-  };
-
-  const handleDelete = async (conversationId: string) => {
-    const success = await deleteConversation(conversationId);
-
-    if (success) {
-      toast.success("Conversation deleted successfully");
-      // If the deleted conversation is the current one, redirect to new chat
-      if (conversationId === params.id) {
-        router.push("/chat/new");
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (status === "streaming" || status === "submitted") {
+        return;
       }
-    } else {
-      toast.error("Failed to delete conversation");
-    }
 
-    return success;
-  };
+      await submitChat(input, setInput);
+    },
+    [status, submitChat, input]
+  );
 
-  const handleRename = async (conversationId: string, newTitle: string) => {
-    const success = await updateConversation(conversationId, {
-      title: newTitle,
-    });
+  const handleNewChat = useCallback(() => {
+    router.push("/chat/new");
+  }, [router]);
 
-    if (success) {
-      toast.success("Conversation renamed successfully");
-    } else {
-      toast.error("Failed to rename conversation");
-    }
+  const handleDelete = useCallback(
+    async (conversationId: string) => {
+      const success = await deleteConversation(conversationId);
 
-    return success;
-  };
+      if (success) {
+        toast.success("Conversation deleted successfully");
+        // If the deleted conversation is the current one, redirect to new chat
+        if (conversationId === params.id) {
+          router.push("/chat/new");
+        }
+      } else {
+        toast.error("Failed to delete conversation");
+      }
+
+      return success;
+    },
+    [deleteConversation, params.id, router]
+  );
+
+  const handleRename = useCallback(
+    async (conversationId: string, newTitle: string) => {
+      const success = await updateConversation(conversationId, {
+        title: newTitle,
+      });
+
+      if (success) {
+        toast.success("Conversation renamed successfully");
+      } else {
+        toast.error("Failed to rename conversation");
+      }
+
+      return success;
+    },
+    [updateConversation]
+  );
 
   return (
     <TooltipProvider>
@@ -210,6 +223,7 @@ export default function ChatPage() {
             ref={scrollAreaRef}
             messages={messages}
             status={status}
+            isLoadingMessages={isLoadingMessages}
           />
 
           <ChatInput

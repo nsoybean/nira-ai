@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 
@@ -107,20 +108,29 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    console.log("ConversationsProvider mounted, loading conversations...");
     loadConversations();
-  }, []);
+  }, [loadConversations]);
+
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      conversations,
+      isLoadingConversations,
+      refreshConversations,
+      deleteConversation,
+      updateConversation,
+    }),
+    [
+      conversations,
+      isLoadingConversations,
+      refreshConversations,
+      deleteConversation,
+      updateConversation,
+    ]
+  );
 
   return (
-    <ConversationsContext.Provider
-      value={{
-        conversations,
-        isLoadingConversations,
-        refreshConversations,
-        deleteConversation,
-        updateConversation,
-      }}
-    >
+    <ConversationsContext.Provider value={contextValue}>
       {children}
     </ConversationsContext.Provider>
   );

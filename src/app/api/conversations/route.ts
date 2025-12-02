@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 /**
  * GET /api/conversations
  *
- * Lists all conversations, ordered by most recent first.
+ * Lists all conversations, ordered by most recent activity first.
  * Includes message count and last activity timestamp.
  *
  * Response:
@@ -21,7 +21,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET(req: Request) {
   try {
     const conversations = await prisma.conversation.findMany({
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { lastMessageAt: 'desc' },
       include: {
         _count: {
           select: { messages: true },
