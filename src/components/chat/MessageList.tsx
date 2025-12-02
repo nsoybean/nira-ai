@@ -3,6 +3,7 @@
 import { ChatState, ChatStatus, UIMessage } from "ai";
 import { Sparkles, Loader2 } from "lucide-react";
 import { forwardRef } from "react";
+import { Streamdown } from "streamdown";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -59,13 +60,20 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                           </div>
                         </div>
                         <div className="flex-1 pt-0.5">
-                          <p className="text-[15px] text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
+                          <div className="inline-block max-w-2xl">
                             {message.parts
                               .filter((part) => part.type === "text")
                               .map((part: any, i) => (
-                                <span key={i}>{part.text}</span>
+                                <Streamdown
+                                  key={i}
+                                  isAnimating={
+                                    isLoading && message.role === "assistant"
+                                  }
+                                >
+                                  {part.text}
+                                </Streamdown>
                               ))}
-                          </p>
+                          </div>
                         </div>
                       </div>
                     )}
