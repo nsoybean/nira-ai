@@ -54,30 +54,27 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
 
   const refreshConversations = useCallback(async () => {
     await loadConversations();
-  }, [loadConversations]);
+  }, []);
 
-  const deleteConversation = useCallback(
-    async (conversationId: string) => {
-      try {
-        const response = await fetch(`/api/conversations/${conversationId}`, {
-          method: "DELETE",
-        });
+  const deleteConversation = useCallback(async (conversationId: string) => {
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}`, {
+        method: "DELETE",
+      });
 
-        if (!response.ok) {
-          console.error("Failed to delete conversation");
-          return false;
-        }
-
-        // Refresh the conversation list after successful deletion
-        await loadConversations();
-        return true;
-      } catch (error) {
-        console.error("Error deleting conversation:", error);
+      if (!response.ok) {
+        console.error("Failed to delete conversation");
         return false;
       }
-    },
-    [loadConversations]
-  );
+
+      // Refresh the conversation list after successful deletion
+      await loadConversations();
+      return true;
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      return false;
+    }
+  }, []);
 
   const updateConversation = useCallback(
     async (conversationId: string, updates: Partial<Conversation>) => {
@@ -103,12 +100,12 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
         return false;
       }
     },
-    [loadConversations]
+    []
   );
 
   useEffect(() => {
     loadConversations();
-  }, [loadConversations]);
+  }, []);
 
   return (
     <ConversationsContext.Provider
