@@ -251,11 +251,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                         <ToolContent>
                                           <ToolInput input={part.input} />
                                           <ToolOutput
-                                            output={JSON.stringify(
-                                              part.output,
-                                              null,
-                                              2
-                                            )}
+                                            output={part.output}
                                             errorText={part.errorText}
                                           />
                                         </ToolContent>
