@@ -122,16 +122,24 @@ export default function ChatPage() {
     // Only run for existing conversations (not "new")
     if (!isNewChat && !pendingMessageProcessedRef.current) {
       const pendingMessage = sessionStorage.getItem("pendingMessage");
+      const pendingFilesStr = sessionStorage.getItem("pendingFiles");
 
       if (pendingMessage) {
         // Mark as processed
         pendingMessageProcessedRef.current = true;
 
-        // Clear it immediately to prevent double-sending
+        // Clear them immediately to prevent double-sending
         sessionStorage.removeItem("pendingMessage");
+        sessionStorage.removeItem("pendingFiles");
+
+        // Parse files if they exist
+        const pendingFiles = pendingFilesStr ? JSON.parse(pendingFilesStr) : [];
 
         // Send the message after the component has fully mounted
-        sendMessage({ text: pendingMessage }, { body: { conversationId } });
+        sendMessage(
+          { text: pendingMessage, files: pendingFiles },
+          { body: { conversationId } }
+        );
       }
     }
   }, [isNewChat, conversationId, sendMessage]);
@@ -169,8 +177,8 @@ export default function ChatPage() {
         return;
       }
 
-      // For now, we'll just handle text. Files can be passed through later
-      await submitChat(message.text, setInput);
+      // Pass both text and files to submitChat
+      await submitChat(message.text, message.files || [], setInput);
     },
     [status, submitChat, setInput]
   );
