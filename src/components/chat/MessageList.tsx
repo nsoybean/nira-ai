@@ -73,27 +73,44 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                         </div>
                         <div className="flex-1 pt-0.5">
                           <div className="inline-block max-w-2xl">
-                            {message.parts
+                            {/* Show loader in place of text when message is empty and loading */}
+                            {isLoading &&
+                            index === messages.length - 1 &&
+                            message.parts
                               .filter((part) => part.type === "text")
-                              .map((part: any, i) => (
-                                <Streamdown
-                                  key={i}
-                                  isAnimating={
-                                    isLoading && message.role === "assistant"
-                                  }
-                                >
-                                  {part.text}
-                                </Streamdown>
-                              ))}
-
-                            {/* loading */}
-                            {isLoading && index === messages.length - 1 && (
-                              <div className="flex mt-4">
+                              .every((part: any) => !part.text) ? (
+                              <div className="flex">
                                 <Loader
                                   size={24}
                                   className="animate-spin animation-duration-[1.3s]"
                                 />
                               </div>
+                            ) : (
+                              <>
+                                {message.parts
+                                  .filter((part) => part.type === "text")
+                                  .map((part: any, i) => (
+                                    <Streamdown
+                                      key={i}
+                                      isAnimating={
+                                        isLoading &&
+                                        message.role === "assistant"
+                                      }
+                                    >
+                                      {part.text}
+                                    </Streamdown>
+                                  ))}
+
+                                {/* Show loader below text once streaming has started */}
+                                {isLoading && index === messages.length - 1 && (
+                                  <div className="flex mt-4">
+                                    <Loader
+                                      size={24}
+                                      className="animate-spin animation-duration-[1.3s]"
+                                    />
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
