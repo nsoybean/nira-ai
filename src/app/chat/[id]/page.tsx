@@ -28,6 +28,7 @@ export default function ChatPage() {
 
   const {
     deleteConversation,
+    clearAllConversations,
     updateConversation,
     conversations,
     isLoadingConversations,
@@ -197,6 +198,20 @@ export default function ChatPage() {
     [deleteConversation, params.id, router]
   );
 
+  const handleClearAll = useCallback(async () => {
+    const success = await clearAllConversations();
+
+    if (success) {
+      toast.success("All conversations cleared successfully");
+      // Redirect to new chat after clearing all
+      router.push("/chat/new");
+    } else {
+      toast.error("Failed to clear conversations");
+    }
+
+    return success;
+  }, [clearAllConversations, router]);
+
   const handleRename = useCallback(
     async (conversationId: string, newTitle: string) => {
       const success = await updateConversation(conversationId, {
@@ -242,6 +257,7 @@ export default function ChatPage() {
           conversations={conversations}
           isLoadingConversations={isLoadingConversations}
           onDelete={handleDelete}
+          onClearAll={handleClearAll}
           onRename={handleRename}
         />
 
