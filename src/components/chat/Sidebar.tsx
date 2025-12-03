@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Kbd } from "@/components/ui/kbd";
 import {
   Tooltip,
   TooltipContent,
@@ -155,7 +156,10 @@ export const Sidebar = memo(function Sidebar({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              <p>Close sidebar</p>
+              <div className="flex items-center gap-2">
+                <span>Close sidebar</span>
+                <Kbd>⌘.</Kbd>
+              </div>
             </TooltipContent>
           </Tooltip>
         </div>
