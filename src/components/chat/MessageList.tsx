@@ -33,6 +33,13 @@ import {
   SourcesContent,
   SourcesTrigger,
 } from "../ai-elements/sources";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "../ai-elements/tool";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -228,6 +235,32 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                       </Message>
                                     );
 
+                                  case "tool-code_execution":
+                                    // Replace the raw JSON with Elements components
+                                    return (
+                                      <Tool
+                                        key={
+                                          part.toolCallId ||
+                                          `${message.id}-${msgIndex}`
+                                        }
+                                      >
+                                        <ToolHeader
+                                          type={part.type}
+                                          state={part.state}
+                                        />
+                                        <ToolContent>
+                                          <ToolInput input={part.input} />
+                                          <ToolOutput
+                                            output={JSON.stringify(
+                                              part.output,
+                                              null,
+                                              2
+                                            )}
+                                            errorText={part.errorText}
+                                          />
+                                        </ToolContent>
+                                      </Tool>
+                                    );
                                   default:
                                     return null;
                                 }

@@ -9,6 +9,7 @@ import {
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
+import { codeExecutionTool } from "@/lib/tools";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -117,6 +118,11 @@ export async function POST(req: Request) {
         anthropic: {
           reasoningSummary: "auto",
         },
+      },
+      tools: {
+        ...(modelConfig.provider === "anthropic" && {
+          code_execution: codeExecutionTool,
+        }),
       },
       messages: modelMessages,
       system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
