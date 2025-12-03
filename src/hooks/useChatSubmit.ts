@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useConversations } from "@/contexts/ConversationsContext";
+import { FileUIPart } from "ai";
 
 interface UseChatSubmitProps {
   isNewChat: boolean;
   conversationId: string | null;
-  sendMessage: (message: { text: string }, options?: any) => void;
+  sendMessage: (message: { text: string; files?: FileUIPart[] }, options?: any) => void;
   selectedModel: string;
 }
 
@@ -24,9 +25,10 @@ export function useChatSubmit({
 
   const handleSubmit = async (
     input: string,
+    files: FileUIPart[],
     setInput: (value: string) => void
   ) => {
-    if (!input.trim() || isCreatingConversation) return;
+    if ((!input.trim() && files.length === 0) || isCreatingConversation) return;
 
     // If this is a new chat, create the conversation and navigate
     if (isNewChat) {
@@ -47,8 +49,11 @@ export function useChatSubmit({
         const { id: newConversationId } = await createResponse.json();
 
         if (newConversationId) {
-          // Store the pending message in sessionStorage so the new page can send it
+          // Store the pending message and files in sessionStorage so the new page can send it
           sessionStorage.setItem("pendingMessage", input);
+          if (files.length > 0) {
+            sessionStorage.setItem("pendingFiles", JSON.stringify(files));
+          }
 
           // Clear input immediately for better UX
           setInput("");
@@ -72,7 +77,7 @@ export function useChatSubmit({
 
     // For existing conversations, use normal flow and pass the selected model
     sendMessage(
-      { text: input },
+      { text: input, files },
       { body: { conversationId: conversationId, modelId: selectedModel } }
     );
     setInput("");
