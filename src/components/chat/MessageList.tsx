@@ -47,7 +47,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
             ) : (
               <div className="space-y-6">
                 {/* messages */}
-                {messages.map((message) => (
+                {messages.map((message, index) => (
                   <div key={message.id}>
                     {message.role === "user" ? (
                       // User message - with bubble
@@ -84,19 +84,19 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                   {part.text}
                                 </Streamdown>
                               ))}
+
+                            {/* loading */}
+                            {isLoading && index === messages.length - 1 && (
+                              <div className="flex mt-4">
+                                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
                     )}
                   </div>
                 ))}
-
-                {/* loading */}
-                {isLoading && (
-                  <div className="flex mt-2 ml-8">
-                    <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                  </div>
-                )}
               </div>
             )}
           </div>

@@ -10,7 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AVAILABLE_MODELS } from "@/lib/models";
-import { Sparkles, Zap, Brain } from "lucide-react";
+import { AnthropicIcon } from "@/components/icons/AnthropicIcon";
+import { OpenAIIcon } from "@/components/icons/OpenAIIcon";
 
 interface ModelSelectorInlineProps {
   selectedModel: string;
@@ -18,15 +19,15 @@ interface ModelSelectorInlineProps {
   disabled?: boolean;
 }
 
-// Icon mapping for different model characteristics
-const getModelIcon = (modelId: string) => {
-  if (modelId.includes("3-7") || modelId.includes("o1")) {
-    return <Brain className="h-3.5 w-3.5" />;
+// Icon mapping for different model providers
+const getModelIcon = (provider: string) => {
+  if (provider === "anthropic") {
+    return <AnthropicIcon className="h-3.5 w-3.5" />;
   }
-  if (modelId.includes("haiku") || modelId.includes("mini")) {
-    return <Zap className="h-3.5 w-3.5" />;
+  if (provider === "openai") {
+    return <OpenAIIcon className="h-3.5 w-3.5" />;
   }
-  return <Sparkles className="h-3.5 w-3.5" />;
+  return null;
 };
 
 export function ModelSelectorInline({
@@ -52,7 +53,7 @@ export function ModelSelectorInline({
     >
       <SelectTrigger className="h-8 w-auto border-0 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs gap-1.5 px-2 focus:ring-0 focus:ring-offset-0">
         <div className="flex items-center gap-1.5">
-          {/* {selectedModelConfig && getModelIcon(selectedModelConfig.id)} */}
+          {selectedModelConfig && getModelIcon(selectedModelConfig.provider)}
           <span className="font-medium">
             {selectedModelConfig?.name || "Select Model"}
           </span>
@@ -66,7 +67,7 @@ export function ModelSelectorInline({
           {anthropicModels.map((model) => (
             <SelectItem key={model.id} value={model.id} className="text-xs">
               <div className="flex items-center gap-2">
-                {/* {getModelIcon(model.id)} */}
+                {getModelIcon(model.provider)}
                 <div className="flex flex-col">
                   <span className="font-medium">{model.name}</span>
                   <span className="text-[10px] text-muted-foreground">
@@ -85,7 +86,7 @@ export function ModelSelectorInline({
           {openaiModels.map((model) => (
             <SelectItem key={model.id} value={model.id} className="text-xs">
               <div className="flex items-center gap-2">
-                {/* {getModelIcon(model.id)} */}
+                {getModelIcon(model.provider)}
                 <div className="flex flex-col">
                   <span className="font-medium">{model.name}</span>
                   <span className="text-[10px] text-muted-foreground">

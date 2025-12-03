@@ -14,8 +14,16 @@ export interface ModelConfig {
   outputCostPer1k: number; // USD per 1000 tokens
 }
 
-export const AVAILABLE_MODELS: ModelConfig[] = [
+export const AVAILABLE_MODELS = [
   // Anthropic Models
+  {
+    id: "claude-sonnet-4-5",
+    name: "Claude 4.5 Sonnet",
+    provider: "anthropic",
+    description: "Latest and most intelligent model",
+    inputCostPer1k: 0.003,
+    outputCostPer1k: 0.015,
+  },
   {
     id: "claude-3-7-sonnet-20250219",
     name: "Claude 3.7 Sonnet",
@@ -25,16 +33,8 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
     outputCostPer1k: 0.015,
   },
   {
-    id: "claude-3-5-sonnet-20241022",
-    name: "Claude 3.5 Sonnet",
-    provider: "anthropic",
-    description: "Balanced intelligence and speed",
-    inputCostPer1k: 0.003,
-    outputCostPer1k: 0.015,
-  },
-  {
-    id: "claude-3-5-haiku-20241022",
-    name: "Claude 3.5 Haiku",
+    id: "claude-haiku-4-5",
+    name: "Claude 4.5 Haiku",
     provider: "anthropic",
     description: "Fastest model, great for simple tasks",
     inputCostPer1k: 0.001,
@@ -42,40 +42,42 @@ export const AVAILABLE_MODELS: ModelConfig[] = [
   },
   // OpenAI Models
   {
-    id: "gpt-4o",
-    name: "GPT-4o",
+    id: "gpt-5.1",
+    name: "GPT-5.1",
     provider: "openai",
-    description: "OpenAI's most advanced multimodal model",
+    description: "Best model for coding and agentic tasks across industries",
+    inputCostPer1k: 0.00125,
+    outputCostPer1k: 0.01,
+  },
+  {
+    id: "gpt-5-mini",
+    name: "GPT-5 Mini",
+    provider: "openai",
+    description: "A faster, cheaper version of GPT-5 for well-defined tasks",
+    inputCostPer1k: 0.00025,
+    outputCostPer1k: 0.002,
+  },
+  {
+    id: "gpt-5-nano",
+    name: "GPT-5 Nano",
+    provider: "openai",
+    description:
+      "The fastest, cheapest version of GPT-5—great for summarization and classification tasks",
     inputCostPer1k: 0.0025,
     outputCostPer1k: 0.01,
   },
   {
-    id: "gpt-4o-mini",
-    name: "GPT-4o Mini",
+    id: "gpt-4o",
+    name: "GPT-4o",
     provider: "openai",
-    description: "Fast and affordable OpenAI model",
-    inputCostPer1k: 0.00015,
-    outputCostPer1k: 0.0006,
+    description: "Most advanced multimodal model",
+    inputCostPer1k: 0.0025,
+    outputCostPer1k: 0.01,
   },
-  {
-    id: "o1",
-    name: "OpenAI o1",
-    provider: "openai",
-    description: "Advanced reasoning model",
-    inputCostPer1k: 0.015,
-    outputCostPer1k: 0.06,
-  },
-  {
-    id: "o1-mini",
-    name: "OpenAI o1-mini",
-    provider: "openai",
-    description: "Faster reasoning model",
-    inputCostPer1k: 0.003,
-    outputCostPer1k: 0.012,
-  },
-];
+] satisfies ModelConfig[];
 
-export const DEFAULT_MODEL_ID = "claude-3-7-sonnet-20250219";
+export const DEFAULT_MODEL_ID: (typeof AVAILABLE_MODELS)[0]["id"] =
+  "claude-haiku-4-5";
 
 /**
  * Get model configuration by ID
