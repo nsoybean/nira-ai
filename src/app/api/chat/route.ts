@@ -89,6 +89,16 @@ export async function POST(req: Request) {
       message,
     ];
 
+    // Save user message immediately to ensure correct ordering
+    await prisma.message.create({
+      data: {
+        id: message.id,
+        conversationId,
+        role: message.role,
+        parts: message.parts as any,
+      },
+    });
+
     // Convert UIMessage[] to ModelMessage[] format for the AI model
     // useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
     const modelMessages = convertToModelMessages(allMessages);
@@ -185,10 +195,9 @@ export async function POST(req: Request) {
       }),
       async onFinish({ messages }) {
         try {
-          // Save all messages to database in UIMessage format
-          // allMessages includes both user messages and assistant response
+          // Save only assistant messages (user message already saved above)
           await prisma.message.createMany({
-            data: [message, ...messages].map((msg) => ({
+            data: messages.map((msg) => ({
               id: msg.id,
               conversationId,
               role: msg.role,
