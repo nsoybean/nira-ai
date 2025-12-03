@@ -56,11 +56,14 @@ export async function POST(req: Request) {
     }
 
     // Determine which model to use: provided modelId, conversation's model, or default
-    const selectedModelId = modelId || conversation.modelId || "claude-3-7-sonnet-20250219";
+    const selectedModelId =
+      modelId || conversation.modelId || "claude-3-7-sonnet-20250219";
     const modelConfig = getModelById(selectedModelId);
 
     if (!modelConfig) {
-      return new Response(`Invalid model ID: ${selectedModelId}`, { status: 400 });
+      return new Response(`Invalid model ID: ${selectedModelId}`, {
+        status: 400,
+      });
     }
 
     // Fetch all existing messages for conversation
@@ -96,7 +99,9 @@ export async function POST(req: Request) {
     } else if (modelConfig.provider === "openai") {
       languageModel = openai(selectedModelId);
     } else {
-      return new Response(`Unsupported provider: ${modelConfig.provider}`, { status: 400 });
+      return new Response(`Unsupported provider: ${modelConfig.provider}`, {
+        status: 400,
+      });
     }
 
     // Track request start time for metrics
@@ -113,7 +118,11 @@ export async function POST(req: Request) {
         // Calculate token costs using model-specific pricing
         const inputTokens = event.usage.inputTokens || 0;
         const outputTokens = event.usage.outputTokens || 0;
-        const estimatedCost = calculateCost(selectedModelId, inputTokens, outputTokens);
+        const estimatedCost = calculateCost(
+          selectedModelId,
+          inputTokens,
+          outputTokens
+        );
         const responseTimeMs = Date.now() - startTime;
 
         try {
