@@ -218,6 +218,19 @@ export default function ChatPage() {
     [updateConversation, params.id]
   );
 
+  // Keyboard shortcut to toggle sidebar (Cmd/Ctrl + .)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "." && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        setSidebarOpen((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <TooltipProvider>
       <div className="flex h-screen bg-white dark:bg-gray-950">
