@@ -113,6 +113,7 @@ export function ChatInput({
               placeholder="Ask me anything..."
               onChange={(e) => onInputChange(e.target.value)}
               value={input}
+              autoFocus
             />
           </PromptInputBody>
           <PromptInputFooter className="flex items-center justify-between">

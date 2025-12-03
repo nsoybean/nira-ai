@@ -54,7 +54,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               <Conversation className="h-full">
                 <ConversationContent>
                   {/* empty messages, tmp commented out, see if ai element handle this out of box */}
-                  {/* {messages.length === 0 && (
+                  {messages.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
                       <Sparkles className="h-12 w-12 text-gray-300 dark:text-gray-700" />
                       <div>
@@ -66,20 +66,22 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                         </p>
                       </div>
                     </div>
-                  )} */}
+                  )}
 
                   {/* isloading, tmp commented out, see if ai element handle this out of box */}
-                  {/* <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
-                    <Loader2 className="h-12 w-12 text-gray-300 dark:text-gray-700 animate-spin" />
-                    <div>
-                      <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
-                        Loading messages...
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Please wait
-                      </p>
+                  {isLoadingMessages && !messages.length && (
+                    <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
+                      <Loader2 className="h-12 w-12 text-gray-300 dark:text-gray-700 animate-spin" />
+                      <div>
+                        <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
+                          Loading messages...
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          Please wait
+                        </p>
+                      </div>
                     </div>
-                  </div> */}
+                  )}
 
                   {/* messages */}
                   {messages.map((message, msgIndex) => (
@@ -178,7 +180,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                         part.text.trim() !== "" && (
                                           <div className="flex mt-4">
                                             <Loader
-                                              size={20}
+                                              size={16}
                                               className="animate-spin animation-duration-[1.3s]"
                                             />
                                           </div>
