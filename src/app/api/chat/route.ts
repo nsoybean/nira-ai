@@ -10,8 +10,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+// Allow streaming responses up to X seconds
+export const maxDuration = 60;
 
 /**
  * POST /api/chat

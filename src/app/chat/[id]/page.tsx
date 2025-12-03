@@ -146,7 +146,7 @@ export default function ChatPage() {
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 30; // Xpx threshold
 
       // Update auto-scroll preference based on scroll position
       shouldAutoScrollRef.current = isNearBottom;
