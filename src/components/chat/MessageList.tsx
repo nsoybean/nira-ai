@@ -16,6 +16,7 @@ import {
   MessageResponse,
   MessageActions,
   MessageAction,
+  MessageAttachment,
 } from "../ai-elements/message";
 import {
   Reasoning,
@@ -93,18 +94,39 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                   {/* messages */}
                   {messages.map((message, msgIndex) => (
                     <div key={message.id}>
-                      {/* User message - with bubble */}
+                      {/* User message - with attachments above */}
                       {message.role === "user" && (
-                        <div className="flex justify-end mb-6">
-                          <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2.5 max-w-[75%]">
-                            <p className="text-[15px] text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
+                        <div className="flex flex-col items-end mb-6">
+                          {/* Render file attachments above */}
+                          {message.parts.some(
+                            (part) => part.type === "file"
+                          ) && (
+                            <div className="flex flex-wrap gap-2 mb-2 max-w-[75%]">
                               {message.parts
-                                .filter((part) => part.type === "text")
+                                .filter((part) => part.type === "file")
                                 .map((part: any, i) => (
-                                  <span key={i}>{part.text}</span>
+                                  <MessageAttachment
+                                    key={`${message.id}-file-${i}`}
+                                    data={part}
+                                  />
                                 ))}
-                            </p>
-                          </div>
+                            </div>
+                          )}
+
+                          {/* Render text content below */}
+                          {message.parts.some(
+                            (part) => part.type === "text" && part.text
+                          ) && (
+                            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2.5 max-w-[75%]">
+                              <p className="text-[15px] text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
+                                {message.parts
+                                  .filter((part) => part.type === "text")
+                                  .map((part: any, i) => (
+                                    <span key={i}>{part.text}</span>
+                                  ))}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       )}
 
