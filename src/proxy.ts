@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Middleware to validate beta authentication token
+ * Proxy to validate beta authentication token
  * Protects API routes by checking for X-Beta-Token header
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for:
+  // Skip proxy for:
   // 1. Beta verification endpoint (needs to accept requests without token)
   // 2. Static files and Next.js internal routes
   // 3. Public assets
@@ -15,7 +15,9 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/api/auth/beta-verify") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
-    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|eot)$/)
+    pathname.match(
+      /\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|eot)$/
+    )
   ) {
     return NextResponse.next();
   }
