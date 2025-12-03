@@ -9,9 +9,10 @@ import {
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
+import { codeExecutionTool } from "@/lib/tools";
 
-// Allow streaming responses up to 30 seconds
-export const maxDuration = 30;
+// Allow streaming responses up to X seconds
+export const maxDuration = 60;
 
 /**
  * POST /api/chat
@@ -110,6 +111,19 @@ export async function POST(req: Request) {
     // Stream the chat completion
     const result = streamText({
       model: languageModel,
+      providerOptions: {
+        openai: {
+          reasoningSummary: "auto",
+        },
+        anthropic: {
+          reasoningSummary: "auto",
+        },
+      },
+      tools: {
+        ...(modelConfig.provider === "anthropic" && {
+          code_execution: codeExecutionTool,
+        }),
+      },
       messages: modelMessages,
       system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
       temperature: 0.7,
@@ -164,6 +178,7 @@ export async function POST(req: Request) {
     // Return stream with message persistence
     const response = result.toUIMessageStreamResponse({
       sendReasoning: true,
+      sendSources: true,
       generateMessageId: createIdGenerator({
         prefix: "msg",
         size: 16,
