@@ -54,7 +54,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               <Conversation className="h-full">
                 <ConversationContent>
                   {/* empty messages, tmp commented out, see if ai element handle this out of box */}
-                  {messages.length === 0 && (
+                  {messages.length === 0 && !isLoadingMessages && (
                     <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
                       <Sparkles className="h-12 w-12 text-gray-300 dark:text-gray-700" />
                       <div>
@@ -103,39 +103,17 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
                       {/* assistant message */}
                       {message.role === "assistant" && (
-                        <div className="flex gap-3 mb-6">
-                          {/* left - icon */}
-                          <div className="shrink-0 mt-0.5">
-                            <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
-                              <Sparkles className="h-4 w-4 text-white" />
-                            </div>
-                          </div>
-
-                          {/* right - content */}
-                          <div className="flex-1 flex-col w-full">
-                            {/* Show loader beside icon before streaming starts */}
-                            {isLoading &&
-                              msgIndex === messages.length - 1 &&
-                              message.parts.every(
-                                (part) =>
-                                  part.type !== "text" ||
-                                  !part.text ||
-                                  part.text.trim() === ""
-                              ) && (
-                                <div className="flex items-center mt-1">
-                                  <Loader
-                                    size={24}
-                                    className="animate-spin animation-duration-[1.3s]"
-                                  />
-                                </div>
-                              )}
-
-                            {message.parts.map((part, partIndex) => {
-                              switch (part.type) {
-                                case "reasoning":
+                        <div className="flex flex-col mb-6">
+                          {/* reasoning at the top, above everything */}
+                          {message.parts.some(
+                            (part) => part.type === "reasoning" && part.text
+                          ) && (
+                            <div className="mb-3">
+                              {message.parts.map((part, partIndex) => {
+                                if (part.type === "reasoning" && part.text) {
                                   return (
                                     <Reasoning
-                                      key={`${message.id}-${partIndex}`}
+                                      key={`${message.id}-reasoning-${partIndex}`}
                                       className="w-full"
                                       isStreaming={
                                         status === "streaming" &&
@@ -150,71 +128,111 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                       </ReasoningContent>
                                     </Reasoning>
                                   );
+                                }
+                                return null;
+                              })}
+                            </div>
+                          )}
 
-                                case "text":
-                                  // Skip rendering text part if it's empty and we're loading
-                                  if (
-                                    (!part.text || part.text.trim() === "") &&
-                                    isLoading &&
-                                    msgIndex === messages.length - 1
-                                  ) {
+                          {/* main message content with icon */}
+                          <div className="flex gap-3">
+                            {/* left - icon */}
+                            <div className="shrink-0 mt-0.5">
+                              <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
+                                <Sparkles className="h-4 w-4 text-white" />
+                              </div>
+                            </div>
+
+                            {/* right - content */}
+                            <div className="flex-1 flex-col w-full">
+                              {/* Show loader beside icon before streaming starts */}
+                              {isLoading &&
+                                msgIndex === messages.length - 1 &&
+                                message.parts.every(
+                                  (part) =>
+                                    part.type !== "text" ||
+                                    !part.text ||
+                                    part.text.trim() === ""
+                                ) && (
+                                  <div className="flex items-center mt-1">
+                                    <Loader
+                                      size={24}
+                                      className="animate-spin animation-duration-[1.3s]"
+                                    />
+                                  </div>
+                                )}
+
+                              {message.parts.map((part, partIndex) => {
+                                switch (part.type) {
+                                  case "reasoning":
+                                    // Skip rendering here - reasoning is rendered above
                                     return null;
-                                  }
 
-                                  return (
-                                    <Message
-                                      className="max-w-[90%]"
-                                      key={`${message.id}-${partIndex}`}
-                                      from={message.role}
-                                    >
-                                      <MessageContent className="text-md">
-                                        <MessageResponse>
-                                          {part.text}
-                                        </MessageResponse>
-                                      </MessageContent>
+                                  case "text":
+                                    // Skip rendering text part if it's empty and we're loading
+                                    if (
+                                      (!part.text || part.text.trim() === "") &&
+                                      isLoading &&
+                                      msgIndex === messages.length - 1
+                                    ) {
+                                      return null;
+                                    }
 
-                                      {/* Show loader below text during streaming */}
-                                      {isLoading &&
-                                        msgIndex === messages.length - 1 &&
-                                        part.text &&
-                                        part.text.trim() !== "" && (
-                                          <div className="flex mt-4">
-                                            <Loader
-                                              size={16}
-                                              className="animate-spin animation-duration-[1.3s]"
-                                            />
-                                          </div>
-                                        )}
+                                    return (
+                                      <Message
+                                        className="max-w-[90%]"
+                                        key={`${message.id}-${partIndex}`}
+                                        from={message.role}
+                                      >
+                                        <MessageContent className="text-md">
+                                          <MessageResponse>
+                                            {part.text}
+                                          </MessageResponse>
+                                        </MessageContent>
 
-                                      {/* show message action once streams complete */}
-                                      {!isLoading && (
-                                        <MessageActions>
-                                          {/* tmp comment out regenerate */}
-                                          {/* <MessageAction
+                                        {/* Show loader below text during streaming */}
+                                        {isLoading &&
+                                          msgIndex === messages.length - 1 &&
+                                          part.text &&
+                                          part.text.trim() !== "" && (
+                                            <div className="flex mt-4">
+                                              <Loader
+                                                size={16}
+                                                className="animate-spin animation-duration-[1.3s]"
+                                              />
+                                            </div>
+                                          )}
+
+                                        {/* show message action once streams complete */}
+                                        {!isLoading && (
+                                          <MessageActions>
+                                            {/* tmp comment out regenerate */}
+                                            {/* <MessageAction
                                           onClick={() => {}}
                                           label="Retry"
                                         >
                                           <RefreshCcwIcon className="size-3" />
                                         </MessageAction> */}
-                                          <MessageAction
-                                            onClick={() =>
-                                              navigator.clipboard.writeText(
-                                                part.text
-                                              )
-                                            }
-                                            label="Copy"
-                                          >
-                                            <CopyIcon className="size-3" />
-                                          </MessageAction>
-                                        </MessageActions>
-                                      )}
-                                    </Message>
-                                  );
+                                            <MessageAction
+                                              onClick={() =>
+                                                navigator.clipboard.writeText(
+                                                  part.text
+                                                )
+                                              }
+                                              label="Copy"
+                                            >
+                                              <CopyIcon className="size-3" />
+                                            </MessageAction>
+                                          </MessageActions>
+                                        )}
+                                      </Message>
+                                    );
 
-                                default:
-                                  return null;
-                              }
-                            })}
+                                  default:
+                                    return null;
+                                }
+                              })}
+                            </div>
                           </div>
                         </div>
                       )}

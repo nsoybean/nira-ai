@@ -110,6 +110,14 @@ export async function POST(req: Request) {
     // Stream the chat completion
     const result = streamText({
       model: languageModel,
+      providerOptions: {
+        openai: {
+          reasoningSummary: "auto",
+        },
+        anthropic: {
+          reasoningSummary: "auto",
+        },
+      },
       messages: modelMessages,
       system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
       temperature: 0.7,
