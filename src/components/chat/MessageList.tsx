@@ -1,10 +1,11 @@
 "use client";
 
 import { ChatState, ChatStatus, UIMessage } from "ai";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, Loader } from "lucide-react";
 import { forwardRef } from "react";
 import { Streamdown } from "streamdown";
 import { Spinner } from "../ui/spinner";
+import SpinnerBlob from "../SpinnerBlob";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -88,7 +89,10 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                             {/* loading */}
                             {isLoading && index === messages.length - 1 && (
                               <div className="flex mt-4">
-                                <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                                <Loader
+                                  size={24}
+                                  className="animate-spin animation-duration-[1.3s]"
+                                />
                               </div>
                             )}
                           </div>
