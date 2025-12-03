@@ -164,6 +164,7 @@ export async function POST(req: Request) {
     // Return stream with message persistence
     const response = result.toUIMessageStreamResponse({
       sendReasoning: true,
+      sendSources: true,
       generateMessageId: createIdGenerator({
         prefix: "msg",
         size: 16,

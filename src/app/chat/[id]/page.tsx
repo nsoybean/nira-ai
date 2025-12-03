@@ -164,15 +164,15 @@ export default function ChatPage() {
   }, [messages]);
 
   const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
+    async (message: { text: string; files?: any[] }) => {
       if (status === "streaming" || status === "submitted") {
         return;
       }
 
-      await submitChat(input, setInput);
+      // For now, we'll just handle text. Files can be passed through later
+      await submitChat(message.text, setInput);
     },
-    [status, submitChat, input]
+    [status, submitChat, setInput]
   );
 
   const handleNewChat = useCallback(() => {
