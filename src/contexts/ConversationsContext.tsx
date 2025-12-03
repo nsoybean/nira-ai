@@ -20,6 +20,7 @@ interface ConversationsContextType {
   isLoadingConversations: boolean;
   refreshConversations: () => Promise<void>;
   deleteConversation: (conversationId: string) => Promise<boolean>;
+  clearAllConversations: () => Promise<boolean>;
   updateConversation: (
     conversationId: string,
     updates: Partial<Conversation>
@@ -80,6 +81,26 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     [loadConversations]
   );
 
+  const clearAllConversations = useCallback(async () => {
+    try {
+      const response = await fetch("/api/conversations", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        console.error("Failed to clear all conversations");
+        return false;
+      }
+
+      // Refresh the conversation list after successful deletion
+      await loadConversations();
+      return true;
+    } catch (error) {
+      console.error("Error clearing all conversations:", error);
+      return false;
+    }
+  }, [loadConversations]);
+
   const updateConversation = useCallback(
     async (conversationId: string, updates: Partial<Conversation>) => {
       try {
@@ -118,6 +139,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       isLoadingConversations,
       refreshConversations,
       deleteConversation,
+      clearAllConversations,
       updateConversation,
     }),
     [
@@ -125,6 +147,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       isLoadingConversations,
       refreshConversations,
       deleteConversation,
+      clearAllConversations,
       updateConversation,
     ]
   );

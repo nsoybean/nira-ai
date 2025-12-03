@@ -33,6 +33,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState, memo } from "react";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
+import { ClearAllChatsDialog } from "./ClearAllChatsDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
 import { BetaAuthDialog } from "@/components/BetaAuthDialog";
 import { useBetaAuth } from "@/contexts/BetaAuthContext";
@@ -51,6 +52,7 @@ interface SidebarProps {
   conversations: Conversation[];
   isLoadingConversations: boolean;
   onDelete?: (conversationId: string) => Promise<boolean>;
+  onClearAll?: () => Promise<boolean>;
   onRename?: (conversationId: string, newTitle: string) => Promise<boolean>;
 }
 
@@ -62,10 +64,12 @@ export const Sidebar = memo(function Sidebar({
   conversations,
   isLoadingConversations,
   onDelete,
+  onClearAll,
   onRename,
 }: SidebarProps) {
   // state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [betaDialogOpen, setBetaDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<
@@ -74,6 +78,7 @@ export const Sidebar = memo(function Sidebar({
   const [conversationToRename, setConversationToRename] =
     useState<Conversation | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
 
   // hook
@@ -96,6 +101,20 @@ export const Sidebar = memo(function Sidebar({
     setIsDeleting(false);
     setDeleteDialogOpen(false);
     setConversationToDelete(null);
+  };
+
+  const handleClearAllClick = () => {
+    setClearAllDialogOpen(true);
+  };
+
+  const handleConfirmClearAll = async () => {
+    if (!onClearAll) return;
+
+    setIsClearing(true);
+    await onClearAll();
+
+    setIsClearing(false);
+    setClearAllDialogOpen(false);
   };
 
   const handleRenameClick = (
@@ -287,8 +306,8 @@ export const Sidebar = memo(function Sidebar({
         <Separator />
 
         {/* User Profile */}
-        <Tooltip>
-          <TooltipTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-linear-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
@@ -304,11 +323,20 @@ export const Sidebar = memo(function Sidebar({
                 </p>
               </div>
             </div>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            <p>Account settings</p>
-          </TooltipContent>
-        </Tooltip>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-56 dark:bg-gray-900 dark:border-gray-800"
+          >
+            <DropdownMenuItem
+              onClick={handleClearAllClick}
+              className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/20"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear all chats
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Delete Confirmation Dialog */}
@@ -317,6 +345,14 @@ export const Sidebar = memo(function Sidebar({
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+      />
+
+      {/* Clear All Chats Confirmation Dialog */}
+      <ClearAllChatsDialog
+        open={clearAllDialogOpen}
+        onOpenChange={setClearAllDialogOpen}
+        onConfirm={handleConfirmClearAll}
+        isClearing={isClearing}
       />
 
       {/* Rename Confirmation Dialog */}

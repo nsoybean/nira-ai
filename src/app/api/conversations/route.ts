@@ -48,3 +48,39 @@ export async function GET(req: Request) {
     );
   }
 }
+
+/**
+ * DELETE /api/conversations
+ *
+ * Deletes all conversations and their associated messages.
+ * This action cannot be undone.
+ *
+ * Response:
+ * {
+ *   "success": true,
+ *   "message": "All conversations deleted successfully",
+ *   "deletedCount": 5
+ * }
+ */
+export async function DELETE(req: Request) {
+  try {
+    // Count conversations before deletion
+    const count = await prisma.conversation.count();
+
+    // Delete all conversations (messages will be cascade deleted)
+    await prisma.conversation.deleteMany({});
+
+    return NextResponse.json({
+      success: true,
+      message: 'All conversations deleted successfully',
+      deletedCount: count,
+    });
+  } catch (error) {
+    console.error('[Conversations API] Error deleting all conversations:', error);
+
+    return NextResponse.json(
+      { error: 'Failed to delete conversations' },
+      { status: 500 }
+    );
+  }
+}
