@@ -63,7 +63,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
       }, 2000);
     };
 
-    // Helper to group consecutive text parts together
+    // Helper to group consecutive text and source-url parts together
     function groupMessageParts(parts: UIMessage["parts"]) {
       const groups: Array<{
         type: "reasoning" | "text" | "source-url" | "other";
@@ -71,22 +71,38 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
       }> = [];
 
       let currentTextGroup: typeof parts = [];
+      let currentSourceGroup: typeof parts = [];
 
       parts.forEach((part) => {
         if (part.type === "text" && part.text) {
+          // Flush accumulated source parts
+          if (currentSourceGroup.length > 0) {
+            groups.push({ type: "source-url", parts: currentSourceGroup });
+            currentSourceGroup = [];
+          }
           currentTextGroup.push(part);
+        } else if (part.type === "source-url") {
+          // Flush accumulated text parts
+          if (currentTextGroup.length > 0) {
+            groups.push({ type: "text", parts: currentTextGroup });
+            currentTextGroup = [];
+          }
+          currentSourceGroup.push(part);
         } else {
           // Flush accumulated text parts
           if (currentTextGroup.length > 0) {
             groups.push({ type: "text", parts: currentTextGroup });
             currentTextGroup = [];
           }
+          // Flush accumulated source parts
+          if (currentSourceGroup.length > 0) {
+            groups.push({ type: "source-url", parts: currentSourceGroup });
+            currentSourceGroup = [];
+          }
 
-          // Add non-text part as its own group
+          // Add non-text/non-source part as its own group
           if (part.type === "reasoning" && part.text) {
             groups.push({ type: "reasoning", parts: [part] });
-          } else if (part.type === "source-url") {
-            groups.push({ type: "source-url", parts: [part] });
           } else {
             groups.push({ type: "other", parts: [part] });
           }
@@ -96,6 +112,10 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
       // Flush any remaining text parts
       if (currentTextGroup.length > 0) {
         groups.push({ type: "text", parts: currentTextGroup });
+      }
+      // Flush any remaining source parts
+      if (currentSourceGroup.length > 0) {
+        groups.push({ type: "source-url", parts: currentSourceGroup });
       }
 
       return groups;
@@ -164,6 +184,23 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                       )}
                   </Message>
                 </div>
+              );
+            }
+
+            if (group.type === "source-url") {
+              return (
+                <Sources key={`${message.id}-sources-${groupIndex}`}>
+                  <SourcesTrigger count={group.parts.length} />
+                  <SourcesContent>
+                    {group.parts.map((part: any, partIndex) => (
+                      <Source
+                        key={`${message.id}-source-${groupIndex}-${partIndex}`}
+                        href={part.url}
+                        title={part.title}
+                      />
+                    ))}
+                  </SourcesContent>
+                </Sources>
               );
             }
 
