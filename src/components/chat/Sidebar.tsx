@@ -222,7 +222,7 @@ export const Sidebar = memo(function Sidebar({
                     : "text-gray-600 dark:text-gray-400"
                 }`}
               >
-                <span className="truncate flex-1">{conv.title}</span>
+                <span className="truncate flex-1 min-w-0">{conv.title}</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
