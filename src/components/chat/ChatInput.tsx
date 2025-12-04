@@ -170,10 +170,6 @@ export function ChatInput({
             </PromptInputSubmit>
           </PromptInputFooter>
         </PromptInput>
-        {/* Footer Text */}
-        <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-1">
-          Nira can make mistakes. Check important info.
-        </p>
       </div>
     </div>
   );
