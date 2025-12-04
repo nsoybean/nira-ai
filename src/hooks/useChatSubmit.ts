@@ -62,10 +62,6 @@ export function useChatSubmit({
           if (files.length > 0) {
             sessionStorage.setItem("pendingFiles", JSON.stringify(files));
           }
-          sessionStorage.setItem(
-            "pendingUseWebsearch",
-            JSON.stringify(useWebsearch)
-          );
 
           // Clear input immediately for better UX
           setInput("");
