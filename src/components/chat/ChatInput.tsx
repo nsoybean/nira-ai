@@ -23,6 +23,7 @@ import {
 } from "../ai-elements/prompt-input";
 import { useConversations } from "@/contexts/ConversationsContext";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface ChatInputProps {
   input: string;
@@ -67,6 +68,11 @@ export function ChatInput({
   const { mutate: updateWebSearch } = useMutation({
     mutationFn: async (webSearch: boolean) => {
       return updateConversation(conversationId, { webSearch });
+    },
+    onError: (error) => {
+      toast.error(`Failed to update web search setting: ${error}`);
+      // reset
+      setUseWebSearch((prev) => !prev);
     },
   });
 
