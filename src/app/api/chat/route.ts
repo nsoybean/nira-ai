@@ -195,7 +195,6 @@ export async function POST(req: Request) {
         size: 16,
       }),
       async onFinish({ messages }) {
-        console.log("🚀 ~ POST ~ messages:", messages);
         try {
           // Save only assistant messages (user message already saved above)
           await prisma.message.createMany({
