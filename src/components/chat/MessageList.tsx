@@ -7,8 +7,9 @@ import {
   Loader,
   CopyIcon,
   RefreshCcwIcon,
+  Check,
 } from "lucide-react";
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
 import { Streamdown } from "streamdown";
 import {
   Message,
@@ -51,6 +52,15 @@ interface MessageListProps {
 export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
   ({ messages, status, isLoadingMessages = false }, ref) => {
     const isLoading = status === "submitted" || status === "streaming";
+    const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+
+    const handleCopy = (text: string, messageId: string) => {
+      navigator.clipboard.writeText(text);
+      setCopiedMessageId(messageId);
+      setTimeout(() => {
+        setCopiedMessageId(null);
+      }, 2000);
+    };
 
     return (
       <div className="flex flex-col overflow-hidden size-full h-screen">
@@ -240,13 +250,24 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                         </MessageAction> */}
                                           <MessageAction
                                             onClick={() =>
-                                              navigator.clipboard.writeText(
-                                                part.text
+                                              handleCopy(
+                                                part.text,
+                                                `${message.id}-${partIndex}`
                                               )
                                             }
-                                            label="Copy"
+                                            label={
+                                              copiedMessageId ===
+                                              `${message.id}-${partIndex}`
+                                                ? "Copied"
+                                                : "Copy"
+                                            }
                                           >
-                                            <CopyIcon className="size-3" />
+                                            {copiedMessageId ===
+                                            `${message.id}-${partIndex}` ? (
+                                              <Check className="size-3" />
+                                            ) : (
+                                              <CopyIcon className="size-3" />
+                                            )}
                                           </MessageAction>
                                         </MessageActions>
                                       )}
