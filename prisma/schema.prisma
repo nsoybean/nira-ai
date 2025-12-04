@@ -66,6 +66,7 @@ model Conversation {
   userId        String?  @map("user_id") // Nullable for anonymous users
   title         String   @default("New Chat")
   modelId       String   @default("claude-3-7-sonnet-20250219") @map("model_id") // Selected AI model
+  websearch     Boolean  @default(false)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   lastMessageAt DateTime @default(now()) @map("last_message_at") // Last time a message was added

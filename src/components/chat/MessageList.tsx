@@ -9,7 +9,7 @@ import {
   RefreshCcwIcon,
   Check,
 } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { forwardRef, Fragment, useState } from "react";
 import { Streamdown } from "streamdown";
 import {
   Message,
@@ -42,6 +42,7 @@ import {
   ToolInput,
   ToolOutput,
 } from "../ai-elements/tool";
+import { cn, isDevelopment } from "@/lib/utils";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -61,6 +62,77 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
         setCopiedMessageId(null);
       }, 2000);
     };
+
+    function renderMessage(
+      message: UIMessage,
+      isLastMessage: boolean,
+      isLoading: boolean
+    ) {
+      const textAcc = message.parts.reduce((acc, part) => {
+        if (part.type === "text" && part.text) {
+          acc += part.text;
+        }
+        return acc;
+      }, "");
+
+      if (isLoading && isLastMessage) {
+        return (
+          <div className="flex items-center mt-1">
+            <Loader
+              size={24}
+              className="animate-spin animation-duration-[1.3s]"
+            />
+          </div>
+        );
+      }
+
+      return (
+        <Message
+          className={cn("max-w-[90%]")}
+          key={`${message.id}`}
+          from={message.role}
+        >
+          <MessageContent className="text-md">
+            <MessageResponse>{textAcc}</MessageResponse>
+          </MessageContent>
+
+          {/* Show loader below text during streaming */}
+          {isLoading && isLastMessage && textAcc.trim() && (
+            <div className="flex mt-4">
+              <Loader
+                size={16}
+                className="animate-spin animation-duration-[1.3s]"
+              />
+            </div>
+          )}
+
+          {/* show message action once streams complete */}
+          {!isLoading && (
+            <MessageActions className="ml-auto">
+              <MessageAction
+                onClick={() => handleCopy(textAcc, message.id)}
+                label={copiedMessageId === message.id ? "Copied" : "Copy"}
+              >
+                {copiedMessageId === message.id ? (
+                  <Check className="size-3" />
+                ) : (
+                  <CopyIcon className="size-3" />
+                )}
+              </MessageAction>
+            </MessageActions>
+          )}
+
+          {/* reminder note - only show on last text part of last message */}
+          {isLastMessage && (
+            <div className="ml-auto">
+              <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-1">
+                Nira can make mistakes. Check important info.
+              </p>
+            </div>
+          )}
+        </Message>
+      );
+    }
 
     return (
       <div className="flex flex-col overflow-hidden size-full h-screen">
@@ -140,7 +212,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     {/* assistant message */}
                     {message.role === "assistant" && (
                       <div className="flex flex-col mb-6">
-                        {/* reasoning at the top, above everything */}
+                        {/* reasoning */}
                         {message.parts.some(
                           (part) => part.type === "reasoning" && part.text
                         ) && (
@@ -169,7 +241,41 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                           </div>
                         )}
 
-                        {/* main message content with icon */}
+                        {/* sources */}
+                        {message.role === "assistant" &&
+                          message.parts.filter(
+                            (part) => part.type === "source-url"
+                          ).length > 0 && (
+                            <Sources>
+                              <SourcesTrigger
+                                count={
+                                  message.parts.filter(
+                                    (part) => part.type === "source-url"
+                                  ).length
+                                }
+                              />
+                              {message.parts.map((part, i) => {
+                                switch (part.type) {
+                                  case "source-url":
+                                    return (
+                                      <SourcesContent
+                                        key={`${message.id}-${i}`}
+                                      >
+                                        <Source
+                                          key={`${message.id}-${i}`}
+                                          href={part.url}
+                                          title={part.url}
+                                        />
+                                      </SourcesContent>
+                                    );
+                                  default:
+                                    return null;
+                                }
+                              })}
+                            </Sources>
+                          )}
+
+                        {/* message */}
                         <div className="flex gap-3">
                           {/* left - icon */}
                           <div className="shrink-0 mt-0.5">
@@ -178,145 +284,13 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                             </div>
                           </div>
 
-                          {/* right - content */}
+                          {/* right - text content */}
                           <div className="flex-1 flex-col w-full">
-                            {/* Show loader beside icon before streaming starts */}
-                            {isLoading &&
-                              msgIndex === messages.length - 1 &&
-                              message.parts.every(
-                                (part) =>
-                                  part.type !== "text" ||
-                                  !part.text ||
-                                  part.text.trim() === ""
-                              ) && (
-                                <div className="flex items-center mt-1">
-                                  <Loader
-                                    size={24}
-                                    className="animate-spin animation-duration-[1.3s]"
-                                  />
-                                </div>
-                              )}
-
-                            {message.parts.map((part, partIndex) => {
-                              switch (part.type) {
-                                case "reasoning":
-                                  // Skip rendering here - reasoning is rendered above
-                                  return null;
-
-                                case "text":
-                                  // Skip rendering text part if it's empty and we're loading
-                                  if (
-                                    (!part.text || part.text.trim() === "") &&
-                                    isLoading &&
-                                    msgIndex === messages.length - 1
-                                  ) {
-                                    return null;
-                                  }
-
-                                  return (
-                                    <Message
-                                      className="max-w-[90%]"
-                                      key={`${message.id}-${partIndex}`}
-                                      from={message.role}
-                                    >
-                                      <MessageContent className="text-md">
-                                        <MessageResponse>
-                                          {part.text}
-                                        </MessageResponse>
-                                      </MessageContent>
-
-                                      {/* Show loader below text during streaming */}
-                                      {isLoading &&
-                                        msgIndex === messages.length - 1 &&
-                                        part.text &&
-                                        part.text.trim() !== "" && (
-                                          <div className="flex mt-4">
-                                            <Loader
-                                              size={16}
-                                              className="animate-spin animation-duration-[1.3s]"
-                                            />
-                                          </div>
-                                        )}
-
-                                      {/* show message action once streams complete */}
-                                      {!isLoading && (
-                                        <MessageActions className="ml-auto">
-                                          {/* tmp comment out regenerate */}
-                                          {/* <MessageAction
-                                          onClick={() => {}}
-                                          label="Retry"
-                                        >
-                                          <RefreshCcwIcon className="size-3" />
-                                        </MessageAction> */}
-                                          <MessageAction
-                                            onClick={() =>
-                                              handleCopy(
-                                                part.text,
-                                                `${message.id}-${partIndex}`
-                                              )
-                                            }
-                                            label={
-                                              copiedMessageId ===
-                                              `${message.id}-${partIndex}`
-                                                ? "Copied"
-                                                : "Copy"
-                                            }
-                                          >
-                                            {copiedMessageId ===
-                                            `${message.id}-${partIndex}` ? (
-                                              <Check className="size-3" />
-                                            ) : (
-                                              <CopyIcon className="size-3" />
-                                            )}
-                                          </MessageAction>
-                                        </MessageActions>
-                                      )}
-
-                                      {/* reminder note - only show on last text part of last message */}
-                                      {msgIndex === messages.length - 1 &&
-                                        partIndex ===
-                                          message.parts
-                                            .map((p, i) =>
-                                              p.type === "text" ? i : -1
-                                            )
-                                            .filter((i) => i !== -1)
-                                            .pop() && (
-                                          <div className="ml-auto">
-                                            <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-1">
-                                              Nira can make mistakes. Check
-                                              important info.
-                                            </p>
-                                          </div>
-                                        )}
-                                    </Message>
-                                  );
-
-                                case "tool-code_execution":
-                                  // Replace the raw JSON with Elements components
-                                  return (
-                                    <Tool
-                                      key={
-                                        part.toolCallId ||
-                                        `${message.id}-${msgIndex}`
-                                      }
-                                    >
-                                      <ToolHeader
-                                        type={part.type}
-                                        state={part.state}
-                                      />
-                                      <ToolContent>
-                                        <ToolInput input={part.input} />
-                                        <ToolOutput
-                                          output={part.output}
-                                          errorText={part.errorText}
-                                        />
-                                      </ToolContent>
-                                    </Tool>
-                                  );
-                                default:
-                                  return null;
-                              }
-                            })}
+                            {renderMessage(
+                              message,
+                              msgIndex == messages.length - 1,
+                              isLoading
+                            )}
                           </div>
                         </div>
                       </div>

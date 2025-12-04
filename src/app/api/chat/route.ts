@@ -137,13 +137,15 @@ export async function POST(req: Request) {
         } satisfies AnthropicProviderOptions,
       },
       tools: {
+        // anthropic
         ...(modelConfig.provider === "anthropic" && {
           // ned to evaluate, seems abit spammy
           // code_execution: codeExecutionTool,
-          web_search: anthropicWebSearchTool,
+          ...(conversation.websearch && { web_search: anthropicWebSearchTool }),
         }),
+        // openai
         ...(modelConfig.provider === "openai" && {
-          web_search: openaiWebSearchTool,
+          ...(conversation.websearch && { web_search: openaiWebSearchTool }),
         }),
       },
       messages: modelMessages,

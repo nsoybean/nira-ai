@@ -1,24 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { ChatStatus } from "ai";
-import {
-  Loader2,
-  Paperclip,
-  Image as ImageIcon,
-  BookOpen,
-  ArrowUp,
-  GlobeIcon,
-} from "lucide-react";
-import { useRef, useEffect, FormEvent } from "react";
+import { Loader2, ArrowUp, GlobeIcon } from "lucide-react";
+import { useRef, useEffect, FormEvent, useState } from "react";
 import { ModelSelectorInline } from "./ModelSelectorInline";
-import { models } from "tokenlens";
 import {
   PromptInput,
   PromptInputHeader,
@@ -33,27 +18,27 @@ import {
   PromptInputActionMenuContent,
   PromptInputActionAddAttachments,
   PromptInputButton,
-  PromptInputSelect,
-  PromptInputSelectTrigger,
-  PromptInputSelectValue,
-  PromptInputSelectContent,
-  PromptInputSelectItem,
   PromptInputSubmit,
   PromptInputMessage,
 } from "../ai-elements/prompt-input";
-import { AVAILABLE_MODELS } from "@/lib/models";
+import { useConversations } from "@/contexts/ConversationsContext";
+import { useMutation } from "@tanstack/react-query";
 
 interface ChatInputProps {
   input: string;
   onInputChange: (value: string) => void;
   onSubmit: (
     message: PromptInputMessage,
-    event: FormEvent<HTMLFormElement>
+    event: FormEvent<HTMLFormElement>,
+    options: { useWebSearch: boolean }
   ) => void | Promise<void>;
   status: ChatStatus;
   isCreatingConversation: boolean;
   selectedModel: string;
   onModelChange: (modelId: string) => void;
+  conversationId: string;
+  isNewChat: boolean;
+  initialWebSearch?: boolean;
 }
 
 export function ChatInput({
@@ -64,9 +49,47 @@ export function ChatInput({
   isCreatingConversation,
   selectedModel,
   onModelChange,
+  conversationId,
+  isNewChat,
+  initialWebSearch = false,
 }: ChatInputProps) {
-  const isLoading = status === "submitted" || status === "streaming";
+  // ref
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Internal state for web search
+  const [useWebSearch, setUseWebSearch] = useState(initialWebSearch);
+  const isInitialMount = useRef(true);
+
+  // Get updateConversation from context
+  const { updateConversation } = useConversations();
+
+  // Mutation for updating web search setting
+  const { mutate: updateWebSearch } = useMutation({
+    mutationFn: async (webSearch: boolean) => {
+      return updateConversation(conversationId, { webSearch });
+    },
+  });
+
+  const isLoading = status === "submitted" || status === "streaming";
+
+  // Sync internal state with initialWebSearch prop when it changes
+  useEffect(() => {
+    setUseWebSearch(initialWebSearch);
+  }, [initialWebSearch]);
+
+  // Update conversation when web search is toggled (not on mount)
+  useEffect(() => {
+    // Skip the first render (mount)
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Only update when toggled and not a new chat
+    if (!isNewChat && conversationId) {
+      updateWebSearch(useWebSearch);
+    }
+  }, [useWebSearch, conversationId, isNewChat, updateWebSearch]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -95,7 +118,9 @@ export function ChatInput({
     <div className="bg-white dark:bg-gray-950">
       <div className="max-w-4xl mx-auto px-4 py-4">
         <PromptInput
-          onSubmit={onSubmit}
+          onSubmit={(message, event) =>
+            onSubmit(message, event, { useWebSearch })
+          }
           className="mt-4 rounded-2xl"
           globalDrop
           multiple
@@ -125,12 +150,6 @@ export function ChatInput({
                 </PromptInputActionMenuContent>
               </PromptInputActionMenu>
 
-              {/* search, tmp commented out */}
-              {/* <PromptInputButton variant={"ghost"} onClick={() => {}}>
-                <GlobeIcon size={16} />
-                <span>Search</span>
-              </PromptInputButton> */}
-
               {/* prompt library, tmo commented out */}
               {/* <Tooltip>
                 <TooltipTrigger asChild>
@@ -147,6 +166,14 @@ export function ChatInput({
                   <p>Prompt Library</p>
                 </TooltipContent>
               </Tooltip> */}
+
+              <PromptInputButton
+                onClick={() => setUseWebSearch(!useWebSearch)}
+                variant={useWebSearch ? "default" : "ghost"}
+              >
+                <GlobeIcon size={16} />
+                <span>Search</span>
+              </PromptInputButton>
 
               {/* model selection */}
               <ModelSelectorInline

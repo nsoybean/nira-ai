@@ -13,6 +13,7 @@ import React, {
 interface Conversation {
   id: string;
   title: string;
+  webSearch?: boolean;
 }
 
 interface ConversationsContextType {

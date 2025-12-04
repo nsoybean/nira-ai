@@ -25,6 +25,7 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatTitle, setChatTitle] = useState("New Chat");
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL_ID);
+  const [initialWebSearch, setInitialWebSearch] = useState(false);
 
   const {
     deleteConversation,
@@ -107,6 +108,9 @@ export default function ChatPage() {
           if (data.title) {
             setChatTitle(data.title);
           }
+          if (data.websearch !== undefined) {
+            setInitialWebSearch(data.websearch);
+          }
         })
         .catch((error) => {
           console.error("Error loading conversation:", error);
@@ -172,13 +176,18 @@ export default function ChatPage() {
   }, [messages]);
 
   const handleSubmit = useCallback(
-    async (message: { text: string; files?: any[] }) => {
+    async (
+      message: { text: string; files?: any[] },
+      options: { useWebSearch: boolean }
+    ) => {
       if (status === "streaming" || status === "submitted") {
         return;
       }
 
       // Pass both text and files to submitChat
-      await submitChat(message.text, message.files || [], setInput);
+      await submitChat(message.text, message.files || [], setInput, {
+        useWebsearch: options.useWebSearch,
+      });
     },
     [status, submitChat, setInput]
   );
@@ -254,6 +263,7 @@ export default function ChatPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+
   return (
     <TooltipProvider>
       <div className="flex h-screen bg-white dark:bg-gray-950">
@@ -291,11 +301,16 @@ export default function ChatPage() {
           <ChatInput
             input={input}
             onInputChange={setInput}
-            onSubmit={handleSubmit}
+            onSubmit={(message, event, options) => {
+              handleSubmit(message, options);
+            }}
             status={status}
             isCreatingConversation={isCreatingConversation}
             selectedModel={selectedModel}
             onModelChange={setSelectedModel}
+            conversationId={conversationId}
+            isNewChat={isNewChat}
+            initialWebSearch={initialWebSearch}
           />
         </div>
       </div>
