@@ -38,6 +38,7 @@ import { RenameConversationDialog } from "./RenameConversationDialog";
 import { BetaAuthDialog } from "@/components/BetaAuthDialog";
 import { useBetaAuth } from "@/contexts/BetaAuthContext";
 import { toast } from "sonner";
+import { cn, isDevelopment } from "@/lib/utils";
 
 interface Conversation {
   id: string;
@@ -201,8 +202,13 @@ export const Sidebar = memo(function Sidebar({
       </div>
 
       {/* Chat List */}
-      <ScrollArea className="flex-1 overflow-hidden">
-        <div className="space-y-1 p-3">
+      <ScrollArea
+        className={cn(
+          "flex-1 overflow-hidden",
+          isDevelopment() && "border-2 border-blue-400"
+        )}
+      >
+        <div className={cn("space-y-1 p-3")}>
           {isLoadingConversations ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
@@ -216,13 +222,23 @@ export const Sidebar = memo(function Sidebar({
               <div
                 key={conv.id}
                 onClick={() => router.push(`/chat/${conv.id}`)}
-                className={`group w-full text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 cursor-pointer ${
-                  conv.id === currentConversationId
-                    ? "text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800"
-                    : "text-gray-600 dark:text-gray-400"
-                }`}
+                className={cn(
+                  `group text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 cursor-pointer ${
+                    conv.id === currentConversationId
+                      ? "text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800"
+                      : "text-gray-600 dark:text-gray-400"
+                  }`,
+                  isDevelopment() && "border-2 border-green-400"
+                )}
               >
-                <span className="truncate flex-1">{conv.title}</span>
+                <div
+                  className={cn(
+                    "truncate flex-1 min-w-0 max-w-42",
+                    isDevelopment() && "border-2 border-red-400"
+                  )}
+                >
+                  {conv.title}
+                </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button

@@ -1,4 +1,4 @@
-import { anthropic } from "@ai-sdk/anthropic";
+import { anthropic, AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
 import {
   streamText,
@@ -126,13 +126,14 @@ export async function POST(req: Request) {
           reasoningSummary: "auto",
         },
         anthropic: {
-          reasoningSummary: "auto",
-        },
+          thinking: { type: "enabled", budgetTokens: 2000 },
+        } satisfies AnthropicProviderOptions,
       },
       tools: {
-        ...(modelConfig.provider === "anthropic" && {
-          code_execution: codeExecutionTool,
-        }),
+        // ned to evaluate, seems abit spammy
+        // ...(modelConfig.provider === "anthropic" && {
+        //   code_execution: codeExecutionTool,
+        // }),
       },
       messages: modelMessages,
       system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,

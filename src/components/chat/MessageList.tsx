@@ -251,15 +251,22 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                         </MessageActions>
                                       )}
 
-                                      {/* reminder note */}
-                                      {msgIndex === messages.length - 1 && (
-                                        <div className="ml-auto">
-                                          <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-1">
-                                            Nira can make mistakes. Check
-                                            important info.
-                                          </p>
-                                        </div>
-                                      )}
+                                      {/* reminder note - only show on last text part of last message */}
+                                      {msgIndex === messages.length - 1 &&
+                                        partIndex ===
+                                          message.parts
+                                            .map((p, i) =>
+                                              p.type === "text" ? i : -1
+                                            )
+                                            .filter((i) => i !== -1)
+                                            .pop() && (
+                                          <div className="ml-auto">
+                                            <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-1">
+                                              Nira can make mistakes. Check
+                                              important info.
+                                            </p>
+                                          </div>
+                                        )}
                                     </Message>
                                   );
 
