@@ -9,7 +9,7 @@ import {
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
-import { codeExecutionTool } from "@/lib/tools";
+import { anthropicWebSearchTool, openaiWebSearchTool } from "@/lib/tools";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -121,6 +121,13 @@ export async function POST(req: Request) {
     // Stream the chat completion
     const result = streamText({
       model: languageModel,
+      headers: {
+        // doesnt seem to be working
+        // https://platform.claude.com/docs/en/agents-and-tools/tool-use/fine-grained-tool-streaming
+        // ...(modelConfig.provider === "anthropic" && {
+        //   "anthropic-beta": "fine-grained-tool-streaming-2025-05-14",
+        // }),
+      },
       providerOptions: {
         openai: {
           reasoningSummary: "auto",
@@ -130,10 +137,14 @@ export async function POST(req: Request) {
         } satisfies AnthropicProviderOptions,
       },
       tools: {
-        // ned to evaluate, seems abit spammy
-        // ...(modelConfig.provider === "anthropic" && {
-        //   code_execution: codeExecutionTool,
-        // }),
+        ...(modelConfig.provider === "anthropic" && {
+          // ned to evaluate, seems abit spammy
+          // code_execution: codeExecutionTool,
+          web_search: anthropicWebSearchTool,
+        }),
+        ...(modelConfig.provider === "openai" && {
+          web_search: openaiWebSearchTool,
+        }),
       },
       messages: modelMessages,
       system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
