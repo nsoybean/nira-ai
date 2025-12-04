@@ -169,7 +169,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                           </div>
 
                           {/* right - content */}
-                          <div className="flex-1 flex-col w-full min-w-0">
+                          <div className="flex-1 flex-col w-full">
                             {/* Show loader beside icon before streaming starts */}
                             {isLoading &&
                               msgIndex === messages.length - 1 &&
@@ -278,7 +278,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                         part.toolCallId ||
                                         `${message.id}-${msgIndex}`
                                       }
-                                      className="max-w-full"
                                     >
                                       <ToolHeader
                                         type={part.type}
