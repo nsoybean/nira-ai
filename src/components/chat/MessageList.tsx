@@ -63,54 +63,128 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
       }, 2000);
     };
 
-    function renderMessage(
+    // Helper to group consecutive text parts together
+    function groupMessageParts(parts: UIMessage["parts"]) {
+      const groups: Array<{
+        type: "reasoning" | "text" | "source-url" | "other";
+        parts: typeof parts;
+      }> = [];
+
+      let currentTextGroup: typeof parts = [];
+
+      parts.forEach((part) => {
+        if (part.type === "text" && part.text) {
+          currentTextGroup.push(part);
+        } else {
+          // Flush accumulated text parts
+          if (currentTextGroup.length > 0) {
+            groups.push({ type: "text", parts: currentTextGroup });
+            currentTextGroup = [];
+          }
+
+          // Add non-text part as its own group
+          if (part.type === "reasoning" && part.text) {
+            groups.push({ type: "reasoning", parts: [part] });
+          } else if (part.type === "source-url") {
+            groups.push({ type: "source-url", parts: [part] });
+          } else {
+            groups.push({ type: "other", parts: [part] });
+          }
+        }
+      });
+
+      // Flush any remaining text parts
+      if (currentTextGroup.length > 0) {
+        groups.push({ type: "text", parts: currentTextGroup });
+      }
+
+      return groups;
+    }
+
+    function renderMessageContent(
       message: UIMessage,
       isLastMessage: boolean,
       isLoading: boolean
     ) {
-      const textAcc = message.parts.reduce((acc, part) => {
-        if (part.type === "text" && part.text) {
-          acc += part.text;
-        }
-        return acc;
-      }, "");
-
-      if (isLoading && isLastMessage) {
-        return (
-          <div className="flex items-center mt-1">
-            <Loader
-              size={24}
-              className="animate-spin animation-duration-[1.3s]"
-            />
-          </div>
-        );
-      }
+      const groups = groupMessageParts(message.parts);
+      const allText = message.parts
+        .filter((p) => p.type === "text" && p.text)
+        .map((p: any) => p.text)
+        .join("");
 
       return (
-        <Message
-          className={cn("max-w-[90%]")}
-          key={`${message.id}`}
-          from={message.role}
-        >
-          <MessageContent className="text-md">
-            <MessageResponse>{textAcc}</MessageResponse>
-          </MessageContent>
+        <div className="flex flex-col gap-3 w-full">
+          {groups.map((group, groupIndex) => {
+            const isLastGroup = groupIndex === groups.length - 1;
 
-          {/* Show loader below text during streaming */}
-          {isLoading && isLastMessage && textAcc.trim() && (
-            <div className="flex mt-4">
+            if (group.type === "reasoning") {
+              const part = group.parts[0] as any;
+              return (
+                <Reasoning
+                  key={`${message.id}-reasoning-${groupIndex}`}
+                  className="w-full"
+                  isStreaming={
+                    status === "streaming" &&
+                    isLastGroup &&
+                    isLastMessage
+                  }
+                >
+                  <ReasoningTrigger />
+                  <ReasoningContent>{part.text}</ReasoningContent>
+                </Reasoning>
+              );
+            }
+
+            if (group.type === "text") {
+              const textContent = group.parts
+                .map((p: any) => p.text)
+                .join("");
+
+              return (
+                <div key={`${message.id}-text-${groupIndex}`}>
+                  <Message
+                    className={cn("max-w-[90%]")}
+                    from={message.role}
+                  >
+                    <MessageContent className="text-md">
+                      <MessageResponse>{textContent}</MessageResponse>
+                    </MessageContent>
+
+                    {/* Show loader below text during streaming */}
+                    {isLoading &&
+                      isLastMessage &&
+                      isLastGroup &&
+                      textContent.trim() && (
+                        <div className="flex mt-4">
+                          <Loader
+                            size={16}
+                            className="animate-spin animation-duration-[1.3s]"
+                          />
+                        </div>
+                      )}
+                  </Message>
+                </div>
+              );
+            }
+
+            return null;
+          })}
+
+          {/* Show initial loader if no content yet */}
+          {isLoading && isLastMessage && groups.length === 0 && (
+            <div className="flex items-center mt-1">
               <Loader
-                size={16}
+                size={24}
                 className="animate-spin animation-duration-[1.3s]"
               />
             </div>
           )}
 
-          {/* show message action once streams complete */}
-          {!isLoading && (
+          {/* Show copy action once complete - only after last text group */}
+          {!isLoading && allText && (
             <MessageActions className="ml-auto">
               <MessageAction
-                onClick={() => handleCopy(textAcc, message.id)}
+                onClick={() => handleCopy(allText, message.id)}
                 label={copiedMessageId === message.id ? "Copied" : "Copy"}
               >
                 {copiedMessageId === message.id ? (
@@ -122,7 +196,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
             </MessageActions>
           )}
 
-          {/* reminder note - only show on last text part of last message */}
+          {/* Reminder note - only show on last message */}
           {isLastMessage && (
             <div className="ml-auto">
               <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-1">
@@ -130,7 +204,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               </p>
             </div>
           )}
-        </Message>
+        </div>
       );
     }
 
@@ -212,69 +286,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     {/* assistant message */}
                     {message.role === "assistant" && (
                       <div className="flex flex-col mb-6">
-                        {/* reasoning */}
-                        {message.parts.some(
-                          (part) => part.type === "reasoning" && part.text
-                        ) && (
-                          <div className="mb-3">
-                            {message.parts.map((part, partIndex) => {
-                              if (part.type === "reasoning" && part.text) {
-                                return (
-                                  <Reasoning
-                                    key={`${message.id}-reasoning-${partIndex}`}
-                                    className="w-full"
-                                    isStreaming={
-                                      status === "streaming" &&
-                                      partIndex === message.parts.length - 1 &&
-                                      message.id === messages.at(-1)?.id
-                                    }
-                                  >
-                                    <ReasoningTrigger />
-                                    <ReasoningContent>
-                                      {part.text}
-                                    </ReasoningContent>
-                                  </Reasoning>
-                                );
-                              }
-                              return null;
-                            })}
-                          </div>
-                        )}
-
-                        {/* sources */}
-                        {message.role === "assistant" &&
-                          message.parts.filter(
-                            (part) => part.type === "source-url"
-                          ).length > 0 && (
-                            <Sources>
-                              <SourcesTrigger
-                                count={
-                                  message.parts.filter(
-                                    (part) => part.type === "source-url"
-                                  ).length
-                                }
-                              />
-                              {message.parts.map((part, i) => {
-                                switch (part.type) {
-                                  case "source-url":
-                                    return (
-                                      <SourcesContent
-                                        key={`${message.id}-${i}`}
-                                      >
-                                        <Source
-                                          key={`${message.id}-${i}`}
-                                          href={part.url}
-                                          title={part.url}
-                                        />
-                                      </SourcesContent>
-                                    );
-                                  default:
-                                    return null;
-                                }
-                              })}
-                            </Sources>
-                          )}
-
                         {/* message */}
                         <div className="flex gap-3">
                           {/* left - icon */}
@@ -286,7 +297,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
                           {/* right - text content */}
                           <div className="flex-1 flex-col w-full">
-                            {renderMessage(
+                            {renderMessageContent(
                               message,
                               msgIndex == messages.length - 1,
                               isLoading
