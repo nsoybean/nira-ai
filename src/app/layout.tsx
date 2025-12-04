@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BetaAuthProvider } from "@/contexts/BetaAuthContext";
 import { ClientInit } from "@/components/ClientInit";
+import { QueryProvider } from "@/contexts/QueryClientProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,9 +33,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ClientInit />
-        <ThemeProvider>
-          <BetaAuthProvider>{children}</BetaAuthProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <BetaAuthProvider>{children}</BetaAuthProvider>
+            <Toaster />
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

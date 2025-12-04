@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { DEFAULT_MODEL_ID } from '@/lib/models';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { DEFAULT_MODEL_ID } from "@/lib/models";
 
 /**
  * POST /api/conversations/create
@@ -24,10 +24,15 @@ export async function POST(req: Request) {
   try {
     // Parse request body to get optional modelId
     let modelId = DEFAULT_MODEL_ID;
+    let useWebsearch = false;
     try {
       const body = await req.json();
       if (body.modelId) {
         modelId = body.modelId;
+      }
+
+      if (body.useWebsearch) {
+        useWebsearch = body.useWebsearch;
       }
     } catch {
       // If no body or invalid JSON, use default model
@@ -37,8 +42,9 @@ export async function POST(req: Request) {
     const conversation = await prisma.conversation.create({
       data: {
         userId: null, // Anonymous for now
-        title: 'New Chat',
+        title: "New Chat",
         modelId,
+        websearch: useWebsearch,
       },
     });
 
@@ -47,10 +53,13 @@ export async function POST(req: Request) {
       createdAt: conversation.createdAt,
     });
   } catch (error) {
-    console.error('[Create Conversation API] Error creating conversation:', error);
+    console.error(
+      "[Create Conversation API] Error creating conversation:",
+      error
+    );
 
     return NextResponse.json(
-      { error: 'Failed to create conversation' },
+      { error: "Failed to create conversation" },
       { status: 500 }
     );
   }

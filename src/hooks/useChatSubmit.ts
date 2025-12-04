@@ -6,7 +6,10 @@ import { FileUIPart } from "ai";
 interface UseChatSubmitProps {
   isNewChat: boolean;
   conversationId: string | null;
-  sendMessage: (message: { text: string; files?: FileUIPart[] }, options?: any) => void;
+  sendMessage: (
+    message: { text: string; files?: FileUIPart[] },
+    options?: any
+  ) => void;
   selectedModel: string;
 }
 
@@ -26,8 +29,13 @@ export function useChatSubmit({
   const handleSubmit = async (
     input: string,
     files: FileUIPart[],
-    setInput: (value: string) => void
+    setInput: (value: string) => void,
+    options: {
+      useWebsearch?: boolean;
+    }
   ) => {
+    const useWebsearch = options?.useWebsearch || false;
+
     if ((!input.trim() && files.length === 0) || isCreatingConversation) return;
 
     // If this is a new chat, create the conversation and navigate
@@ -39,7 +47,7 @@ export function useChatSubmit({
         const createResponse = await fetch("/api/conversations/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ modelId: selectedModel }),
+          body: JSON.stringify({ modelId: selectedModel, useWebsearch }),
         });
 
         if (!createResponse.ok) {

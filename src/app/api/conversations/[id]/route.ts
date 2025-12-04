@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/conversations/[id]
@@ -19,6 +19,7 @@ export async function GET(
         id: true,
         title: true,
         modelId: true,
+        websearch: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -26,16 +27,16 @@ export async function GET(
 
     if (!conversation) {
       return NextResponse.json(
-        { error: 'Conversation not found' },
+        { error: "Conversation not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json(conversation);
   } catch (error) {
-    console.error('[Get Conversation API] Error:', error);
+    console.error("[Get Conversation API] Error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch conversation' },
+      { error: "Failed to fetch conversation" },
       { status: 500 }
     );
   }
@@ -63,11 +64,11 @@ export async function PATCH(
 ) {
   try {
     const { id } = await context.params;
-    const body = await req.json();
+    const body: { title?: string; webSearch?: boolean } = await req.json();
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Conversation ID is required' },
+        { error: "Conversation ID is required" },
         { status: 400 }
       );
     }
@@ -79,7 +80,7 @@ export async function PATCH(
 
     if (!conversation) {
       return NextResponse.json(
-        { error: 'Conversation not found' },
+        { error: "Conversation not found" },
         { status: 404 }
       );
     }
@@ -89,11 +90,13 @@ export async function PATCH(
       where: { id },
       data: {
         ...(body.title !== undefined && { title: body.title }),
+        ...(body.webSearch !== undefined && { websearch: body.webSearch }),
       },
       select: {
         id: true,
         title: true,
         modelId: true,
+        websearch: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -104,10 +107,10 @@ export async function PATCH(
       conversation: updatedConversation,
     });
   } catch (error) {
-    console.error('[Conversation API] Error updating conversation:', error);
+    console.error("[Conversation API] Error updating conversation:", error);
 
     return NextResponse.json(
-      { error: 'Failed to update conversation' },
+      { error: "Failed to update conversation" },
       { status: 500 }
     );
   }
@@ -134,7 +137,7 @@ export async function DELETE(
 
     if (!id) {
       return NextResponse.json(
-        { error: 'Conversation ID is required' },
+        { error: "Conversation ID is required" },
         { status: 400 }
       );
     }
@@ -146,7 +149,7 @@ export async function DELETE(
 
     if (!conversation) {
       return NextResponse.json(
-        { error: 'Conversation not found' },
+        { error: "Conversation not found" },
         { status: 404 }
       );
     }
@@ -158,13 +161,13 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Conversation deleted successfully',
+      message: "Conversation deleted successfully",
     });
   } catch (error) {
-    console.error('[Conversation API] Error deleting conversation:', error);
+    console.error("[Conversation API] Error deleting conversation:", error);
 
     return NextResponse.json(
-      { error: 'Failed to delete conversation' },
+      { error: "Failed to delete conversation" },
       { status: 500 }
     );
   }
