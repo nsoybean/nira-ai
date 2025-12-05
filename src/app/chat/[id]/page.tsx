@@ -27,6 +27,7 @@ export default function ChatPage() {
   const [chatTitle, setChatTitle] = useState("New Chat");
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL_ID);
   const [initialWebSearch, setInitialWebSearch] = useState(false);
+  const [initialExtendedThinking, setInitialExtendedThinking] = useState(false);
 
   const {
     deleteConversation,
@@ -111,6 +112,9 @@ export default function ChatPage() {
           }
           if (data.websearch !== undefined) {
             setInitialWebSearch(data.websearch);
+          }
+          if (data.settings?.extendedThinking !== undefined) {
+            setInitialExtendedThinking(data.settings.extendedThinking);
           }
         })
         .catch((error) => {
@@ -353,6 +357,7 @@ export default function ChatPage() {
                   conversationId={conversationId}
                   isNewChat={isNewChat}
                   initialWebSearch={initialWebSearch}
+                  initialExtendedThinking={initialExtendedThinking}
                 />
               </div>
             </div>
@@ -379,6 +384,7 @@ export default function ChatPage() {
                 conversationId={conversationId}
                 isNewChat={isNewChat}
                 initialWebSearch={initialWebSearch}
+                initialExtendedThinking={initialExtendedThinking}
               />
             </>
           )}

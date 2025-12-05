@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ConversationSettings } from "@/lib/conversation-settings";
 
 /**
  * GET /api/conversations/[id]
@@ -20,6 +21,7 @@ export async function GET(
         title: true,
         modelId: true,
         websearch: true,
+        settings: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -45,11 +47,13 @@ export async function GET(
 /**
  * PATCH /api/conversations/[id]
  *
- * Updates a conversation's details (e.g., title).
+ * Updates a conversation's details (e.g., title, settings).
  *
  * Request body:
  * {
- *   "title"?: string
+ *   "title"?: string,
+ *   "webSearch"?: boolean,
+ *   "settings"?: Partial<ConversationSettings>
  * }
  *
  * Response:
@@ -64,7 +68,11 @@ export async function PATCH(
 ) {
   try {
     const { id } = await context.params;
-    const body: { title?: string; webSearch?: boolean } = await req.json();
+    const body: {
+      title?: string;
+      webSearch?: boolean;
+      settings?: Partial<ConversationSettings>;
+    } = await req.json();
 
     if (!id) {
       return NextResponse.json(
@@ -85,18 +93,29 @@ export async function PATCH(
       );
     }
 
+    // Merge settings if provided
+    let updatedSettings = conversation.settings;
+    if (body.settings !== undefined) {
+      updatedSettings = {
+        ...(conversation.settings as any),
+        ...body.settings,
+      };
+    }
+
     // Update the conversation
     const updatedConversation = await prisma.conversation.update({
       where: { id },
       data: {
         ...(body.title !== undefined && { title: body.title }),
         ...(body.webSearch !== undefined && { websearch: body.webSearch }),
+        ...(body.settings !== undefined && { settings: updatedSettings as any }),
       },
       select: {
         id: true,
         title: true,
         modelId: true,
         websearch: true,
+        settings: true,
         createdAt: true,
         updatedAt: true,
       },
