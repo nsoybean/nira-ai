@@ -10,6 +10,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
 import { anthropicWebSearchTool, openaiWebSearchTool } from "@/lib/tools";
+import { mergeConversationSettings } from "@/lib/conversation-settings";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -55,6 +56,11 @@ export async function POST(req: Request) {
     if (!conversation) {
       return new Response("Conversation not found", { status: 404 });
     }
+
+    // Get conversation settings with defaults
+    const settings = mergeConversationSettings(
+      conversation.settings as any
+    );
 
     // Determine which model to use: provided modelId, conversation's model, or default
     const selectedModelId =
@@ -133,7 +139,9 @@ export async function POST(req: Request) {
           reasoningSummary: "auto",
         },
         anthropic: {
-          thinking: { type: "enabled", budgetTokens: 2000 },
+          thinking: settings.extendedThinking
+            ? { type: "enabled", budgetTokens: 10000 }
+            : { type: "enabled", budgetTokens: 2000 },
         } satisfies AnthropicProviderOptions,
       },
       tools: {

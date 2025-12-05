@@ -9,11 +9,13 @@ import React, {
   useMemo,
   ReactNode,
 } from "react";
+import { ConversationSettings } from "@/lib/conversation-settings";
 
 interface Conversation {
   id: string;
   title: string;
   webSearch?: boolean;
+  settings?: ConversationSettings;
 }
 
 interface ConversationsContextType {
