@@ -123,12 +123,12 @@ export function ChatInput({
     }
   }, [input]);
 
-  // Clear pending files when conversation creation completes
+  // Clear pending files when navigating away (conversationId changes) or chat is no longer new
   useEffect(() => {
-    if (!isCreatingConversation && pendingFiles.length > 0) {
+    if (!isNewChat && pendingFiles.length > 0) {
       setPendingFiles([]);
     }
-  }, [isCreatingConversation, pendingFiles.length]);
+  }, [isNewChat, conversationId, pendingFiles.length]);
 
   // Wrapper for onSubmit to capture files during conversation creation
   const handleSubmit = (message: PromptInputMessage, event: FormEvent<HTMLFormElement>) => {
