@@ -24,7 +24,11 @@ import {
 import { useConversations } from "@/contexts/ConversationsContext";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 
 interface ChatInputProps {
@@ -63,7 +67,9 @@ export function ChatInput({
 
   // Internal state for settings
   const [useWebSearch, setUseWebSearch] = useState(initialWebSearch);
-  const [useExtendedThinking, setUseExtendedThinking] = useState(initialExtendedThinking);
+  const [useExtendedThinking, setUseExtendedThinking] = useState(
+    initialExtendedThinking
+  );
   const isInitialMount = useRef(true);
   const isInitialMountThinking = useRef(true);
 
@@ -170,7 +176,10 @@ export function ChatInput({
   }, [isNewChat, conversationId, pendingFiles.length]);
 
   // Wrapper for onSubmit to capture files during conversation creation
-  const handleSubmit = (message: PromptInputMessage, event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (
+    message: PromptInputMessage,
+    event: FormEvent<HTMLFormElement>
+  ) => {
     // If creating a new conversation, store the files
     if (isNewChat && message.files && message.files.length > 0) {
       setPendingFiles(message.files);
@@ -217,7 +226,9 @@ export function ChatInput({
           <PromptInputFooter className="flex items-center justify-between">
             <PromptInputTools>
               <PromptInputActionMenu>
-                <PromptInputActionMenuTrigger disabled={isLoading || isCreatingConversation} />
+                <PromptInputActionMenuTrigger
+                  disabled={isLoading || isCreatingConversation}
+                />
                 <PromptInputActionMenuContent>
                   <PromptInputActionAddAttachments />
                 </PromptInputActionMenuContent>
@@ -227,11 +238,13 @@ export function ChatInput({
               <Popover>
                 <PopoverTrigger asChild>
                   <PromptInputButton
-                    variant={(useWebSearch || useExtendedThinking) ? "default" : "ghost"}
+                    variant={
+                      useWebSearch || useExtendedThinking ? "default" : "ghost"
+                    }
                     type="button"
                   >
                     <Settings2 size={16} />
-                    <span>Settings</span>
+                    {/* <span>Settings</span> */}
                   </PromptInputButton>
                 </PopoverTrigger>
                 <PopoverContent className="w-64" align="start">
@@ -268,7 +281,7 @@ export function ChatInput({
                             Extended Thinking
                           </label>
                           <p className="text-xs text-muted-foreground">
-                            More thinking tokens (10k vs 2k)
+                            Enable advanced reasoning capabilities
                           </p>
                         </div>
                         <Switch
