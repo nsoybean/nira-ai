@@ -10,6 +10,7 @@ import {
   UIMessage,
   createIdGenerator,
   LanguageModel,
+  generateText,
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
@@ -81,15 +82,49 @@ export async function POST(req: Request) {
       orderBy: { createdAt: "asc" },
     });
 
+    // Variable to store generated title for response headers
+    let generatedTitle: string | null = null;
+
     // if no previous message, means is a new conversation, generate short title
     if (existingMessages.length === 0) {
-      // Generate a short title for the new conversation
-      // (Implementation for title generation can be added here)
+      // Generate a short title for the new conversation using OpenAI nano model
+      try {
+        // Extract text content from user message
+        const userMessageText = message.parts
+          .filter((part: any) => part.type === "text")
+          .map((part: any) => part.text)
+          .join(" ");
+
+        if (userMessageText) {
+          // Use OpenAI nano model for cheap title generation
+          const titleModel = openai("gpt-5-nano");
+          const titleResult = await generateText({
+            model: titleModel,
+            prompt: `Generate a short, descriptive title (maximum 8 words) for this chat message. Only return the title, nothing else.\n\nMessage: ${userMessageText}`,
+            maxOutputTokens: 20,
+          });
+
+          generatedTitle = titleResult.text.trim();
+
+          // Update conversation title in database
+          await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { title: generatedTitle },
+          });
+
+          if (process.env.NODE_ENV === "development") {
+            console.log("[Chat API] Generated title:", generatedTitle);
+          }
+        }
+      } catch (error) {
+        console.error("[Chat API] Error generating title:", error);
+        // Continue with chat even if title generation fails
+      }
     }
 
     // Combine existing messages with the new message
     const allMessages: UIMessage[] = [
-      ...existingMessages.map((msg) => ({
+      ...existingMessages.map((msg: any) => ({
         id: msg.id,
         role: msg.role as any,
         parts: msg.parts as any, // Cast to satisfy UIMessage format
@@ -258,6 +293,11 @@ export async function POST(req: Request) {
 
     // Add conversation ID to response headers
     response.headers.set("X-Conversation-Id", conversation.id);
+
+    // Add generated title to response headers if available
+    if (generatedTitle) {
+      response.headers.set("X-Chat-Title", generatedTitle);
+    }
 
     return response;
   } catch (error) {
