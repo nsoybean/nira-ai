@@ -25,6 +25,12 @@ import {
   ReasoningContent,
 } from "../ai-elements/reasoning";
 import {
+  ChainOfThought,
+  ChainOfThoughtHeader,
+  ChainOfThoughtContent,
+  ChainOfThoughtStep,
+} from "../ai-elements/chain-of-thought";
+import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
@@ -63,10 +69,67 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
       }, 2000);
     };
 
+    // Helper to parse reasoning text into steps
+    function parseReasoningIntoSteps(text: string): Array<{ label: string; content?: string }> {
+      // Try to detect different formatting patterns
+      const steps: Array<{ label: string; content?: string }> = [];
+
+      // Pattern 1: Numbered steps (1. , 2. , 3. , etc.)
+      const numberedPattern = /^\d+\.\s+(.+?)(?=\n\d+\.\s+|\n*$)/gm;
+      const numberedMatches = Array.from(text.matchAll(numberedPattern));
+
+      if (numberedMatches.length > 0) {
+        numberedMatches.forEach((match) => {
+          const content = match[1].trim();
+          const [firstLine, ...rest] = content.split('\n');
+          steps.push({
+            label: firstLine,
+            content: rest.length > 0 ? rest.join('\n').trim() : undefined,
+          });
+        });
+        return steps;
+      }
+
+      // Pattern 2: Bullet points (- or * or •)
+      const bulletPattern = /^[\-\*•]\s+(.+?)(?=\n[\-\*•]\s+|\n*$)/gm;
+      const bulletMatches = Array.from(text.matchAll(bulletPattern));
+
+      if (bulletMatches.length > 0) {
+        bulletMatches.forEach((match) => {
+          const content = match[1].trim();
+          const [firstLine, ...rest] = content.split('\n');
+          steps.push({
+            label: firstLine,
+            content: rest.length > 0 ? rest.join('\n').trim() : undefined,
+          });
+        });
+        return steps;
+      }
+
+      // Pattern 3: Paragraphs (separated by double newlines)
+      const paragraphs = text.split(/\n\n+/).filter((p: string) => p.trim().length > 0);
+
+      if (paragraphs.length > 1) {
+        paragraphs.forEach((paragraph: string) => {
+          const trimmed = paragraph.trim();
+          const [firstLine, ...rest] = trimmed.split('\n');
+          steps.push({
+            label: firstLine.length > 100 ? firstLine.slice(0, 100) + '...' : firstLine,
+            content: rest.length > 0 ? rest.join('\n').trim() : (firstLine.length > 100 ? firstLine : undefined),
+          });
+        });
+        return steps;
+      }
+
+      // Fallback: Single step with the entire text
+      const preview = text.length > 100 ? text.slice(0, 100) + '...' : text;
+      return [{ label: preview, content: text.length > 100 ? text : undefined }];
+    }
+
     // Helper to group consecutive text and source-url parts together
     function groupMessageParts(parts: UIMessage["parts"]) {
       const groups: Array<{
-        type: "reasoning" | "text" | "source-url" | "other";
+        type: "reasoning" | "text" | "source-url" | "tool" | "other";
         parts: typeof parts;
       }> = [];
 
@@ -103,6 +166,9 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
           // Add non-text/non-source part as its own group
           if (part.type === "reasoning" && part.text) {
             groups.push({ type: "reasoning", parts: [part] });
+          } else if (part.type.startsWith("tool-")) {
+            // Tool calls (tool-{toolName})
+            groups.push({ type: "tool", parts: [part] });
           } else {
             groups.push({ type: "other", parts: [part] });
           }
@@ -132,27 +198,155 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
         .map((p: any) => p.text)
         .join("");
 
+      // Check if we have reasoning or tool calls to show in a timeline
+      const hasReasoningOrTools = groups.some(
+        (g) => g.type === "reasoning" || g.type === "tool"
+      );
+
+      // Collect all reasoning and tool items for a unified timeline
+      const timelineItems: Array<{
+        type: "reasoning-step" | "tool";
+        key: string;
+        data: any;
+      }> = [];
+
+      groups.forEach((group, groupIndex) => {
+        if (group.type === "reasoning") {
+          const part = group.parts[0] as any;
+          const reasoningText = part.text || "";
+          const steps = parseReasoningIntoSteps(reasoningText);
+          steps.forEach((step, stepIndex) => {
+            timelineItems.push({
+              type: "reasoning-step",
+              key: `reasoning-${groupIndex}-${stepIndex}`,
+              data: step,
+            });
+          });
+        } else if (group.type === "tool") {
+          const part = group.parts[0] as any;
+          timelineItems.push({
+            type: "tool",
+            key: `tool-${groupIndex}`,
+            data: part,
+          });
+        }
+      });
+
       return (
         <div className="flex flex-col gap-3 w-full">
+          {/* Unified timeline for reasoning and tools */}
+          {hasReasoningOrTools && timelineItems.length > 0 && (
+            <ChainOfThought className="w-full" defaultOpen={true}>
+              <ChainOfThoughtHeader>
+                {isLoading && isLastMessage
+                  ? "Thinking..."
+                  : `Agent Timeline (${timelineItems.length} step${timelineItems.length !== 1 ? 's' : ''})`}
+              </ChainOfThoughtHeader>
+              <ChainOfThoughtContent>
+                {timelineItems.map((item, index) => {
+                  const isLastItem = index === timelineItems.length - 1;
+                  const isStreaming = isLoading && isLastMessage && isLastItem;
+
+                  if (item.type === "reasoning-step") {
+                    return (
+                      <ChainOfThoughtStep
+                        key={`${message.id}-${item.key}`}
+                        label={`💭 ${item.data.label}`}
+                        status={isStreaming ? "active" : "complete"}
+                      >
+                        {item.data.content && (
+                          <div className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
+                            {item.data.content}
+                          </div>
+                        )}
+                      </ChainOfThoughtStep>
+                    );
+                  }
+
+                  if (item.type === "tool") {
+                    const toolPart = item.data;
+                    const toolName = toolPart.type.replace("tool-", "");
+                    const hasOutput =
+                      toolPart.state === "output-available" ||
+                      toolPart.state === "output-error";
+                    const statusIcon =
+                      toolPart.state === "output-available"
+                        ? "✅"
+                        : toolPart.state === "output-error"
+                        ? "❌"
+                        : "⚙️";
+
+                    return (
+                      <ChainOfThoughtStep
+                        key={`${message.id}-${item.key}`}
+                        label={`${statusIcon} Tool: ${toolName}`}
+                        description={
+                          toolPart.state === "input-streaming"
+                            ? "Preparing..."
+                            : toolPart.state === "input-available"
+                            ? "Executing..."
+                            : toolPart.state === "output-error"
+                            ? "Failed"
+                            : "Completed"
+                        }
+                        status={
+                          hasOutput
+                            ? "complete"
+                            : isStreaming
+                            ? "active"
+                            : "pending"
+                        }
+                      >
+                        {toolPart.input && (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs font-medium text-muted-foreground uppercase">
+                              Input
+                            </div>
+                            <div className="rounded-md bg-muted/50 p-2 text-xs overflow-x-auto">
+                              <pre className="whitespace-pre-wrap break-words">
+                                {JSON.stringify(toolPart.input, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+                        {hasOutput && (toolPart.output || toolPart.errorText) && (
+                          <div className="mt-2 space-y-1">
+                            <div className="text-xs font-medium text-muted-foreground uppercase">
+                              {toolPart.errorText ? "Error" : "Output"}
+                            </div>
+                            <div
+                              className={`rounded-md p-2 text-xs overflow-x-auto ${
+                                toolPart.errorText
+                                  ? "bg-destructive/10 text-destructive"
+                                  : "bg-muted/50"
+                              }`}
+                            >
+                              <pre className="whitespace-pre-wrap break-words">
+                                {toolPart.errorText ||
+                                  (typeof toolPart.output === "string"
+                                    ? toolPart.output
+                                    : JSON.stringify(toolPart.output, null, 2))}
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+                      </ChainOfThoughtStep>
+                    );
+                  }
+
+                  return null;
+                })}
+              </ChainOfThoughtContent>
+            </ChainOfThought>
+          )}
+
+          {/* Render non-reasoning, non-tool groups */}
           {groups.map((group, groupIndex) => {
             const isLastGroup = groupIndex === groups.length - 1;
 
-            if (group.type === "reasoning") {
-              const part = group.parts[0] as any;
-              return (
-                <Reasoning
-                  key={`${message.id}-reasoning-${groupIndex}`}
-                  className="w-full"
-                  isStreaming={
-                    status === "streaming" &&
-                    isLastGroup &&
-                    isLastMessage
-                  }
-                >
-                  <ReasoningTrigger />
-                  <ReasoningContent>{part.text}</ReasoningContent>
-                </Reasoning>
-              );
+            // Skip reasoning and tool - already rendered in timeline
+            if (group.type === "reasoning" || group.type === "tool") {
+              return null;
             }
 
             if (group.type === "text") {
