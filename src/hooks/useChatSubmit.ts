@@ -63,11 +63,11 @@ export function useChatSubmit({
             sessionStorage.setItem("pendingFiles", JSON.stringify(files));
           }
 
-          // Clear input immediately for better UX
-          setInput("");
-
           // Navigate to the new conversation
           router.push(`/chat/${newConversationId}`);
+
+          // Clear input immediately for better UX
+          setInput("");
 
           // Reload conversations list
           refreshConversations();
