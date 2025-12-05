@@ -14,6 +14,7 @@ import { useChatSubmit } from "@/hooks/useChatSubmit";
 import { DEFAULT_MODEL_ID } from "@/lib/models";
 import { useConversations } from "@/contexts/ConversationsContext";
 import { toast } from "sonner";
+import { getRandomGreeting } from "@/data/greetings";
 
 export default function ChatPage() {
   const params = useParams();
@@ -267,6 +268,9 @@ export default function ChatPage() {
   // Check if chat is empty (no messages and not loading)
   const isChatEmpty = messages.length === 0 && !isLoadingMessages;
 
+  // Get a random greeting on component mount
+  const randomGreeting = useMemo(() => getRandomGreeting(), []);
+
   return (
     <TooltipProvider>
       <div className="flex h-screen bg-white dark:bg-gray-950">
@@ -327,10 +331,10 @@ export default function ChatPage() {
               {/* Greeting */}
               <div className="text-center mb-8">
                 <h1 className="text-4xl font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  Hey there! 👋
+                  {randomGreeting.title}
                 </h1>
                 <p className="text-lg text-gray-500 dark:text-gray-400">
-                  How can I help you today?
+                  {randomGreeting.subtitle}
                 </p>
               </div>
 
