@@ -268,8 +268,8 @@ export default function ChatPage() {
   // Check if chat is empty (no messages and not loading)
   const isChatEmpty = messages.length === 0 && !isLoadingMessages;
 
-  // Get a random greeting on component mount
-  const randomGreeting = useMemo(() => getRandomGreeting(), []);
+  // Get a random greeting on component mount (lazy initialization ensures it only runs once)
+  const [randomGreeting] = useState(() => getRandomGreeting());
 
   return (
     <TooltipProvider>
