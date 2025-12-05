@@ -1,5 +1,9 @@
 import { anthropic, AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import { openai } from "@ai-sdk/openai";
+import {
+  openai,
+  OpenAIProviderSettings,
+  OpenAIResponsesProviderOptions,
+} from "@ai-sdk/openai";
 import {
   streamText,
   convertToModelMessages,
@@ -58,9 +62,7 @@ export async function POST(req: Request) {
     }
 
     // Get conversation settings with defaults
-    const settings = mergeConversationSettings(
-      conversation.settings as any
-    );
+    const settings = mergeConversationSettings(conversation?.settings as any);
 
     // Determine which model to use: provided modelId, conversation's model, or default
     const selectedModelId =
@@ -135,14 +137,18 @@ export async function POST(req: Request) {
         // }),
       },
       providerOptions: {
-        openai: {
-          reasoningSummary: "auto",
-        },
+        // anthropic
         anthropic: {
-          thinking: settings.extendedThinking
-            ? { type: "enabled", budgetTokens: 10000 }
-            : { type: "enabled", budgetTokens: 2000 },
+          ...(settings.extendedThinking && {
+            thinking: { type: "enabled", budgetTokens: 2000 },
+          }),
         } satisfies AnthropicProviderOptions,
+        // openai
+        openai: {
+          ...(settings.extendedThinking && {
+            reasoningSummary: "auto",
+          }),
+        } satisfies OpenAIResponsesProviderOptions,
       },
       tools: {
         // anthropic

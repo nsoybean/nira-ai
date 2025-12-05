@@ -2,7 +2,7 @@
  * Conversation settings stored in the settings JSON column
  */
 export interface ConversationSettings {
-  extendedThinking?: boolean;
+  extendedThinking: boolean;
   // Future settings can be added here without schema changes
 }
 
