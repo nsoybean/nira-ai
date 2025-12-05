@@ -345,6 +345,32 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     )}
                   </div>
                 ))}
+
+                {/* Show loading placeholder if waiting for assistant response */}
+                {isLoading &&
+                  (messages.length === 0 ||
+                   messages[messages.length - 1]?.role === "user") && (
+                  <div className="flex flex-col mb-6">
+                    <div className="flex gap-3">
+                      {/* left - icon */}
+                      <div className="shrink-0 mt-0.5">
+                        <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
+                          <Sparkles className="h-4 w-4 text-white" />
+                        </div>
+                      </div>
+
+                      {/* right - loading indicator */}
+                      <div className="flex-1 flex-col w-full">
+                        <div className="flex items-center mt-1">
+                          <Loader
+                            size={24}
+                            className="animate-spin animation-duration-[1.3s]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </ConversationContent>
             </Conversation>
           </div>
