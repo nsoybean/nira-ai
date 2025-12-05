@@ -299,12 +299,23 @@ export default function ChatPage() {
 
           {/* Centered layout for empty chat */}
           {isChatEmpty ? (
-            <div className="flex-1 flex flex-col items-center justify-center px-4">
+            <div className="flex-1 flex flex-col items-center justify-center px-4 relative">
+              {/* Loading overlay when creating conversation */}
+              {isCreatingConversation && (
+                <div className="absolute inset-0 bg-white/50 dark:bg-gray-950/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="h-8 w-8 border-4 border-gray-300 dark:border-gray-700 border-t-gray-900 dark:border-t-gray-100 rounded-full animate-spin"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Starting conversation...</p>
+                  </div>
+                </div>
+              )}
+
               {/* Toggle sidebar button for empty state */}
               {!sidebarOpen && (
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isCreatingConversation}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

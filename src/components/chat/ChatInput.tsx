@@ -145,12 +145,13 @@ export function ChatInput({
               onChange={(e) => onInputChange(e.target.value)}
               value={input}
               autoFocus
+              disabled={isLoading || isCreatingConversation}
             />
           </PromptInputBody>
           <PromptInputFooter className="flex items-center justify-between">
             <PromptInputTools>
               <PromptInputActionMenu>
-                <PromptInputActionMenuTrigger />
+                <PromptInputActionMenuTrigger disabled={isLoading || isCreatingConversation} />
                 <PromptInputActionMenuContent>
                   <PromptInputActionAddAttachments />
                 </PromptInputActionMenuContent>
@@ -176,6 +177,7 @@ export function ChatInput({
               <PromptInputButton
                 onClick={() => setUseWebSearch(!useWebSearch)}
                 variant={useWebSearch ? "default" : "ghost"}
+                disabled={isLoading || isCreatingConversation}
               >
                 <GlobeIcon size={16} />
                 <span>Search</span>
