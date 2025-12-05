@@ -61,6 +61,9 @@ export function ChatInput({
   const [useWebSearch, setUseWebSearch] = useState(initialWebSearch);
   const isInitialMount = useRef(true);
 
+  // Store pending files during conversation creation
+  const [pendingFiles, setPendingFiles] = useState<any[]>([]);
+
   // Get updateConversation from context
   const { updateConversation } = useConversations();
 
@@ -120,13 +123,28 @@ export function ChatInput({
     }
   }, [input]);
 
+  // Clear pending files when conversation creation completes
+  useEffect(() => {
+    if (!isCreatingConversation && pendingFiles.length > 0) {
+      setPendingFiles([]);
+    }
+  }, [isCreatingConversation, pendingFiles.length]);
+
+  // Wrapper for onSubmit to capture files during conversation creation
+  const handleSubmit = (message: PromptInputMessage, event: FormEvent<HTMLFormElement>) => {
+    // If creating a new conversation, store the files
+    if (isNewChat && message.files && message.files.length > 0) {
+      setPendingFiles(message.files);
+    }
+
+    onSubmit(message, event, { useWebSearch });
+  };
+
   return (
     <div className="bg-white dark:bg-gray-950">
       <div className="max-w-4xl mx-auto px-4 py-4">
         <PromptInput
-          onSubmit={(message, event) =>
-            onSubmit(message, event, { useWebSearch })
-          }
+          onSubmit={handleSubmit}
           className="mt-4 rounded-2xl"
           globalDrop
           multiple
@@ -134,9 +152,18 @@ export function ChatInput({
         >
           {/* header */}
           <PromptInputHeader className="rounded-2xl">
-            <PromptInputAttachments>
-              {(attachment) => <PromptInputAttachment data={attachment} />}
-            </PromptInputAttachments>
+            {/* Show pending files during conversation creation */}
+            {isCreatingConversation && pendingFiles.length > 0 ? (
+              <div className="flex flex-wrap gap-2 p-2">
+                {pendingFiles.map((file, index) => (
+                  <PromptInputAttachment key={index} data={file} />
+                ))}
+              </div>
+            ) : (
+              <PromptInputAttachments>
+                {(attachment) => <PromptInputAttachment data={attachment} />}
+              </PromptInputAttachments>
+            )}
           </PromptInputHeader>
 
           <PromptInputBody>
