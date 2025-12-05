@@ -28,6 +28,10 @@ interface ConversationsContextType {
     conversationId: string,
     updates: Partial<Conversation>
   ) => Promise<boolean>;
+  updateConversationInMemory: (
+    conversationId: string,
+    updates: Partial<Conversation>
+  ) => void;
 }
 
 const ConversationsContext = createContext<
@@ -131,6 +135,17 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     [loadConversations]
   );
 
+  const updateConversationInMemory = useCallback(
+    (conversationId: string, updates: Partial<Conversation>) => {
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.id === conversationId ? { ...conv, ...updates } : conv
+        )
+      );
+    },
+    []
+  );
+
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
@@ -144,6 +159,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       deleteConversation,
       clearAllConversations,
       updateConversation,
+      updateConversationInMemory,
     }),
     [
       conversations,
@@ -152,6 +168,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       deleteConversation,
       clearAllConversations,
       updateConversation,
+      updateConversationInMemory,
     ]
   );
 
