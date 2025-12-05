@@ -63,19 +63,22 @@ export function useChatSubmit({
             sessionStorage.setItem("pendingFiles", JSON.stringify(files));
           }
 
-          // Clear input immediately for better UX
-          setInput("");
+          // Don't clear input yet - keep it visible during loading
+          // Input will be cleared when navigating to the new chat
 
           // Navigate to the new conversation
           router.push(`/chat/${newConversationId}`);
 
           // Reload conversations list
           refreshConversations();
+
+          // Add a small delay before clearing loading state
+          // This makes the transition feel smoother and hides the internal step
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } catch (error) {
         console.error("Error creating conversation:", error);
-        // Restore input on error
-        setInput(input);
+        // Input is already preserved, just need to exit loading state
       } finally {
         setIsCreatingConversation(false);
       }
