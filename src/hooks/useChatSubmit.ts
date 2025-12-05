@@ -71,6 +71,10 @@ export function useChatSubmit({
 
           // Reload conversations list
           refreshConversations();
+
+          // Add a small delay before clearing loading state
+          // This makes the transition feel smoother and hides the internal step
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } catch (error) {
         console.error("Error creating conversation:", error);
