@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatState, ChatStatus, UIMessage } from "ai";
+import { ChatState, ChatStatus, UIMessage, UIMessagePart } from "ai";
 import {
   Sparkles,
   Loader2,
@@ -65,10 +65,42 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
     // Helper to group consecutive text and source-url parts together
     function groupMessageParts(parts: UIMessage["parts"]) {
-      const groups: Array<{
-        type: "reasoning" | "text" | "source-url" | "other";
-        parts: typeof parts;
-      }> = [];
+      const groups: Array<
+        | {
+            type: (typeof parts)[number]["type"];
+            parts: typeof parts;
+          }
+        | {
+            type: "tool-webSearch";
+            parts: Array<
+              UIMessagePart<
+                {},
+                {
+                  webSearch: {
+                    input: {
+                      query: string;
+                      timeRange?: string;
+                    };
+                    output: {
+                      answer: string | null;
+                      images: any[];
+                      query: string;
+                      requestId: string;
+                      responseTime: number;
+                      results: Array<{
+                        content: string;
+                        rawContent: string | null;
+                        score: number;
+                        title: string;
+                        url: string;
+                      }>;
+                    };
+                  };
+                }
+              >
+            >;
+          }
+      > = [];
 
       let currentTextGroup: typeof parts = [];
       let currentSourceGroup: typeof parts = [];
@@ -104,7 +136,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
           if (part.type === "reasoning" && part.text) {
             groups.push({ type: "reasoning", parts: [part] });
           } else {
-            groups.push({ type: "other", parts: [part] });
+            groups.push({ type: part.type, parts: [part] });
           }
         }
       });
@@ -144,28 +176,19 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                   key={`${message.id}-reasoning-${groupIndex}`}
                   className="w-full"
                   isStreaming={
-                    status === "streaming" &&
-                    isLastGroup &&
-                    isLastMessage
+                    status === "streaming" && isLastGroup && isLastMessage
                   }
                 >
                   <ReasoningTrigger />
                   <ReasoningContent>{part.text}</ReasoningContent>
                 </Reasoning>
               );
-            }
-
-            if (group.type === "text") {
-              const textContent = group.parts
-                .map((p: any) => p.text)
-                .join("");
+            } else if (group.type === "text") {
+              const textContent = group.parts.map((p: any) => p.text).join("");
 
               return (
                 <div key={`${message.id}-text-${groupIndex}`}>
-                  <Message
-                    className={cn("max-w-[90%]")}
-                    from={message.role}
-                  >
+                  <Message className={cn("max-w-[90%]")} from={message.role}>
                     <MessageContent className="text-md">
                       <MessageResponse>{textContent}</MessageResponse>
                     </MessageContent>
@@ -185,9 +208,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                   </Message>
                 </div>
               );
-            }
-
-            if (group.type === "source-url") {
+            } else if (group.type === "source-url") {
               return (
                 <Sources key={`${message.id}-sources-${groupIndex}`}>
                   <SourcesTrigger count={group.parts.length} />
@@ -202,9 +223,35 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                   </SourcesContent>
                 </Sources>
               );
+            } else if (group.type === "tool-webSearch") {
+              return (
+                <Sources>
+                  <SourcesTrigger
+                    // white background bordered
+                    className="bg-white border border-gray-300 rounded-md p-4"
+                    count={group.parts[0]?.output?.results.length}
+                    query={group.parts[0].input.query}
+                  />
+                  {group.parts[0]?.output?.results.map((res, i) => {
+                    return (
+                      <SourcesContent
+                        key={`${message.id}-${res.toolCallId}-${i}`}
+                      >
+                        <Source
+                          key={`${message.id}-${i}`}
+                          href={res.url}
+                          title={res.title}
+                        />
+                      </SourcesContent>
+                    );
+                  })}
+                </Sources>
+              );
+            } else if (group.type === "tool-webExtract") {
+              return <>extract</>;
+            } else {
+              return null;
             }
-
-            return null;
           })}
 
           {/* Show initial loader if no content yet */}
@@ -320,7 +367,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                       </div>
                     )}
 
-                    {/* assistant message */}
+                    {/* Assistant message */}
                     {message.role === "assistant" && (
                       <div className="flex flex-col mb-6">
                         {/* message */}
@@ -349,28 +396,28 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                 {/* Show loading placeholder if waiting for assistant response */}
                 {isLoading &&
                   (messages.length === 0 ||
-                   messages[messages.length - 1]?.role === "user") && (
-                  <div className="flex flex-col mb-6">
-                    <div className="flex gap-3">
-                      {/* left - icon */}
-                      <div className="shrink-0 mt-0.5">
-                        <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
-                          <Sparkles className="h-4 w-4 text-white" />
+                    messages[messages.length - 1]?.role === "user") && (
+                    <div className="flex flex-col mb-6">
+                      <div className="flex gap-3">
+                        {/* left - icon */}
+                        <div className="shrink-0 mt-0.5">
+                          <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
+                            <Sparkles className="h-4 w-4 text-white" />
+                          </div>
                         </div>
-                      </div>
 
-                      {/* right - loading indicator */}
-                      <div className="flex-1 flex-col w-full">
-                        <div className="flex items-center mt-1">
-                          <Loader
-                            size={24}
-                            className="animate-spin animation-duration-[1.3s]"
-                          />
+                        {/* right - loading indicator */}
+                        <div className="flex-1 flex-col w-full">
+                          <div className="flex items-center mt-1">
+                            <Loader
+                              size={24}
+                              className="animate-spin animation-duration-[1.3s]"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </ConversationContent>
             </Conversation>
           </div>

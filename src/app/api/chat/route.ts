@@ -10,10 +10,16 @@ import {
   UIMessage,
   createIdGenerator,
   LanguageModel,
+  stepCountIs,
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
-import { anthropicWebSearchTool, openaiWebSearchTool } from "@/lib/tools";
+import {
+  anthropicWebSearchTool,
+  openaiWebSearchTool,
+  tavilyExtractTool,
+  tavilySearchTool,
+} from "@/lib/tools";
 import { mergeConversationSettings } from "@/lib/conversation-settings";
 
 // Allow streaming responses up to X seconds
@@ -129,13 +135,7 @@ export async function POST(req: Request) {
     // Stream the chat completion
     const result = streamText({
       model: languageModel,
-      headers: {
-        // doesnt seem to be working
-        // https://platform.claude.com/docs/en/agents-and-tools/tool-use/fine-grained-tool-streaming
-        // ...(modelConfig.provider === "anthropic" && {
-        //   "anthropic-beta": "fine-grained-tool-streaming-2025-05-14",
-        // }),
-      },
+      stopWhen: stepCountIs(5),
       providerOptions: {
         // anthropic
         anthropic: {
@@ -151,16 +151,22 @@ export async function POST(req: Request) {
         } satisfies OpenAIResponsesProviderOptions,
       },
       tools: {
-        // anthropic
-        ...(modelConfig.provider === "anthropic" && {
-          // ned to evaluate, seems abit spammy
-          // code_execution: codeExecutionTool,
-          ...(conversation.websearch && { web_search: anthropicWebSearchTool }),
+        // web search
+        ...(conversation.websearch && {
+          webSearch: tavilySearchTool,
+          webExtract: tavilyExtractTool,
         }),
-        // openai
-        ...(modelConfig.provider === "openai" && {
-          ...(conversation.websearch && { web_search: openaiWebSearchTool }),
-        }),
+
+        // // anthropic
+        // ...(modelConfig.provider === "anthropic" && {
+        //   // ned to evaluate, seems abit spammy
+        //   // code_execution: codeExecutionTool,
+        //   ...(conversation.websearch && { web_search: anthropicWebSearchTool }),
+        // }),
+        // // openai
+        // ...(modelConfig.provider === "openai" && {
+        //   ...(conversation.websearch && { web_search: openaiWebSearchTool }),
+        // }),
       },
       messages: modelMessages,
       system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,

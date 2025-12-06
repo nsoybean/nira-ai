@@ -6,7 +6,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { BookIcon, ChevronDownIcon } from "lucide-react";
+import { BookIcon, ChevronDownIcon, GlobeIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 
 export type SourcesProps = ComponentProps<"div">;
@@ -20,12 +20,14 @@ export const Sources = ({ className, ...props }: SourcesProps) => (
 
 export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
   count: number;
+  query?: string;
 };
 
 export const SourcesTrigger = ({
   className,
   count,
   children,
+  query,
   ...props
 }: SourcesTriggerProps) => (
   <CollapsibleTrigger
@@ -34,7 +36,10 @@ export const SourcesTrigger = ({
   >
     {children ?? (
       <>
-        <p className="font-medium">Used {count} sources</p>
+        <GlobeIcon size={16} />
+        {/* render query max 2 lines truncate  */}
+        {query && <p className="font-medium truncate max-w-lg">{query}</p>}
+        <p className="font-medium">{count} results</p>
         <ChevronDownIcon className="h-4 w-4" />
       </>
     )}
