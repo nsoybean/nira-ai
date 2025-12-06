@@ -245,6 +245,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                   <SourcesTrigger
                     className="bg-white border border-gray-300 rounded-md p-4"
                     count={resultsCount}
+                    isLoading={!resultsCount}
                     label={query}
                     resultLabel={`result${resultsCount > 1 ? "s" : ""}`}
                   />
@@ -286,11 +287,10 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
             } else if (group.type === "tool-webExtract") {
               const part = group.parts[0] as any;
               const output = part?.output;
-              const input = part?.input;
               const successCount = output?.results?.length || 0;
               const failCount = output?.failedResults?.length || 0;
               const totalCount = successCount + failCount;
-              // const responseTime = output?.responseTime;
+              const responseTime = output?.responseTime;
               // const urls = input?.urls || [];
 
               return (
@@ -299,6 +299,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     className="bg-white border border-gray-300 rounded-md p-4"
                     count={totalCount}
                     label="Reading"
+                    isLoading={responseTime === undefined}
                     resultLabel={`result${totalCount > 1 ? "s" : ""}`}
                   />
                   <SourcesContent>

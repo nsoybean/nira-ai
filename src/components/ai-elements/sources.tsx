@@ -23,6 +23,7 @@ export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
   count?: number;
   label: string;
   resultLabel: string;
+  isLoading?: boolean;
 };
 
 export const SourcesTrigger = ({
@@ -31,10 +32,9 @@ export const SourcesTrigger = ({
   children,
   label,
   resultLabel,
+  isLoading,
   ...props
 }: SourcesTriggerProps) => {
-  const isLoading = count === undefined;
-
   return (
     <CollapsibleTrigger
       className={cn("flex items-center gap-2", className)}
