@@ -238,7 +238,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               const input = part?.input;
               const resultsCount = output?.results?.length;
               const query = input?.query;
-              const responseTime = output?.responseTime;
+              // const responseTime = output?.responseTime;
 
               return (
                 <Sources key={`${message.id}-websearch-${groupIndex}`}>
@@ -290,8 +290,8 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               const successCount = output?.results?.length || 0;
               const failCount = output?.failedResults?.length || 0;
               const totalCount = successCount + failCount;
-              const responseTime = output?.responseTime;
-              const urls = input?.urls || [];
+              // const responseTime = output?.responseTime;
+              // const urls = input?.urls || [];
 
               return (
                 <Sources key={`${message.id}-webextract-${groupIndex}`}>
@@ -353,22 +353,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                       ))}
                     </div>
                   </SourcesContent>
-                  {/* <div className="flex items-center gap-2 w-full">
-                      <GlobeIcon size={16} />
-                      <span>
-                        {`Reading: ${totalCount} URL`}
-                        {totalCount !== 1 ? "s" : ""}
-                      </span>
-                      {successCount > 0 && failCount > 0 && (
-                        <span>
-                          ({successCount} success, {failCount} failed)
-                        </span>
-                      )}
-                      {responseTime && (
-                        <span>• {responseTime.toFixed(2)}s</span>
-                      )}
-                      <ChevronDownIcon className="h-4 w-4" />
-                    </div> */}
                 </Sources>
               );
             } else {
