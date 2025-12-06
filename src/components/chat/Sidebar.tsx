@@ -19,6 +19,13 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import {
   Loader2,
   PanelLeftClose,
   MessageSquarePlus,
@@ -39,6 +46,7 @@ import { BetaAuthDialog } from "@/components/BetaAuthDialog";
 import { useBetaAuth } from "@/contexts/BetaAuthContext";
 import { toast } from "sonner";
 import { cn, isDevelopment } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Conversation {
   id: string;
@@ -57,98 +65,54 @@ interface SidebarProps {
   onRename?: (conversationId: string, newTitle: string) => Promise<boolean>;
 }
 
-export const Sidebar = memo(function Sidebar({
-  isOpen,
-  onClose,
+// Sidebar content component to be reused in both desktop and mobile versions
+const SidebarContent = ({
   currentConversationId,
   onNewChat,
   conversations,
   isLoadingConversations,
-  onDelete,
-  onClearAll,
-  onRename,
-}: SidebarProps) {
-  // state
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [betaDialogOpen, setBetaDialogOpen] = useState(false);
-  const [conversationToDelete, setConversationToDelete] = useState<
-    string | null
-  >(null);
-  const [conversationToRename, setConversationToRename] =
-    useState<Conversation | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-
-  // hook
+  onClose,
+  handleDeleteClick,
+  handleRenameClick,
+  handleShareClick,
+  handleClearAllClick,
+}: {
+  currentConversationId: string;
+  onNewChat: () => void;
+  conversations: Conversation[];
+  isLoadingConversations: boolean;
+  onClose?: () => void;
+  handleDeleteClick: (e: React.MouseEvent, conversationId: string) => void;
+  handleRenameClick: (e: React.MouseEvent, conversation: Conversation) => void;
+  handleShareClick: (e: React.MouseEvent) => void;
+  handleClearAllClick: () => void;
+}) => {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useBetaAuth();
+  const [betaDialogOpen, setBetaDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
 
-  const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
-    e.stopPropagation();
-    setConversationToDelete(conversationId);
-    setDeleteDialogOpen(true);
+  // Handle conversation click with mobile auto-close
+  const handleConversationClick = (conversationId: string) => {
+    router.push(`/chat/${conversationId}`);
+    // Auto-close sidebar on mobile after navigation
+    if (isMobile && onClose) {
+      onClose();
+    }
   };
 
-  const handleConfirmDelete = async () => {
-    if (!conversationToDelete || !onDelete) return;
-
-    setIsDeleting(true);
-    await onDelete(conversationToDelete);
-
-    setIsDeleting(false);
-    setDeleteDialogOpen(false);
-    setConversationToDelete(null);
-  };
-
-  const handleClearAllClick = () => {
-    setClearAllDialogOpen(true);
-  };
-
-  const handleConfirmClearAll = async () => {
-    if (!onClearAll) return;
-
-    setIsClearing(true);
-    await onClearAll();
-
-    setIsClearing(false);
-    setClearAllDialogOpen(false);
-  };
-
-  const handleRenameClick = (
-    e: React.MouseEvent,
-    conversation: Conversation
-  ) => {
-    e.stopPropagation();
-    setConversationToRename(conversation);
-    setRenameDialogOpen(true);
-  };
-
-  const handleConfirmRename = async (newTitle: string) => {
-    if (!conversationToRename || !onRename) return;
-
-    setIsRenaming(true);
-    await onRename(conversationToRename.id, newTitle);
-
-    setIsRenaming(false);
-    setRenameDialogOpen(false);
-    setConversationToRename(null);
-  };
-
-  const handleShareClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toast.info("Share feature coming soon!");
+  // Handle new chat click with mobile auto-close
+  const handleNewChatClick = () => {
+    onNewChat();
+    // Auto-close sidebar on mobile after new chat
+    if (isMobile && onClose) {
+      onClose();
+    }
   };
 
   return (
-    <aside
-      className={`${
-        isOpen ? "w-64" : "w-0"
-      } transition-all duration-300 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden`}
-    >
+    <>
       {/* Sidebar Header */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-4">
@@ -164,24 +128,26 @@ export const Sidebar = memo(function Sidebar({
               BETA
             </Badge>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 dark:hover:bg-gray-800"
-                onClick={onClose}
-              >
-                <PanelLeftClose className="h-4 w-4 dark:text-gray-400" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <div className="flex items-center gap-2">
-                <span>Close sidebar</span>
-                <Kbd>⌘.</Kbd>
-              </div>
-            </TooltipContent>
-          </Tooltip>
+          {onClose && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 dark:hover:bg-gray-800"
+                  onClick={onClose}
+                >
+                  <PanelLeftClose className="h-4 w-4 dark:text-gray-400" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <div className="flex items-center gap-2">
+                  <span>Close sidebar</span>
+                  <Kbd>⌘.</Kbd>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
 
         <Tooltip>
@@ -189,7 +155,7 @@ export const Sidebar = memo(function Sidebar({
             <Button
               className="w-full justify-start gap-2 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
               size="sm"
-              onClick={onNewChat}
+              onClick={handleNewChatClick}
             >
               <MessageSquarePlus className="h-4 w-4" />
               New Chat
@@ -221,7 +187,7 @@ export const Sidebar = memo(function Sidebar({
             conversations.map((conv) => (
               <div
                 key={conv.id}
-                onClick={() => router.push(`/chat/${conv.id}`)}
+                onClick={() => handleConversationClick(conv.id)}
                 className={cn(
                   `group text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 cursor-pointer ${
                     conv.id === currentConversationId
@@ -355,23 +321,185 @@ export const Sidebar = memo(function Sidebar({
         </DropdownMenu>
       </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Beta Auth Dialog */}
+      <BetaAuthDialog open={betaDialogOpen} onOpenChange={setBetaDialogOpen} />
+    </>
+  );
+};
+
+export const Sidebar = memo(function Sidebar({
+  isOpen,
+  onClose,
+  currentConversationId,
+  onNewChat,
+  conversations,
+  isLoadingConversations,
+  onDelete,
+  onClearAll,
+  onRename,
+}: SidebarProps) {
+  // state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [conversationToDelete, setConversationToDelete] = useState<
+    string | null
+  >(null);
+  const [conversationToRename, setConversationToRename] =
+    useState<Conversation | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  // hook
+  const router = useRouter();
+  const isMobile = useIsMobile();
+
+  const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {
+    e.stopPropagation();
+    setConversationToDelete(conversationId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!conversationToDelete || !onDelete) return;
+
+    setIsDeleting(true);
+    await onDelete(conversationToDelete);
+
+    setIsDeleting(false);
+    setDeleteDialogOpen(false);
+    setConversationToDelete(null);
+  };
+
+  const handleClearAllClick = () => {
+    setClearAllDialogOpen(true);
+  };
+
+  const handleConfirmClearAll = async () => {
+    if (!onClearAll) return;
+
+    setIsClearing(true);
+    await onClearAll();
+
+    setIsClearing(false);
+    setClearAllDialogOpen(false);
+  };
+
+  const handleRenameClick = (
+    e: React.MouseEvent,
+    conversation: Conversation
+  ) => {
+    e.stopPropagation();
+    setConversationToRename(conversation);
+    setRenameDialogOpen(true);
+  };
+
+  const handleConfirmRename = async (newTitle: string) => {
+    if (!conversationToRename || !onRename) return;
+
+    setIsRenaming(true);
+    await onRename(conversationToRename.id, newTitle);
+
+    setIsRenaming(false);
+    setRenameDialogOpen(false);
+    setConversationToRename(null);
+  };
+
+  const handleShareClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toast.info("Share feature coming soon!");
+  };
+
+  // Mobile: Render as Sheet drawer
+  if (isMobile) {
+    return (
+      <>
+        <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+          <SheetContent
+            side="left"
+            className="w-[280px] sm:w-[320px] p-0 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800"
+          >
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation Menu</SheetTitle>
+              <SheetDescription>
+                Access your conversations and settings
+              </SheetDescription>
+            </SheetHeader>
+            <div className="h-full flex flex-col">
+              <SidebarContent
+                currentConversationId={currentConversationId}
+                onNewChat={onNewChat}
+                conversations={conversations}
+                isLoadingConversations={isLoadingConversations}
+                onClose={onClose}
+                handleDeleteClick={handleDeleteClick}
+                handleRenameClick={handleRenameClick}
+                handleShareClick={handleShareClick}
+                handleClearAllClick={handleClearAllClick}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Dialogs */}
+        <DeleteConversationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleConfirmDelete}
+          isDeleting={isDeleting}
+        />
+        <ClearAllChatsDialog
+          open={clearAllDialogOpen}
+          onOpenChange={setClearAllDialogOpen}
+          onConfirm={handleConfirmClearAll}
+          isClearing={isClearing}
+        />
+        <RenameConversationDialog
+          open={renameDialogOpen}
+          onOpenChange={setRenameDialogOpen}
+          onConfirm={handleConfirmRename}
+          currentTitle={conversationToRename?.title || ""}
+          isRenaming={isRenaming}
+        />
+      </>
+    );
+  }
+
+  // Desktop: Render as fixed sidebar
+  return (
+    <>
+      <aside
+        className={`${
+          isOpen ? "w-64" : "w-0"
+        } transition-all duration-300 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden`}
+      >
+        <SidebarContent
+          currentConversationId={currentConversationId}
+          onNewChat={onNewChat}
+          conversations={conversations}
+          isLoadingConversations={isLoadingConversations}
+          onClose={onClose}
+          handleDeleteClick={handleDeleteClick}
+          handleRenameClick={handleRenameClick}
+          handleShareClick={handleShareClick}
+          handleClearAllClick={handleClearAllClick}
+        />
+      </aside>
+
+      {/* Dialogs */}
       <DeleteConversationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
       />
-
-      {/* Clear All Chats Confirmation Dialog */}
       <ClearAllChatsDialog
         open={clearAllDialogOpen}
         onOpenChange={setClearAllDialogOpen}
         onConfirm={handleConfirmClearAll}
         isClearing={isClearing}
       />
-
-      {/* Rename Confirmation Dialog */}
       <RenameConversationDialog
         open={renameDialogOpen}
         onOpenChange={setRenameDialogOpen}
@@ -379,9 +507,6 @@ export const Sidebar = memo(function Sidebar({
         currentTitle={conversationToRename?.title || ""}
         isRenaming={isRenaming}
       />
-
-      {/* Beta Auth Dialog */}
-      <BetaAuthDialog open={betaDialogOpen} onOpenChange={setBetaDialogOpen} />
-    </aside>
+    </>
   );
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { ChatStatus } from "ai";
-import { Loader2, ArrowUp, GlobeIcon } from "lucide-react";
+import { Loader2, ArrowUp, Settings2 } from "lucide-react";
 import { useRef, useEffect, FormEvent, useState } from "react";
 import { ModelSelectorInline } from "./ModelSelectorInline";
 import {
@@ -24,6 +24,12 @@ import {
 import { useConversations } from "@/contexts/ConversationsContext";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 
 interface ChatInputProps {
   input: string;
@@ -40,6 +46,7 @@ interface ChatInputProps {
   conversationId: string;
   isNewChat: boolean;
   initialWebSearch?: boolean;
+  initialExtendedThinking?: boolean;
 }
 
 export function ChatInput({
@@ -53,13 +60,21 @@ export function ChatInput({
   conversationId,
   isNewChat,
   initialWebSearch = false,
+  initialExtendedThinking = false,
 }: ChatInputProps) {
   // ref
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Internal state for web search
+  // Internal state for settings
   const [useWebSearch, setUseWebSearch] = useState(initialWebSearch);
+  const [useExtendedThinking, setUseExtendedThinking] = useState(
+    initialExtendedThinking
+  );
   const isInitialMount = useRef(true);
+  const isInitialMountThinking = useRef(true);
+
+  // Store pending files during conversation creation
+  const [pendingFiles, setPendingFiles] = useState<any[]>([]);
 
   // Get updateConversation from context
   const { updateConversation } = useConversations();
@@ -76,12 +91,31 @@ export function ChatInput({
     },
   });
 
+  // Mutation for updating extended thinking setting
+  const { mutate: updateExtendedThinking } = useMutation({
+    mutationFn: async (extendedThinking: boolean) => {
+      return updateConversation(conversationId, {
+        settings: { extendedThinking },
+      });
+    },
+    onError: (error) => {
+      toast.error(`Failed to update extended thinking setting: ${error}`);
+      // reset
+      setUseExtendedThinking((prev) => !prev);
+    },
+  });
+
   const isLoading = status === "submitted" || status === "streaming";
 
   // Sync internal state with initialWebSearch prop when it changes
   useEffect(() => {
     setUseWebSearch(initialWebSearch);
   }, [initialWebSearch]);
+
+  // Sync internal state with initialExtendedThinking prop when it changes
+  useEffect(() => {
+    setUseExtendedThinking(initialExtendedThinking);
+  }, [initialExtendedThinking]);
 
   // Update conversation when web search is toggled (not on mount)
   useEffect(() => {
@@ -96,6 +130,20 @@ export function ChatInput({
       updateWebSearch(useWebSearch);
     }
   }, [useWebSearch, conversationId, isNewChat, updateWebSearch]);
+
+  // Update conversation when extended thinking is toggled (not on mount)
+  useEffect(() => {
+    // Skip the first render (mount)
+    if (isInitialMountThinking.current) {
+      isInitialMountThinking.current = false;
+      return;
+    }
+
+    // Only update when toggled and not a new chat
+    if (!isNewChat && conversationId) {
+      updateExtendedThinking(useExtendedThinking);
+    }
+  }, [useExtendedThinking, conversationId, isNewChat, updateExtendedThinking]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -120,13 +168,31 @@ export function ChatInput({
     }
   }, [input]);
 
+  // Clear pending files when navigating away (conversationId changes) or chat is no longer new
+  useEffect(() => {
+    if (!isNewChat && pendingFiles.length > 0) {
+      setPendingFiles([]);
+    }
+  }, [isNewChat, conversationId, pendingFiles.length]);
+
+  // Wrapper for onSubmit to capture files during conversation creation
+  const handleSubmit = (
+    message: PromptInputMessage,
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    // If creating a new conversation, store the files
+    if (isNewChat && message.files && message.files.length > 0) {
+      setPendingFiles(message.files);
+    }
+
+    onSubmit(message, event, { useWebSearch });
+  };
+
   return (
     <div className="bg-white dark:bg-gray-950">
       <div className="max-w-4xl mx-auto px-4 py-4">
         <PromptInput
-          onSubmit={(message, event) =>
-            onSubmit(message, event, { useWebSearch })
-          }
+          onSubmit={handleSubmit}
           className="mt-4 rounded-2xl"
           globalDrop
           multiple
@@ -134,9 +200,18 @@ export function ChatInput({
         >
           {/* header */}
           <PromptInputHeader className="rounded-2xl">
-            <PromptInputAttachments>
-              {(attachment) => <PromptInputAttachment data={attachment} />}
-            </PromptInputAttachments>
+            {/* Show pending files during conversation creation */}
+            {isCreatingConversation && pendingFiles.length > 0 ? (
+              <div className="flex flex-wrap gap-2 p-2">
+                {pendingFiles.map((file, index) => (
+                  <PromptInputAttachment key={index} data={file} />
+                ))}
+              </div>
+            ) : (
+              <PromptInputAttachments>
+                {(attachment) => <PromptInputAttachment data={attachment} />}
+              </PromptInputAttachments>
+            )}
           </PromptInputHeader>
 
           <PromptInputBody>
@@ -145,41 +220,80 @@ export function ChatInput({
               onChange={(e) => onInputChange(e.target.value)}
               value={input}
               autoFocus
+              disabled={isLoading || isCreatingConversation}
             />
           </PromptInputBody>
           <PromptInputFooter className="flex items-center justify-between">
             <PromptInputTools>
               <PromptInputActionMenu>
-                <PromptInputActionMenuTrigger />
+                <PromptInputActionMenuTrigger
+                  disabled={isLoading || isCreatingConversation}
+                />
                 <PromptInputActionMenuContent>
                   <PromptInputActionAddAttachments />
                 </PromptInputActionMenuContent>
               </PromptInputActionMenu>
 
-              {/* prompt library, tmo commented out */}
-              {/* <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
+              {/* Settings Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <PromptInputButton
+                    variant={
+                      useWebSearch || useExtendedThinking ? "default" : "ghost"
+                    }
                     type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
-                    <BookOpen className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Prompt Library</p>
-                </TooltipContent>
-              </Tooltip> */}
+                    <Settings2 size={16} />
+                    {/* <span>Settings</span> */}
+                  </PromptInputButton>
+                </PopoverTrigger>
+                <PopoverContent className="w-64" align="start">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-sm">Chat Settings</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Configure settings for this conversation
+                      </p>
+                    </div>
 
-              <PromptInputButton
-                onClick={() => setUseWebSearch(!useWebSearch)}
-                variant={useWebSearch ? "default" : "ghost"}
-              >
-                <GlobeIcon size={16} />
-                <span>Search</span>
-              </PromptInputButton>
+                    <div className="space-y-3">
+                      {/* Web Search Toggle */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <label className="text-sm font-medium">
+                            Web Search
+                          </label>
+                          <p className="text-xs text-muted-foreground">
+                            Search the web for answers
+                          </p>
+                        </div>
+                        <Switch
+                          checked={useWebSearch}
+                          onCheckedChange={setUseWebSearch}
+                          disabled={isLoading || isCreatingConversation}
+                        />
+                      </div>
+
+                      {/* Extended Thinking Toggle */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <label className="text-sm font-medium">
+                            Extended Thinking
+                          </label>
+                          <p className="text-xs text-muted-foreground">
+                            Enable advanced reasoning capabilities
+                          </p>
+                        </div>
+                        <Switch
+                          checked={useExtendedThinking}
+                          onCheckedChange={setUseExtendedThinking}
+                          disabled={isLoading || isCreatingConversation}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
 
               {/* model selection */}
               <ModelSelectorInline
