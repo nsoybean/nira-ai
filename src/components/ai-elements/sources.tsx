@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import { BookIcon, ChevronDownIcon, GlobeIcon } from "lucide-react";
 import type { ComponentProps } from "react";
+import { Shimmer } from "./shimmer";
 
 export type SourcesProps = ComponentProps<"div">;
 
@@ -19,7 +20,7 @@ export const Sources = ({ className, ...props }: SourcesProps) => (
 );
 
 export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
-  count: number;
+  count?: number;
   query?: string;
 };
 
@@ -29,22 +30,32 @@ export const SourcesTrigger = ({
   children,
   query,
   ...props
-}: SourcesTriggerProps) => (
-  <CollapsibleTrigger
-    className={cn("flex items-center gap-2", className)}
-    {...props}
-  >
-    {children ?? (
-      <>
-        <GlobeIcon size={16} />
-        {/* render query max 2 lines truncate  */}
-        {query && <p className="font-medium truncate max-w-lg">{query}</p>}
-        <p className="font-medium">{count} results</p>
-        <ChevronDownIcon className="h-4 w-4" />
-      </>
-    )}
-  </CollapsibleTrigger>
-);
+}: SourcesTriggerProps) => {
+  const isLoading = count === undefined;
+
+  return (
+    <CollapsibleTrigger
+      className={cn("flex items-center gap-2", className)}
+      {...props}
+    >
+      {children ?? (
+        <>
+          <GlobeIcon size={16} />
+          {/* render query max 2 lines truncate  */}
+          {query && isLoading ? (
+            <Shimmer as="span" duration={1.5} className="font-medium truncate max-w-lg">
+              {query}
+            </Shimmer>
+          ) : query ? (
+            <p className="font-medium truncate max-w-lg">{query}</p>
+          ) : null}
+          <p className="font-medium">{isLoading ? "..." : `${count} results`}</p>
+          <ChevronDownIcon className="h-4 w-4" />
+        </>
+      )}
+    </CollapsibleTrigger>
+  );
+};
 
 export type SourcesContentProps = ComponentProps<typeof CollapsibleContent>;
 
