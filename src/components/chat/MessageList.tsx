@@ -12,6 +12,7 @@ import {
   BookIcon,
   CrossIcon,
   ChevronDownIcon,
+  XIcon,
 } from "lucide-react";
 import { forwardRef, Fragment, useState } from "react";
 import { Streamdown } from "streamdown";
@@ -169,7 +170,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
         .join("");
 
       return (
-        <div className="flex flex-col gap-3 w-full">
+        <div className="flex flex-col w-full">
           {groups.map((group, groupIndex) => {
             const isLastGroup = groupIndex === groups.length - 1;
 
@@ -303,30 +304,40 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                   <SourcesContent>
                     <div className="space-y-2">
                       {/* Success Results */}
-                      {output?.results?.map((result: any, i: number) => (
-                        <div
-                          key={`${message.id}-extract-success-${i}`}
-                          className="flex items-start gap-2 text-sm"
-                        >
-                          <Check
-                            size={14}
-                            className="text-green-600 mt-0.5 shrink-0"
-                          />
-                          <a href={result.url} target="_blank" rel="noreferrer">
-                            {result.url}
-                          </a>
-                        </div>
-                      ))}
+                      {output?.results?.map((result: any, i: number) => {
+                        return (
+                          <div
+                            key={`${message.id}-extract-success-${i}`}
+                            className="flex items-start gap-2 text-sm hover:bg-gray-50 -mx-2 px-2 py-1 rounded"
+                          >
+                            <a
+                              href={result.url}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <div className="flex flex-row items-center gap-2 flex-1 min-w-0 max-w-2xl">
+                                <Check
+                                  size={14}
+                                  className="text-green-600 mt-0.5 shrink-0"
+                                />
+                                <div className="text-sm text-gray-900 truncate">
+                                  {result.url}
+                                </div>
+                              </div>
+                            </a>
+                          </div>
+                        );
+                      })}
 
                       {/* Failed Results */}
                       {output?.failedResults?.map((failed: any, i: number) => (
                         <div
                           key={`${message.id}-extract-fail-${i}`}
-                          className="flex items-start gap-2 text-sm"
+                          className="flex items-start gap-2 text-sm hover:bg-gray-50 -mx-2 px-2 py-1 rounded"
                         >
-                          <CrossIcon
+                          <XIcon
                             size={14}
-                            className="text-red-600 mt-0.5 shrink-0 rotate-45"
+                            className="text-red-400 mt-0.5 shrink-0 "
                           />
                           <div className="flex-1">
                             <a
@@ -336,9 +347,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                             >
                               {failed.url}
                             </a>
-                            <p className="text-gray-500 mt-1">
-                              Error: {failed.error}
-                            </p>
+                            <p className="text-gray-500 mt-1">{failed.error}</p>
                           </div>
                         </div>
                       ))}
