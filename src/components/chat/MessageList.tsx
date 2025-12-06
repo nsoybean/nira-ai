@@ -8,6 +8,10 @@ import {
   CopyIcon,
   RefreshCcwIcon,
   Check,
+  GlobeIcon,
+  BookIcon,
+  CrossIcon,
+  ChevronDownIcon,
 } from "lucide-react";
 import { forwardRef, Fragment, useState } from "react";
 import { Streamdown } from "streamdown";
@@ -211,7 +215,11 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
             } else if (group.type === "source-url") {
               return (
                 <Sources key={`${message.id}-sources-${groupIndex}`}>
-                  <SourcesTrigger count={group.parts.length} />
+                  <SourcesTrigger
+                    count={group.parts.length}
+                    label="Reading pages"
+                    resultLabel="results"
+                  />
                   <SourcesContent>
                     {group.parts.map((part: any, partIndex) => (
                       <Source
@@ -224,34 +232,135 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                 </Sources>
               );
             } else if (group.type === "tool-webSearch") {
+              const part = group.parts[0] as any;
+              const output = part?.output;
+              const input = part?.input;
+              const resultsCount = output?.results?.length;
+              const query = input?.query;
+              const responseTime = output?.responseTime;
+
               return (
                 <Sources key={`${message.id}-websearch-${groupIndex}`}>
                   <SourcesTrigger
-                    // white background bordered
                     className="bg-white border border-gray-300 rounded-md p-4"
-                    count={group.parts[0]?.output?.results.length}
-                    query={group.parts[0].input?.query}
+                    count={resultsCount}
+                    label={query}
+                    resultLabel={`result${resultsCount > 1 ? "s" : ""}`}
                   />
-                  {group.parts[0]?.output?.results.map((res, i) => {
-                    return (
-                      <SourcesContent
-                        key={`${message.id}-${res.toolCallId}-${i}`}
-                      >
-                        <Source
-                          key={`${message.id}-${i}`}
-                          href={res.url}
-                          title={res.title}
-                        />
-                      </SourcesContent>
-                    );
-                  })}
+                  <SourcesContent>
+                    <div>
+                      {output?.results?.map((result: any, i: number) => {
+                        let domain = "";
+                        try {
+                          const url = new URL(result.url);
+                          domain = url.hostname.replace("www.", "");
+                        } catch (e) {
+                          domain = result.url;
+                        }
+
+                        return (
+                          <a
+                            key={`${message.id}-websearch-result-${i}`}
+                            href={result.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-start gap-2 hover:bg-gray-50 -mx-2 px-2 py-1 rounded"
+                          >
+                            <div className="flex flex-row items-center gap-2 flex-1 min-w-0 max-w-2xl">
+                              <BookIcon className="h-4 w-4" />
+                              <div className="text-sm text-gray-900 truncate">
+                                {result.title || result.url}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {domain}
+                              </div>
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </SourcesContent>
                 </Sources>
               );
             } else if (group.type === "tool-webExtract") {
+              const part = group.parts[0] as any;
+              const output = part?.output;
+              const input = part?.input;
+              const successCount = output?.results?.length || 0;
+              const failCount = output?.failedResults?.length || 0;
+              const totalCount = successCount + failCount;
+              const responseTime = output?.responseTime;
+              const urls = input?.urls || [];
+
               return (
-                <div key={`${message.id}-webextract-${groupIndex}`}>
-                  extract
-                </div>
+                <Sources key={`${message.id}-webextract-${groupIndex}`}>
+                  <SourcesTrigger
+                    className="bg-white border border-gray-300 rounded-md p-4"
+                    count={totalCount}
+                    label="Reading"
+                    resultLabel={`result${totalCount > 1 ? "s" : ""}`}
+                  />
+                  <SourcesContent>
+                    <div className="space-y-2">
+                      {/* Success Results */}
+                      {output?.results?.map((result: any, i: number) => (
+                        <div
+                          key={`${message.id}-extract-success-${i}`}
+                          className="flex items-start gap-2 text-sm"
+                        >
+                          <Check
+                            size={14}
+                            className="text-green-600 mt-0.5 shrink-0"
+                          />
+                          <a href={result.url} target="_blank" rel="noreferrer">
+                            {result.url}
+                          </a>
+                        </div>
+                      ))}
+
+                      {/* Failed Results */}
+                      {output?.failedResults?.map((failed: any, i: number) => (
+                        <div
+                          key={`${message.id}-extract-fail-${i}`}
+                          className="flex items-start gap-2 text-sm"
+                        >
+                          <CrossIcon
+                            size={14}
+                            className="text-red-600 mt-0.5 shrink-0 rotate-45"
+                          />
+                          <div className="flex-1">
+                            <a
+                              href={failed.url}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {failed.url}
+                            </a>
+                            <p className="text-gray-500 mt-1">
+                              Error: {failed.error}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SourcesContent>
+                  {/* <div className="flex items-center gap-2 w-full">
+                      <GlobeIcon size={16} />
+                      <span>
+                        {`Reading: ${totalCount} URL`}
+                        {totalCount !== 1 ? "s" : ""}
+                      </span>
+                      {successCount > 0 && failCount > 0 && (
+                        <span>
+                          ({successCount} success, {failCount} failed)
+                        </span>
+                      )}
+                      {responseTime && (
+                        <span>• {responseTime.toFixed(2)}s</span>
+                      )}
+                      <ChevronDownIcon className="h-4 w-4" />
+                    </div> */}
+                </Sources>
               );
             } else {
               return null;

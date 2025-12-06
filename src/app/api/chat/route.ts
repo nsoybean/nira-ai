@@ -118,23 +118,23 @@ export async function POST(req: Request) {
     const modelMessages = convertToModelMessages(allMessages);
 
     // Get the language model instance based on provider
-    let languageModel: LanguageModel;
-    if (modelConfig.provider === "anthropic") {
-      languageModel = anthropic(selectedModelId);
-    } else if (modelConfig.provider === "openai") {
-      languageModel = openai(selectedModelId);
-    } else {
-      return new Response(`Unsupported provider: ${modelConfig.provider}`, {
-        status: 400,
-      });
-    }
+    // let languageModel: LanguageModel;
+    // if (modelConfig.provider === "anthropic") {
+    //   languageModel = anthropic(selectedModelId, {api});
+    // } else if (modelConfig.provider === "openai") {
+    //   languageModel = openai(selectedModelId);
+    // } else {
+    //   return new Response(`Unsupported provider: ${modelConfig.provider}`, {
+    //     status: 400,
+    //   });
+    // }
 
     // Track request start time for metrics
     const startTime = Date.now();
 
     // Stream the chat completion
     const result = streamText({
-      model: languageModel,
+      model: `${modelConfig.provider}/${selectedModelId}`,
       stopWhen: stepCountIs(5),
       providerOptions: {
         // anthropic

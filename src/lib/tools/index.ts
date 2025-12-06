@@ -14,8 +14,10 @@ export const openaiWebSearchTool = openai.tools.webSearch({
 });
 
 export const tavilySearchTool = tavilySearch({
+  maxResults: 5,
   apiKey: process.env.TAVILY_API_KEY,
 });
 export const tavilyExtractTool = tavilyExtract({
   apiKey: process.env.TAVILY_API_KEY,
+  extractDepth: "basic",
 });

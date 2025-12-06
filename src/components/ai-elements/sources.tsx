@@ -21,14 +21,16 @@ export const Sources = ({ className, ...props }: SourcesProps) => (
 
 export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
   count?: number;
-  query?: string;
+  label: string;
+  resultLabel: string;
 };
 
 export const SourcesTrigger = ({
   className,
   count,
   children,
-  query,
+  label,
+  resultLabel,
   ...props
 }: SourcesTriggerProps) => {
   const isLoading = count === undefined;
@@ -42,14 +44,20 @@ export const SourcesTrigger = ({
         <>
           <GlobeIcon size={16} />
           {/* render query max 2 lines truncate  */}
-          {query && isLoading ? (
-            <Shimmer as="span" duration={1.5} className="font-medium truncate max-w-lg">
-              {query}
+          {label && isLoading ? (
+            <Shimmer
+              as="span"
+              duration={1.5}
+              className="font-medium truncate max-w-lg"
+            >
+              {label}
             </Shimmer>
-          ) : query ? (
-            <p className="font-medium truncate max-w-lg">{query}</p>
+          ) : label ? (
+            <p className="font-medium truncate max-w-lg">{label}</p>
           ) : null}
-          <p className="font-medium">{isLoading ? "..." : `${count} results`}</p>
+          <p className="font-medium">
+            {isLoading ? "..." : `${count} ${resultLabel}`}
+          </p>
           <ChevronDownIcon className="h-4 w-4" />
         </>
       )}
