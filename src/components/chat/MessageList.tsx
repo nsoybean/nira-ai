@@ -225,12 +225,12 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               );
             } else if (group.type === "tool-webSearch") {
               return (
-                <Sources>
+                <Sources key={`${message.id}-websearch-${groupIndex}`}>
                   <SourcesTrigger
                     // white background bordered
                     className="bg-white border border-gray-300 rounded-md p-4"
                     count={group.parts[0]?.output?.results.length}
-                    query={group.parts[0].input.query}
+                    query={group.parts[0].input?.query}
                   />
                   {group.parts[0]?.output?.results.map((res, i) => {
                     return (
@@ -248,7 +248,11 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                 </Sources>
               );
             } else if (group.type === "tool-webExtract") {
-              return <>extract</>;
+              return (
+                <div key={`${message.id}-webextract-${groupIndex}`}>
+                  extract
+                </div>
+              );
             } else {
               return null;
             }
