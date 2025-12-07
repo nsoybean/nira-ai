@@ -171,6 +171,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
       return (
         <div className="flex flex-col w-full">
+          {/* render diff group */}
           {groups.map((group, groupIndex) => {
             const isLastGroup = groupIndex === groups.length - 1;
 
@@ -197,19 +198,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     <MessageContent className="text-md">
                       <MessageResponse>{textContent}</MessageResponse>
                     </MessageContent>
-
-                    {/* Show loader below text during streaming */}
-                    {isLoading &&
-                      isLastMessage &&
-                      isLastGroup &&
-                      textContent.trim() && (
-                        <div className="flex mt-4">
-                          <Loader
-                            size={16}
-                            className="animate-spin animation-duration-[1.3s]"
-                          />
-                        </div>
-                      )}
                   </Message>
                 </div>
               );
@@ -361,16 +349,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
             }
           })}
 
-          {/* Show initial loader if no content yet */}
-          {isLoading && isLastMessage && groups.length === 0 && (
-            <div className="flex items-center mt-1">
-              <Loader
-                size={24}
-                className="animate-spin animation-duration-[1.3s]"
-              />
-            </div>
-          )}
-
           {/* Show copy action once complete - only after last text group */}
           {!isLoading && allText && (
             <MessageActions className="ml-auto">
@@ -408,7 +386,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
             <Conversation className="">
               <ConversationContent>
                 {/* empty */}
-                {messages.length === 0 && !isLoadingMessages && (
+                {/* {messages.length === 0 && !isLoadingMessages && (
                   <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
                     <Sparkles className="h-12 w-12 text-gray-300 dark:text-gray-700" />
                     <div>
@@ -420,7 +398,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                       </p>
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {/* isloading */}
                 {isLoadingMessages && !messages.length && (
@@ -450,6 +428,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                               .filter((part) => part.type === "file")
                               .map((part: any, i) => (
                                 <MessageAttachment
+                                  className="border border-gray-200"
                                   key={`${message.id}-file-${i}`}
                                   data={part}
                                 />
@@ -488,32 +467,62 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
                           {/* right - text content */}
                           <div className="flex-1 flex-col w-full">
+                            {/* initial loader when no message parts */}
+                            {isLoading &&
+                              msgIndex == messages.length - 1 &&
+                              message.parts.length === 0 && (
+                                <div className="flex items-center mt-1">
+                                  <Loader
+                                    size={24}
+                                    className="animate-spin animation-duration-[1.3s]"
+                                  />
+                                </div>
+                              )}
+
+                            {/* actual message content */}
                             {renderMessageContent(
                               message,
                               msgIndex == messages.length - 1,
                               isLoading
                             )}
+
+                            {/* Show loader below text during streaming */}
+                            {status === "streaming" &&
+                              msgIndex === messages.length - 1 &&
+                              message.parts.length > 0 && (
+                                <div className="flex items-center mt-1">
+                                  <Loader
+                                    size={24}
+                                    className="animate-spin animation-duration-[1.3s]"
+                                  />
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
                     )}
                   </div>
                 ))}
-
+                {/* 
+                {isLoading && (
+                  <div className="flex items-center mt-1">
+                    <Loader
+                      size={24}
+                      className="animate-spin animation-duration-[1.3s]"
+                    />
+                  </div>
+                )} */}
                 {/* Show loading placeholder if waiting for assistant response */}
                 {isLoading &&
-                  (messages.length === 0 ||
-                    messages[messages.length - 1]?.role === "user") && (
+                  messages[messages.length - 1]?.role === "user" && (
                     <div className="flex flex-col mb-6">
                       <div className="flex gap-3">
-                        {/* left - icon */}
                         <div className="shrink-0 mt-0.5">
                           <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
                             <Sparkles className="h-4 w-4 text-white" />
                           </div>
                         </div>
 
-                        {/* right - loading indicator */}
                         <div className="flex-1 flex-col w-full">
                           <div className="flex items-center mt-1">
                             <Loader
