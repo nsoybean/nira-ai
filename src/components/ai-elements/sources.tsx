@@ -24,6 +24,7 @@ export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
   label: string;
   resultLabel: string;
   isLoading?: boolean;
+  icon?: React.ReactNode;
 };
 
 export const SourcesTrigger = ({
@@ -33,6 +34,7 @@ export const SourcesTrigger = ({
   label,
   resultLabel,
   isLoading,
+  icon,
   ...props
 }: SourcesTriggerProps) => {
   return (
@@ -42,7 +44,7 @@ export const SourcesTrigger = ({
     >
       {children ?? (
         <>
-          <GlobeIcon size={16} />
+          {icon ?? <GlobeIcon size={16} />}
           {/* render query max 2 lines truncate  */}
           {label && isLoading ? (
             <Shimmer

@@ -455,35 +455,46 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                   case "text":
                     const isLastMessage = msgIndex === messages.length - 1;
 
-                    console.log(message, i);
-                    console.log("messages.length", messages.length);
                     return (
-                      <Message key={`${message.id}-${i}`} from={message.role}>
+                      <Message
+                        key={`${message.id}-${i}`}
+                        from={message.role}
+                        className="mb-2"
+                      >
                         <MessageContent>
                           <MessageResponse>{part.text}</MessageResponse>
                         </MessageContent>
 
+                        {/* show action only for last text part */}
                         {message.role === "assistant" && (
                           <MessageActions>
-                            {isLastMessage && (
-                              <MessageAction onClick={() => {}} label="Retry">
-                                <RefreshCcwIcon className="size-3" />
-                              </MessageAction>
-                            )}
-                            <MessageAction
-                              onClick={() => handleCopy(part.text, message.id)}
-                              label={
-                                copiedMessageId === message.id
-                                  ? "Copied"
-                                  : "Copy"
-                              }
-                            >
-                              {copiedMessageId === message.id ? (
-                                <Check className="size-3" />
-                              ) : (
-                                <CopyIcon className="size-3" />
+                            {isLastMessage &&
+                              i === message.parts.length - 1 && (
+                                <MessageAction onClick={() => {}} label="Retry">
+                                  <RefreshCcwIcon className="size-3" />
+                                </MessageAction>
                               )}
-                            </MessageAction>
+                            {isLastMessage &&
+                              i === message.parts.length - 1 && (
+                                <MessageAction
+                                  onClick={() => {
+                                    console.log("message", message);
+                                    console.log("part index", i);
+                                    handleCopy(part.text, message.id);
+                                  }}
+                                  label={
+                                    copiedMessageId === message.id
+                                      ? "Copied"
+                                      : "Copy"
+                                  }
+                                >
+                                  {copiedMessageId === message.id ? (
+                                    <Check className="size-3" />
+                                  ) : (
+                                    <CopyIcon className="size-3" />
+                                  )}
+                                </MessageAction>
+                              )}
                           </MessageActions>
                         )}
                       </Message>
@@ -514,7 +525,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     );
 
                   case "tool-webSearch":
-                    console.log("Rendering tool-webSearch part:", part);
                     return (
                       <Sources>
                         <SourcesTrigger
@@ -559,6 +569,99 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                       alt={`${domain} logo`}
                                       className="size-4 rounded-sm shrink-0 bg-white"
                                     />
+                                  }
+                                />
+                              );
+                            }
+                          )}
+                        </SourcesContent>
+                      </Sources>
+                    );
+
+                  case "tool-webExtract":
+                    const input = part?.input;
+                    const numUrls = input?.urls?.length || 0;
+                    const output = part?.output;
+                    const successCount = output?.results?.length || 0;
+                    const failCount = output?.failedResults?.length || 0;
+                    const isToolLoading = output?.responseTime === undefined;
+
+                    console.log("part", part);
+                    return (
+                      <Sources>
+                        <SourcesTrigger
+                          count={successCount}
+                          label={isLoading ? "Reading web" : "Read web"}
+                          resultLabel={`success ${
+                            failCount ? `, ${failCount} failed` : ""
+                          }`.trim()}
+                          icon={<BookIcon className="h-4 w-4" />}
+                        />
+                        <SourcesContent
+                          key={`${message.id}-${part.toolCallId}`}
+                          className="ml-2 pl-4 border-l"
+                        >
+                          {/* successful */}
+                          {part?.output?.results?.map(
+                            (result: any, i: number) => {
+                              let domain = "";
+                              try {
+                                const url = new URL(result.url);
+                                domain = url.hostname.replace("www.", "");
+                              } catch (e) {
+                                domain = result.url;
+                              }
+
+                              return (
+                                <Source
+                                  key={`${message.id}-websearch-result-${i}`}
+                                  href={result.url}
+                                  title={result.url}
+                                  icon={
+                                    <img
+                                      src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
+                                      alt={`${domain} logo`}
+                                      className="size-4 rounded-sm shrink-0 bg-white"
+                                    />
+                                  }
+                                />
+                              );
+                            }
+                          )}
+
+                          {part?.output?.failedResults?.map(
+                            (failedResult: any, i: number) => {
+                              let domain = "";
+                              try {
+                                const url = new URL(failedResult.url);
+                                domain = url.hostname.replace("www.", "");
+                              } catch (e) {
+                                domain = failedResult.url;
+                              }
+
+                              return (
+                                <Source
+                                  key={`${message.id}-websearch-result-${i}`}
+                                  href={failedResult.url}
+                                  className="flex flex-row items-center space-x-2"
+                                  children={
+                                    <>
+                                      <img
+                                        src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
+                                        alt={`${domain} logo`}
+                                        className="size-4 rounded-sm shrink-0 bg-white"
+                                      />
+                                      <XIcon
+                                        size={16}
+                                        className="text-red-400 mt-0.5 shrink-0"
+                                      />
+                                      <span className="block font-medium">
+                                        {failedResult.url}
+                                      </span>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        {failedResult.error}
+                                      </p>
+                                    </>
                                   }
                                 />
                               );
