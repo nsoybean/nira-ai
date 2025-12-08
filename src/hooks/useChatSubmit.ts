@@ -69,9 +69,6 @@ export function useChatSubmit({
           // Navigate to the new conversation
           router.push(`/chat/${newConversationId}`);
 
-          // Clear input immediately for better UX
-          setInput("");
-
           // Reload conversations list
           refreshConversations();
 
