@@ -83,7 +83,13 @@ export const SourcesContent = ({
 
 export type SourceProps = ComponentProps<"a">;
 
-export const Source = ({ href, title, children, ...props }: SourceProps) => (
+export const Source = ({
+  href,
+  title,
+  children,
+  icon,
+  ...props
+}: SourceProps & { icon?: React.ReactNode }) => (
   <a
     className="flex items-center gap-2"
     href={href}
@@ -93,7 +99,7 @@ export const Source = ({ href, title, children, ...props }: SourceProps) => (
   >
     {children ?? (
       <>
-        <BookIcon className="h-4 w-4" />
+        {icon ?? <BookIcon className="h-4 w-4" />}
         <span className="block font-medium">{title}</span>
       </>
     )}

@@ -55,6 +55,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn, isDevelopment } from "@/lib/utils";
+import { Tooltip, TooltipContent } from "../ui/tooltip";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -510,6 +511,55 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                         data={part}
                         className="ml-auto border border-gray-250 rounded-md mb-2"
                       />
+                    );
+
+                  case "tool-webSearch":
+                    console.log("Rendering tool-webSearch part:", part);
+                    return (
+                      <Sources>
+                        <SourcesTrigger
+                          count={part?.output?.results?.length}
+                          label={part?.input?.query || "Web search"}
+                          resultLabel={
+                            part?.output?.results.length > 0
+                              ? `result${
+                                  part?.output?.results.length > 1 ? "s" : ""
+                                }`
+                              : ""
+                          }
+                        />
+                        <SourcesContent
+                          key={`${message.id}-${part.toolCallId}`}
+                          className="ml-2 pl-4 border-l"
+                        >
+                          {part?.output?.results?.map(
+                            (result: any, i: number) => {
+                              let domain = "";
+                              try {
+                                const url = new URL(result.url);
+                                domain = url.hostname.replace("www.", "");
+                              } catch (e) {
+                                domain = result.url;
+                              }
+
+                              return (
+                                <Source
+                                  key={`${message.id}-websearch-result-${i}`}
+                                  href={result.url}
+                                  title={result.title}
+                                  icon={
+                                    <img
+                                      src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
+                                      alt={`${domain} logo`}
+                                      className="size-4 rounded-sm shrink-0 bg-white"
+                                    />
+                                  }
+                                />
+                              );
+                            }
+                          )}
+                        </SourcesContent>
+                      </Sources>
                     );
 
                   default:
