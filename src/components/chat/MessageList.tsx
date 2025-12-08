@@ -113,10 +113,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     return (
                       <Collapsible
                         key={`${message.id}-reasoning-${partIndex}`}
-                        defaultOpen={true}
-                        open={
-                          isStreaming ? isStreaming && isLastPart : undefined
-                        }
+                        defaultOpen={isStreaming && isLastPart}
                       >
                         <div className="flex gap-2 text-sm">
                           <div className="relative mt-0.5">
