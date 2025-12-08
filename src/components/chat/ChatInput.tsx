@@ -245,47 +245,55 @@ export function ChatInput({
                 {/* <span>Settings</span> */}
               </PromptInputButton>
             </PopoverTrigger>
-            <PopoverContent className="w-64" align="start">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Chat Settings</h4>
-                  <p className="text-xs text-muted-foreground">
-                    Configure settings for this conversation
-                  </p>
+            <PopoverContent className="w-xs p-2" align="start">
+              <div className="space-y-2 p-2">
+                {/* <h4 className="font-medium text-sm">Chat Settings</h4> */}
+                <p className="text-xs text-muted-foreground">
+                  Configure settings for this conversation
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                {/* Web Search Toggle */}
+                <div
+                  className="flex items-center justify-between hover:bg-secondary rounded-md p-2"
+                  onClick={() => {
+                    setUseWebSearch((prev) => !prev);
+                  }}
+                >
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Web Search</label>
+                    <p className="text-xs text-muted-foreground">
+                      Search the web for answers
+                    </p>
+                  </div>
+                  <Switch
+                    checked={useWebSearch}
+                    onCheckedChange={setUseWebSearch}
+                    disabled={isLoading || isCreatingConversation}
+                  />
                 </div>
 
-                <div className="space-y-3">
-                  {/* Web Search Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Web Search</label>
-                      <p className="text-xs text-muted-foreground">
-                        Search the web for answers
-                      </p>
-                    </div>
-                    <Switch
-                      checked={useWebSearch}
-                      onCheckedChange={setUseWebSearch}
-                      disabled={isLoading || isCreatingConversation}
-                    />
+                {/* Extended Thinking Toggle */}
+                <div
+                  className="flex items-center justify-between  hover:bg-secondary rounded-md p-2"
+                  onClick={() => {
+                    setUseExtendedThinking((prev) => !prev);
+                  }}
+                >
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">
+                      Extended Thinking
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Enable advanced reasoning capabilities
+                    </p>
                   </div>
-
-                  {/* Extended Thinking Toggle */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">
-                        Extended Thinking
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        Enable advanced reasoning capabilities
-                      </p>
-                    </div>
-                    <Switch
-                      checked={useExtendedThinking}
-                      onCheckedChange={setUseExtendedThinking}
-                      disabled={isLoading || isCreatingConversation}
-                    />
-                  </div>
+                  <Switch
+                    checked={useExtendedThinking}
+                    onCheckedChange={setUseExtendedThinking}
+                    disabled={isLoading || isCreatingConversation}
+                  />
                 </div>
               </div>
             </PopoverContent>
