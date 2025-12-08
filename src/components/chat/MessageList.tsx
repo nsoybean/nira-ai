@@ -310,7 +310,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                               alt={`${domain} logo`}
                                               className="size-4 rounded-sm shrink-0 bg-white"
                                             />
-                                            <div className="text-sm text-gray-900 dark:text-gray-100 truncate">
+                                            <div className="text-sm text-gray-900 dark:text-gray-100 truncate max-w-lg">
                                               {result.url}
                                             </div>
                                           </div>
@@ -335,7 +335,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                             href={failed.url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="text-sm text-gray-900 dark:text-gray-100 truncate block"
+                                            className="text-sm text-gray-900 dark:text-gray-100 truncate block max-w-lg"
                                           >
                                             {failed.url}
                                           </a>
