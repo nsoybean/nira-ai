@@ -71,7 +71,6 @@ export function ChatInput({
     initialExtendedThinking
   );
   const isInitialMount = useRef(true);
-  const isInitialMountThinking = useRef(true);
 
   // Store pending files during conversation creation
   const [pendingFiles, setPendingFiles] = useState<any[]>([]);
@@ -79,45 +78,46 @@ export function ChatInput({
   // Get updateConversation from context
   const { updateConversation } = useConversations();
 
-  // Mutation for updating web search setting
-  const { mutate: updateWebSearch } = useMutation({
-    mutationFn: async (webSearch: boolean) => {
-      return updateConversation(conversationId, { webSearch });
-    },
-    onError: (error) => {
-      toast.error(`Failed to update web search setting: ${error}`);
-      // reset
-      setUseWebSearch((prev) => !prev);
-    },
-  });
+  // Combined mutation for updating settings
+  const { mutate: updateSettings } = useMutation({
+    mutationFn: async (updates: {
+      webSearch?: boolean;
+      extendedThinking?: boolean;
+    }) => {
+      // Send all settings in a unified settings object
+      const payload: any = {
+        settings: {
+          websearch: updates.webSearch,
+          extendedThinking: updates.extendedThinking,
+        },
+      };
 
-  // Mutation for updating extended thinking setting
-  const { mutate: updateExtendedThinking } = useMutation({
-    mutationFn: async (extendedThinking: boolean) => {
-      return updateConversation(conversationId, {
-        settings: { extendedThinking },
-      });
+      return updateConversation(conversationId, payload);
     },
-    onError: (error) => {
-      toast.error(`Failed to update extended thinking setting: ${error}`);
-      // reset
-      setUseExtendedThinking((prev) => !prev);
+    onError: (error, variables) => {
+      toast.error(`Failed to update settings: ${error}`);
+      // Reset both settings on error
+      if (variables.webSearch !== undefined) {
+        setUseWebSearch((prev) => !prev);
+      }
+      if (variables.extendedThinking !== undefined) {
+        setUseExtendedThinking((prev) => !prev);
+      }
     },
   });
 
   const isLoading = status === "submitted" || status === "streaming";
 
-  // Sync internal state with initialWebSearch prop when it changes
+  // Sync internal state with initial props when they change
   useEffect(() => {
     setUseWebSearch(initialWebSearch);
   }, [initialWebSearch]);
 
-  // Sync internal state with initialExtendedThinking prop when it changes
   useEffect(() => {
     setUseExtendedThinking(initialExtendedThinking);
   }, [initialExtendedThinking]);
 
-  // Update conversation when web search is toggled (not on mount)
+  // Update conversation when settings are toggled (combined effect)
   useEffect(() => {
     // Skip the first render (mount)
     if (isInitialMount.current) {
@@ -127,23 +127,9 @@ export function ChatInput({
 
     // Only update when toggled and not a new chat
     if (!isNewChat && conversationId) {
-      updateWebSearch(useWebSearch);
+      updateSettings({ webSearch: useWebSearch, extendedThinking: useExtendedThinking });
     }
-  }, [useWebSearch, conversationId, isNewChat, updateWebSearch]);
-
-  // Update conversation when extended thinking is toggled (not on mount)
-  useEffect(() => {
-    // Skip the first render (mount)
-    if (isInitialMountThinking.current) {
-      isInitialMountThinking.current = false;
-      return;
-    }
-
-    // Only update when toggled and not a new chat
-    if (!isNewChat && conversationId) {
-      updateExtendedThinking(useExtendedThinking);
-    }
-  }, [useExtendedThinking, conversationId, isNewChat, updateExtendedThinking]);
+  }, [useWebSearch, useExtendedThinking, conversationId, isNewChat, updateSettings]);
 
   // Auto-resize textarea
   useEffect(() => {

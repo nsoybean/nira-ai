@@ -110,7 +110,10 @@ export default function ChatPage() {
           if (data.title) {
             setChatTitle(data.title);
           }
-          if (data.websearch !== undefined) {
+          // Read websearch from settings (preferred) or fallback to deprecated column
+          if (data.settings?.websearch !== undefined) {
+            setInitialWebSearch(data.settings.websearch);
+          } else if (data.websearch !== undefined) {
             setInitialWebSearch(data.websearch);
           }
           if (data.settings?.extendedThinking !== undefined) {
