@@ -361,9 +361,9 @@ export default function ChatPage() {
           </div>
         ) : (
           /* Standard layout with messages */
-          <div className="flex-1 overflow-hidden border border-green-400">
-            <div className="mx-auto p-2 relative h-full border border-blue-400">
-              <div className="flex flex-col h-full border border-red-400">
+          <div className="flex-1 overflow-hidden border">
+            <div className="mx-auto p-2 relative h-full">
+              <div className="flex flex-col h-full">
                 <MessageList
                   ref={scrollAreaRef}
                   messages={messages}

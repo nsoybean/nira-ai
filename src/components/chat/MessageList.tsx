@@ -400,10 +400,11 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
     }
 
     return (
-      <Conversation className="flex-1">
+      <Conversation>
         <ConversationContent className="max-w-4xl mx-auto">
-          {messages.map((message) => (
+          {messages.map((message, msgIndex) => (
             <div key={message.id}>
+              {/* source url */}
               {message.role === "assistant" &&
                 message.parts.filter((part) => part.type === "source-url")
                   .length > 0 && (
@@ -430,31 +431,38 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                       ))}
                   </Sources>
                 )}
+
+              {/* text */}
               {message.parts.map((part, i) => {
                 switch (part.type) {
                   case "text":
+                    const isLastMessage = msgIndex === messages.length - 1;
+
+                    console.log(message, i);
+                    console.log("messages.length", messages.length);
                     return (
                       <Message key={`${message.id}-${i}`} from={message.role}>
                         <MessageContent>
                           <MessageResponse>{part.text}</MessageResponse>
                         </MessageContent>
 
-                        {message.role === "assistant" &&
-                          i === messages.length - 1 && (
-                            <MessageActions>
+                        {message.role === "assistant" && (
+                          <MessageActions>
+                            {isLastMessage && (
                               <MessageAction onClick={() => {}} label="Retry">
                                 <RefreshCcwIcon className="size-3" />
                               </MessageAction>
-                              <MessageAction
-                                onClick={() =>
-                                  navigator.clipboard.writeText(part.text)
-                                }
-                                label="Copy"
-                              >
-                                <CopyIcon className="size-3" />
-                              </MessageAction>
-                            </MessageActions>
-                          )}
+                            )}
+                            <MessageAction
+                              onClick={() =>
+                                navigator.clipboard.writeText(part.text)
+                              }
+                              label="Copy"
+                            >
+                              <CopyIcon className="size-3" />
+                            </MessageAction>
+                          </MessageActions>
+                        )}
                       </Message>
                     );
                   case "reasoning":
