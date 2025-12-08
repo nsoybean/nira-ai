@@ -275,7 +275,7 @@ export default function ChatPage() {
   const [randomGreeting] = useState(() => getRandomGreeting());
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950 border border-red-400">
+    <div className="flex h-screen bg-white dark:bg-gray-950">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -289,7 +289,7 @@ export default function ChatPage() {
       />
 
       <div className="flex-1 flex flex-col">
-        {/* Show header only when there are messages */}
+        {/* Show header for specific chat */}
         {!isChatEmpty && (
           <ChatHeader
             sidebarOpen={sidebarOpen}
@@ -361,8 +361,8 @@ export default function ChatPage() {
           </div>
         ) : (
           /* Standard layout with messages */
-          <div className="flex-1 overflow-hidden border border-green-400">
-            <div className="max-w-4xl mx-auto p-6 relative h-full border border-blue-400">
+          <div className="flex-1 overflow-hidden">
+            <div className="max-w-4xl mx-auto p-2 relative h-full border border-blue-400">
               <div className="flex flex-col h-full">
                 <MessageList
                   ref={scrollAreaRef}
