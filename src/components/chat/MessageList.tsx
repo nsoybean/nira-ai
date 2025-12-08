@@ -478,8 +478,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                               i === message.parts.length - 1 && (
                                 <MessageAction
                                   onClick={() => {
-                                    console.log("message", message);
-                                    console.log("part index", i);
                                     handleCopy(part.text, message.id);
                                   }}
                                   label={
@@ -580,13 +578,10 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
                   case "tool-webExtract":
                     const input = part?.input;
-                    const numUrls = input?.urls?.length || 0;
                     const output = part?.output;
                     const successCount = output?.results?.length || 0;
                     const failCount = output?.failedResults?.length || 0;
-                    const isToolLoading = output?.responseTime === undefined;
 
-                    console.log("part", part);
                     return (
                       <Sources>
                         <SourcesTrigger
