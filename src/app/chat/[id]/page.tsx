@@ -275,74 +275,102 @@ export default function ChatPage() {
   const [randomGreeting] = useState(() => getRandomGreeting());
 
   return (
-    <TooltipProvider>
-      <div className="flex h-screen bg-white dark:bg-gray-950 border border-red-400">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          currentConversationId={conversationId}
-          onNewChat={handleNewChat}
-          conversations={conversations}
-          isLoadingConversations={isLoadingConversations}
-          onDelete={handleDelete}
-          onClearAll={handleClearAll}
-          onRename={handleRename}
-        />
+    <div className="flex h-screen bg-white dark:bg-gray-950 border border-red-400">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        currentConversationId={conversationId}
+        onNewChat={handleNewChat}
+        conversations={conversations}
+        isLoadingConversations={isLoadingConversations}
+        onDelete={handleDelete}
+        onClearAll={handleClearAll}
+        onRename={handleRename}
+      />
 
-        <div className="flex-1 flex flex-col">
-          {/* Show header only when there are messages */}
-          {!isChatEmpty && (
-            <ChatHeader
-              sidebarOpen={sidebarOpen}
-              onToggleSidebar={() => setSidebarOpen(true)}
-              chatTitle={chatTitle}
-              onTitleChange={setChatTitle}
-              conversationId={conversationId}
-              isNew={isNewChat}
-              onDelete={handleDelete}
-              onRename={handleRename}
-            />
-          )}
+      <div className="flex-1 flex flex-col">
+        {/* Show header only when there are messages */}
+        {!isChatEmpty && (
+          <ChatHeader
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen(true)}
+            chatTitle={chatTitle}
+            onTitleChange={setChatTitle}
+            conversationId={conversationId}
+            isNew={isNewChat}
+            onDelete={handleDelete}
+            onRename={handleRename}
+          />
+        )}
 
-          {/* Centered layout for empty chat */}
-          {isChatEmpty ? (
-            <div className="flex-1 flex flex-col items-center justify-center px-4">
-              {/* Toggle sidebar button for empty state */}
-              {!sidebarOpen && (
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        {/* Centered layout for empty chat */}
+        {isChatEmpty ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
+            {/* Toggle sidebar button for empty state */}
+            {!sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                  </svg>
-                </button>
-              )}
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
+            )}
 
-              {/* Greeting */}
-              <div className="text-center mb-8">
-                <h1 className="text-4xl font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  {randomGreeting.title}
-                </h1>
-                <p className="text-lg text-gray-500 dark:text-gray-400">
-                  {randomGreeting.subtitle}
-                </p>
-              </div>
+            {/* Greeting */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+                {randomGreeting.title}
+              </h1>
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                {randomGreeting.subtitle}
+              </p>
+            </div>
 
-              {/* Centered input */}
-              <div className="w-full max-w-3xl">
+            {/* Centered input */}
+            <div className="w-full max-w-3xl">
+              <ChatInput
+                input={input}
+                onInputChange={setInput}
+                onSubmit={(message, event, options) => {
+                  handleSubmit(message, options);
+                }}
+                status={status}
+                isCreatingConversation={isCreatingConversation}
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+                conversationId={conversationId}
+                isNewChat={isNewChat}
+                initialWebSearch={initialWebSearch}
+                initialExtendedThinking={initialExtendedThinking}
+              />
+            </div>
+          </div>
+        ) : (
+          /* Standard layout with messages */
+          <div className="flex-1 overflow-hidden border border-green-400">
+            <div className="max-w-4xl mx-auto p-6 relative h-full border border-blue-400">
+              <div className="flex flex-col h-full">
+                <MessageList
+                  ref={scrollAreaRef}
+                  messages={messages}
+                  status={status}
+                  isLoadingMessages={isLoadingMessages}
+                />
+
                 <ChatInput
                   input={input}
                   onInputChange={setInput}
@@ -360,39 +388,9 @@ export default function ChatPage() {
                 />
               </div>
             </div>
-          ) : (
-            /* Standard layout with messages */
-            <div className="flex-1 overflow-hidden border border-green-400">
-              <div className="max-w-4xl mx-auto p-6 relative h-full border border-blue-400">
-                <div className="flex flex-col h-full">
-                  <MessageList
-                    ref={scrollAreaRef}
-                    messages={messages}
-                    status={status}
-                    isLoadingMessages={isLoadingMessages}
-                  />
-
-                  <ChatInput
-                    input={input}
-                    onInputChange={setInput}
-                    onSubmit={(message, event, options) => {
-                      handleSubmit(message, options);
-                    }}
-                    status={status}
-                    isCreatingConversation={isCreatingConversation}
-                    selectedModel={selectedModel}
-                    onModelChange={setSelectedModel}
-                    conversationId={conversationId}
-                    isNewChat={isNewChat}
-                    initialWebSearch={initialWebSearch}
-                    initialExtendedThinking={initialExtendedThinking}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-    </TooltipProvider>
+    </div>
   );
 }

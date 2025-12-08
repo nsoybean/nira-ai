@@ -6,6 +6,7 @@ import { BetaAuthProvider } from "@/contexts/BetaAuthContext";
 import { ClientInit } from "@/components/ClientInit";
 import { QueryProvider } from "@/contexts/QueryClientProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,9 @@ export default function RootLayout({
         <ClientInit />
         <QueryProvider>
           <ThemeProvider>
-            <BetaAuthProvider>{children}</BetaAuthProvider>
+            <TooltipProvider>
+              <BetaAuthProvider>{children}</BetaAuthProvider>
+            </TooltipProvider>
             <Toaster />
           </ThemeProvider>
         </QueryProvider>
