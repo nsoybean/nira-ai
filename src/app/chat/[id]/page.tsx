@@ -33,6 +33,7 @@ export default function ChatPage() {
     deleteConversation,
     clearAllConversations,
     updateConversation,
+    updateConversationTitleInMemory,
     conversations,
     isLoadingConversations,
   } = useConversations();
@@ -60,8 +61,22 @@ export default function ChatPage() {
             },
           };
         },
+        async onResponse({ response }) {
+          // Check for generated title in response headers
+          const generatedTitle = response.headers.get("X-Conversation-Title");
+          if (generatedTitle && conversationId && !isNewChat) {
+            // Update title in memory without API call
+            updateConversationTitleInMemory(conversationId, generatedTitle);
+            // Update local title state
+            setChatTitle(generatedTitle);
+
+            if (process.env.NODE_ENV === "development") {
+              console.log("[Chat] Received generated title:", generatedTitle);
+            }
+          }
+        },
       }),
-    []
+    [conversationId, isNewChat, updateConversationTitleInMemory]
   );
 
   const {

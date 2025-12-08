@@ -88,9 +88,54 @@ export async function POST(req: Request) {
     });
 
     // if no previous message, means is a new conversation, generate short title
+    let generatedTitle: string | null = null;
     if (existingMessages.length === 0) {
       // Generate a short title for the new conversation
-      // (Implementation for title generation can be added here)
+      // Extract text from the user message
+      const userMessageText =
+        message.parts
+          ?.filter((part: any) => part.type === "text")
+          .map((part: any) => part.text)
+          .join(" ") || "";
+
+      if (userMessageText.trim()) {
+        try {
+          // Generate title using a fast model
+          const titleResult = await streamText({
+            model: anthropic("claude-3-5-haiku-20241022"),
+            messages: [
+              {
+                role: "user",
+                content: `Generate a concise 3-5 word title for this message. Return only the title, no quotes or punctuation at the end: "${userMessageText.slice(0, 200)}"`,
+              },
+            ],
+            maxTokens: 20,
+          });
+
+          // Wait for the complete title
+          let titleText = "";
+          for await (const chunk of titleResult.textStream) {
+            titleText += chunk;
+          }
+
+          generatedTitle = titleText.trim();
+
+          // Update conversation title in database
+          if (generatedTitle) {
+            await prisma.conversation.update({
+              where: { id: conversationId },
+              data: { title: generatedTitle },
+            });
+
+            if (process.env.NODE_ENV === "development") {
+              console.log("[Chat API] Generated title:", generatedTitle);
+            }
+          }
+        } catch (error) {
+          console.error("[Chat API] Error generating title:", error);
+          // Continue with the chat even if title generation fails
+        }
+      }
     }
 
     // Combine existing messages with the new message
@@ -264,6 +309,11 @@ export async function POST(req: Request) {
 
     // Add conversation ID to response headers
     response.headers.set("X-Conversation-Id", conversation.id);
+
+    // Add generated title to response headers if available
+    if (generatedTitle) {
+      response.headers.set("X-Conversation-Title", generatedTitle);
+    }
 
     return response;
   } catch (error) {

@@ -77,7 +77,7 @@ export function useChatSubmit({
           // Navigate to the new conversation
           router.push(`/chat/${newConversationId}`);
 
-          // Reload conversations list
+          // Reload conversations list to show the new conversation
           refreshConversations();
 
           // Add a small delay before clearing loading state
