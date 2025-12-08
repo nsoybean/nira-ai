@@ -526,7 +526,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     return (
                       <Sources>
                         <SourcesTrigger
-                          count={part?.output?.results?.length}
+                          count={part?.output?.results?.length || ""}
                           label={
                             part?.input?.query
                               ? // capitalize first letter
@@ -585,7 +585,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     return (
                       <Sources>
                         <SourcesTrigger
-                          count={successCount}
+                          count={successCount || ""}
                           label={isLoading ? "Reading web" : "Read web"}
                           resultLabel={`success ${
                             failCount ? `, ${failCount} failed` : ""
