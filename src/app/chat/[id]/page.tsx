@@ -361,16 +361,15 @@ export default function ChatPage() {
           </div>
         ) : (
           /* Standard layout with messages */
-          <div className="flex-1 overflow-hidden">
-            <div className="max-w-4xl mx-auto p-2 relative h-full border border-blue-400">
-              <div className="flex flex-col h-full">
+          <div className="flex-1 overflow-hidden border border-green-400">
+            <div className="mx-auto p-2 relative h-full border border-blue-400 max-w-4xl">
+              <div className="flex flex-col h-full border border-red-400">
                 <MessageList
                   ref={scrollAreaRef}
                   messages={messages}
                   status={status}
                   isLoadingMessages={isLoadingMessages}
                 />
-
                 <ChatInput
                   input={input}
                   onInputChange={setInput}
