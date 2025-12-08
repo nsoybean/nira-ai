@@ -402,6 +402,22 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
     return (
       <Conversation>
         <ConversationContent className="max-w-4xl mx-auto">
+          {/* loading */}
+          {isLoadingMessages && !messages.length && (
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
+              <Loader2 className="h-12 w-12 text-gray-300 dark:text-gray-700 animate-spin" />
+              <div>
+                <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
+                  Loading messages...
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Please wait
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* messages */}
           {messages.map((message, msgIndex) => (
             <div key={message.id}>
               {/* source url */}
@@ -455,7 +471,11 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                             )}
                             <MessageAction
                               onClick={() => handleCopy(part.text, message.id)}
-                              label={copiedMessageId === message.id ? "Copied" : "Copy"}
+                              label={
+                                copiedMessageId === message.id
+                                  ? "Copied"
+                                  : "Copy"
+                              }
                             >
                               {copiedMessageId === message.id ? (
                                 <Check className="size-3" />
@@ -498,6 +518,8 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
               })}
             </div>
           ))}
+
+          {/* submitted */}
           {status === "submitted" && <Loader />}
         </ConversationContent>
         <ConversationScrollButton />
