@@ -189,135 +189,129 @@ export function ChatInput({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-950">
-      <div className="max-w-4xl mx-auto px-4 py-4">
-        <PromptInput
-          onSubmit={handleSubmit}
-          className="mt-4 rounded-2xl"
-          globalDrop
-          multiple
-          accept="image/*"
-        >
-          {/* header */}
-          <PromptInputHeader className="rounded-2xl">
-            {/* Show pending files during conversation creation */}
-            {isCreatingConversation && pendingFiles.length > 0 ? (
-              <div className="flex flex-wrap gap-2 p-2">
-                {pendingFiles.map((file, index) => (
-                  <PromptInputAttachment key={index} data={file} />
-                ))}
-              </div>
-            ) : (
-              <PromptInputAttachments>
-                {(attachment) => <PromptInputAttachment data={attachment} />}
-              </PromptInputAttachments>
-            )}
-          </PromptInputHeader>
+    <PromptInput
+      onSubmit={handleSubmit}
+      className="mt-4 rounded-2xl"
+      globalDrop
+      multiple
+      accept="image/*"
+    >
+      {/* header */}
+      <PromptInputHeader className="rounded-2xl">
+        {/* Show pending files during conversation creation */}
+        {isCreatingConversation && pendingFiles.length > 0 ? (
+          <div className="flex flex-wrap gap-2 p-2">
+            {pendingFiles.map((file, index) => (
+              <PromptInputAttachment key={index} data={file} />
+            ))}
+          </div>
+        ) : (
+          <PromptInputAttachments>
+            {(attachment) => <PromptInputAttachment data={attachment} />}
+          </PromptInputAttachments>
+        )}
+      </PromptInputHeader>
 
-          <PromptInputBody>
-            <PromptInputTextarea
-              placeholder="Ask me anything..."
-              onChange={(e) => onInputChange(e.target.value)}
-              value={input}
-              autoFocus
+      <PromptInputBody>
+        <PromptInputTextarea
+          placeholder="Ask me anything..."
+          onChange={(e) => onInputChange(e.target.value)}
+          value={input}
+          autoFocus
+          disabled={isLoading || isCreatingConversation}
+        />
+      </PromptInputBody>
+      <PromptInputFooter className="flex items-center justify-between">
+        <PromptInputTools>
+          <PromptInputActionMenu>
+            <PromptInputActionMenuTrigger
               disabled={isLoading || isCreatingConversation}
             />
-          </PromptInputBody>
-          <PromptInputFooter className="flex items-center justify-between">
-            <PromptInputTools>
-              <PromptInputActionMenu>
-                <PromptInputActionMenuTrigger
-                  disabled={isLoading || isCreatingConversation}
-                />
-                <PromptInputActionMenuContent>
-                  <PromptInputActionAddAttachments />
-                </PromptInputActionMenuContent>
-              </PromptInputActionMenu>
+            <PromptInputActionMenuContent>
+              <PromptInputActionAddAttachments />
+            </PromptInputActionMenuContent>
+          </PromptInputActionMenu>
 
-              {/* Settings Popover */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <PromptInputButton
-                    variant={
-                      useWebSearch || useExtendedThinking ? "default" : "ghost"
-                    }
-                    type="button"
-                  >
-                    <Settings2 size={16} />
-                    {/* <span>Settings</span> */}
-                  </PromptInputButton>
-                </PopoverTrigger>
-                <PopoverContent className="w-64" align="start">
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-sm">Chat Settings</h4>
+          {/* Settings Popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <PromptInputButton
+                variant={
+                  useWebSearch || useExtendedThinking ? "default" : "ghost"
+                }
+                type="button"
+              >
+                <Settings2 size={16} />
+                {/* <span>Settings</span> */}
+              </PromptInputButton>
+            </PopoverTrigger>
+            <PopoverContent className="w-64" align="start">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium text-sm">Chat Settings</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Configure settings for this conversation
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Web Search Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <label className="text-sm font-medium">Web Search</label>
                       <p className="text-xs text-muted-foreground">
-                        Configure settings for this conversation
+                        Search the web for answers
                       </p>
                     </div>
-
-                    <div className="space-y-3">
-                      {/* Web Search Toggle */}
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <label className="text-sm font-medium">
-                            Web Search
-                          </label>
-                          <p className="text-xs text-muted-foreground">
-                            Search the web for answers
-                          </p>
-                        </div>
-                        <Switch
-                          checked={useWebSearch}
-                          onCheckedChange={setUseWebSearch}
-                          disabled={isLoading || isCreatingConversation}
-                        />
-                      </div>
-
-                      {/* Extended Thinking Toggle */}
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <label className="text-sm font-medium">
-                            Extended Thinking
-                          </label>
-                          <p className="text-xs text-muted-foreground">
-                            Enable advanced reasoning capabilities
-                          </p>
-                        </div>
-                        <Switch
-                          checked={useExtendedThinking}
-                          onCheckedChange={setUseExtendedThinking}
-                          disabled={isLoading || isCreatingConversation}
-                        />
-                      </div>
-                    </div>
+                    <Switch
+                      checked={useWebSearch}
+                      onCheckedChange={setUseWebSearch}
+                      disabled={isLoading || isCreatingConversation}
+                    />
                   </div>
-                </PopoverContent>
-              </Popover>
 
-              {/* model selection */}
-              <ModelSelectorInline
-                selectedModel={selectedModel}
-                onModelChange={onModelChange}
-                disabled={isLoading || isCreatingConversation}
-              />
-            </PromptInputTools>
+                  {/* Extended Thinking Toggle */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <label className="text-sm font-medium">
+                        Extended Thinking
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        Enable advanced reasoning capabilities
+                      </p>
+                    </div>
+                    <Switch
+                      checked={useExtendedThinking}
+                      onCheckedChange={setUseExtendedThinking}
+                      disabled={isLoading || isCreatingConversation}
+                    />
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
 
-            {/* submit */}
-            <PromptInputSubmit
-              disabled={!input || !status}
-              status={status}
-              className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900 transition-all"
-            >
-              {isLoading || isCreatingConversation ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ArrowUp className="h-4 w-4" />
-              )}
-            </PromptInputSubmit>
-          </PromptInputFooter>
-        </PromptInput>
-      </div>
-    </div>
+          {/* model selection */}
+          <ModelSelectorInline
+            selectedModel={selectedModel}
+            onModelChange={onModelChange}
+            disabled={isLoading || isCreatingConversation}
+          />
+        </PromptInputTools>
+
+        {/* submit */}
+        <PromptInputSubmit
+          disabled={!input || !status}
+          status={status}
+          className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900 transition-all"
+        >
+          {isLoading || isCreatingConversation ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <ArrowUp className="h-4 w-4" />
+          )}
+        </PromptInputSubmit>
+      </PromptInputFooter>
+    </PromptInput>
   );
 }

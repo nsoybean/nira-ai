@@ -157,28 +157,28 @@ export default function ChatPage() {
   const shouldAutoScrollRef = useRef(true);
 
   // Detect when user manually scrolls
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current;
-    if (!scrollArea) return;
+  // useEffect(() => {
+  //   const scrollArea = scrollAreaRef.current;
+  //   if (!scrollArea) return;
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 30; // Xpx threshold
+  //   const handleScroll = () => {
+  //     const { scrollTop, scrollHeight, clientHeight } = scrollArea;
+  //     const isNearBottom = scrollHeight - scrollTop - clientHeight < 30; // Xpx threshold
 
-      // Update auto-scroll preference based on scroll position
-      shouldAutoScrollRef.current = isNearBottom;
-    };
+  //     // Update auto-scroll preference based on scroll position
+  //     shouldAutoScrollRef.current = isNearBottom;
+  //   };
 
-    scrollArea.addEventListener("scroll", handleScroll);
-    return () => scrollArea.removeEventListener("scroll", handleScroll);
-  }, []);
+  //   scrollArea.addEventListener("scroll", handleScroll);
+  //   return () => scrollArea.removeEventListener("scroll", handleScroll);
+  // }, []);
 
   // Auto-scroll to bottom when messages change (only if user hasn't scrolled up)
-  useEffect(() => {
-    if (scrollAreaRef.current && shouldAutoScrollRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   if (scrollAreaRef.current && shouldAutoScrollRef.current) {
+  //     scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+  //   }
+  // }, [messages]);
 
   const handleSubmit = useCallback(
     async (
@@ -268,7 +268,6 @@ export default function ChatPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-
   // Check if chat is empty (no messages and not loading)
   const isChatEmpty = messages.length === 0 && !isLoadingMessages;
 
@@ -277,7 +276,7 @@ export default function ChatPage() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen bg-white dark:bg-gray-950">
+      <div className="flex h-screen bg-white dark:bg-gray-950 border border-red-400">
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -363,30 +362,34 @@ export default function ChatPage() {
             </div>
           ) : (
             /* Standard layout with messages */
-            <>
-              <MessageList
-                ref={scrollAreaRef}
-                messages={messages}
-                status={status}
-                isLoadingMessages={isLoadingMessages}
-              />
+            <div className="flex-1 overflow-hidden border border-green-400">
+              <div className="max-w-4xl mx-auto p-6 relative h-full border border-blue-400">
+                <div className="flex flex-col h-full">
+                  <MessageList
+                    ref={scrollAreaRef}
+                    messages={messages}
+                    status={status}
+                    isLoadingMessages={isLoadingMessages}
+                  />
 
-              <ChatInput
-                input={input}
-                onInputChange={setInput}
-                onSubmit={(message, event, options) => {
-                  handleSubmit(message, options);
-                }}
-                status={status}
-                isCreatingConversation={isCreatingConversation}
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-                conversationId={conversationId}
-                isNewChat={isNewChat}
-                initialWebSearch={initialWebSearch}
-                initialExtendedThinking={initialExtendedThinking}
-              />
-            </>
+                  <ChatInput
+                    input={input}
+                    onInputChange={setInput}
+                    onSubmit={(message, event, options) => {
+                      handleSubmit(message, options);
+                    }}
+                    status={status}
+                    isCreatingConversation={isCreatingConversation}
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
+                    conversationId={conversationId}
+                    isNewChat={isNewChat}
+                    initialWebSearch={initialWebSearch}
+                    initialExtendedThinking={initialExtendedThinking}
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </div>
       </div>

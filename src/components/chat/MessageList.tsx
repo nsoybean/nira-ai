@@ -24,6 +24,7 @@ import {
   MessageActions,
   MessageAction,
   MessageAttachment,
+  MessageBranch,
 } from "../ai-elements/message";
 import {
   Reasoning,
@@ -399,168 +400,98 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
     }
 
     return (
-      <div className="flex flex-col overflow-hidden size-full h-screen">
-        {/* scroll */}
-        <div ref={ref} className="h-full overflow-y-auto">
-          {/* conversation */}
-          <div className="max-w-4xl mx-auto p-6 h-full">
-            <Conversation className="">
-              <ConversationContent>
-                {/* empty */}
-                {/* {messages.length === 0 && !isLoadingMessages && (
-                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
-                    <Sparkles className="h-12 w-12 text-gray-300 dark:text-gray-700" />
-                    <div>
-                      <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
-                        Start a new conversation
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Ask me anything...
-                      </p>
-                    </div>
-                  </div>
-                )} */}
-
-                {/* isloading */}
-                {isLoadingMessages && !messages.length && (
-                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
-                    <Loader2 className="h-12 w-12 text-gray-300 dark:text-gray-700 animate-spin" />
-                    <div>
-                      <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
-                        Loading messages...
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Please wait
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* messages */}
-                {messages.map((message, msgIndex) => (
-                  <div key={message.id}>
-                    {/* User message - with attachments above */}
-                    {message.role === "user" && (
-                      <div className="flex flex-col items-end mb-6">
-                        {/* Render file attachments above */}
-                        {message.parts.some((part) => part.type === "file") && (
-                          <div className="flex flex-wrap gap-2 mb-2 max-w-[75%]">
-                            {message.parts
-                              .filter((part) => part.type === "file")
-                              .map((part: any, i) => (
-                                <MessageAttachment
-                                  className="border border-gray-200"
-                                  key={`${message.id}-file-${i}`}
-                                  data={part}
-                                />
-                              ))}
-                          </div>
-                        )}
-
-                        {/* Render text content below */}
-                        {message.parts.some(
-                          (part) => part.type === "text" && part.text
-                        ) && (
-                          <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2.5 max-w-[75%]">
-                            <p className="text-[15px] text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
-                              {message.parts
-                                .filter((part) => part.type === "text")
-                                .map((part: any, i) => (
-                                  <span key={i}>{part.text}</span>
-                                ))}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Assistant message */}
-                    {message.role === "assistant" && (
-                      <div className="flex flex-col mb-6">
-                        {/* message */}
-                        <div className="flex gap-3">
-                          {/* left - icon */}
-                          <div className="shrink-0 mt-0.5">
-                            <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
-                              <Sparkles className="h-4 w-4 text-white" />
-                            </div>
-                          </div>
-
-                          {/* right - text content */}
-                          <div className="flex-1 flex-col w-full">
-                            {/* initial loader when no message parts */}
-                            {isLoading &&
-                              msgIndex == messages.length - 1 &&
-                              message.parts.length === 0 && (
-                                <div className="flex items-center mt-1">
-                                  <Loader
-                                    size={24}
-                                    className="animate-spin animation-duration-[1.3s]"
-                                  />
-                                </div>
-                              )}
-
-                            {/* actual message content */}
-                            {renderMessageContent(
-                              message,
-                              msgIndex == messages.length - 1,
-                              isLoading
-                            )}
-
-                            {/* Show loader below text during streaming */}
-                            {status === "streaming" &&
-                              msgIndex === messages.length - 1 &&
-                              message.parts.length > 0 && (
-                                <div className="flex items-center mt-1">
-                                  <Loader
-                                    size={24}
-                                    className="animate-spin animation-duration-[1.3s]"
-                                  />
-                                </div>
-                              )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {/* 
-                {isLoading && (
-                  <div className="flex items-center mt-1">
-                    <Loader
-                      size={24}
-                      className="animate-spin animation-duration-[1.3s]"
-                    />
-                  </div>
-                )} */}
-                {/* Show loading placeholder if waiting for assistant response */}
-                {isLoading &&
-                  messages[messages.length - 1]?.role === "user" && (
-                    <div className="flex flex-col mb-6">
-                      <div className="flex gap-3">
-                        <div className="shrink-0 mt-0.5">
-                          <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
-                            <Sparkles className="h-4 w-4 text-white" />
-                          </div>
-                        </div>
-
-                        <div className="flex-1 flex-col w-full">
-                          <div className="flex items-center mt-1">
-                            <Loader
-                              size={24}
-                              className="animate-spin animation-duration-[1.3s]"
+      <Conversation className="flex-1">
+          <ConversationContent>
+            {messages.map((message) => (
+              <div key={message.id}>
+                {message.role === "assistant" &&
+                  message.parts.filter((part) => part.type === "source-url")
+                    .length > 0 && (
+                    <Sources>
+                      <SourcesTrigger
+                        count={
+                          message.parts.filter(
+                            (part) => part.type === "source-url"
+                          ).length
+                        }
+                        label={"Sources"}
+                        resultLabel="results"
+                      />
+                      {message.parts
+                        .filter((part) => part.type === "source-url")
+                        .map((part, i) => (
+                          <SourcesContent key={`${message.id}-${i}`}>
+                            <Source
+                              key={`${message.id}-${i}`}
+                              href={part.url}
+                              title={part.url}
                             />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                          </SourcesContent>
+                        ))}
+                    </Sources>
                   )}
-              </ConversationContent>
-              <ConversationScrollButton />
-            </Conversation>
-          </div>
-        </div>
-      </div>
+                {message.parts.map((part, i) => {
+                  switch (part.type) {
+                    case "text":
+                      return (
+                        <Message key={`${message.id}-${i}`} from={message.role}>
+                          <MessageContent>
+                            <MessageResponse>{part.text}</MessageResponse>
+                          </MessageContent>
+
+                          {message.role === "assistant" &&
+                            i === messages.length - 1 && (
+                              <MessageActions>
+                                <MessageAction onClick={() => {}} label="Retry">
+                                  <RefreshCcwIcon className="size-3" />
+                                </MessageAction>
+                                <MessageAction
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(part.text)
+                                  }
+                                  label="Copy"
+                                >
+                                  <CopyIcon className="size-3" />
+                                </MessageAction>
+                              </MessageActions>
+                            )}
+                        </Message>
+                      );
+                    case "reasoning":
+                      return (
+                        <Reasoning
+                          key={`${message.id}-${i}`}
+                          className="w-full"
+                          isStreaming={
+                            status === "streaming" &&
+                            i === message.parts.length - 1 &&
+                            message.id === messages.at(-1)?.id
+                          }
+                        >
+                          <ReasoningTrigger />
+                          <ReasoningContent>{part.text}</ReasoningContent>
+                        </Reasoning>
+                      );
+
+                    case "file":
+                      return (
+                        <MessageAttachment
+                          key={`${message.id}-${i}`}
+                          data={part}
+                          className="ml-auto border border-gray-250 rounded-md mb-2"
+                        />
+                      );
+
+                    default:
+                      return null;
+                  }
+                })}
+              </div>
+            ))}
+            {status === "submitted" && <Loader />}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
     );
   }
 );
