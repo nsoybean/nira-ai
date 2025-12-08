@@ -106,10 +106,13 @@ export async function POST(req: Request) {
             messages: [
               {
                 role: "user",
-                content: `Generate a concise 3-5 word title for this message. Return only the title, no quotes or punctuation at the end: "${userMessageText.slice(0, 200)}"`,
+                content: `Generate a concise 3-5 word title for this message. Return only the title, no quotes or punctuation at the end: "${userMessageText.slice(
+                  0,
+                  200
+                )}"`,
               },
             ],
-            maxTokens: 20,
+            maxOutputTokens: 20,
           });
 
           // Wait for the complete title
