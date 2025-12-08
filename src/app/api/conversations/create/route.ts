@@ -16,8 +16,10 @@ import {
  * Request body (optional):
  * {
  *   "modelId": "claude-3-7-sonnet-20250219",
- *   "useWebsearch": boolean,
- *   "settings": ConversationSettings
+ *   "settings": {
+ *     "useWebsearch": boolean,
+ *     "extendedThinking": boolean
+ *   }
  * }
  *
  * Response:
@@ -30,7 +32,6 @@ export async function POST(req: Request) {
   try {
     // Parse request body to get optional modelId
     let modelId = DEFAULT_MODEL_ID;
-    let useWebsearch = false;
     let settings: ConversationSettings = DEFAULT_CONVERSATION_SETTINGS;
 
     try {
@@ -39,12 +40,12 @@ export async function POST(req: Request) {
         modelId = body.modelId;
       }
 
-      if (body.useWebsearch) {
-        useWebsearch = body.useWebsearch;
-      }
-
       if (body.settings) {
-        settings = { ...DEFAULT_CONVERSATION_SETTINGS, ...body.settings };
+        // Merge settings
+        settings = {
+          ...DEFAULT_CONVERSATION_SETTINGS,
+          ...body.settings,
+        };
       }
     } catch {
       // If no body or invalid JSON, use default model
@@ -56,7 +57,6 @@ export async function POST(req: Request) {
         userId: null, // Anonymous for now
         title: "New Chat",
         modelId,
-        websearch: useWebsearch,
         settings: settings as any, // Prisma Json type
       },
     });

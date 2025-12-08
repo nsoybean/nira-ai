@@ -37,7 +37,7 @@ interface ChatInputProps {
   onSubmit: (
     message: PromptInputMessage,
     event: FormEvent<HTMLFormElement>,
-    options: { useWebSearch: boolean }
+    settings: { useWebSearch: boolean; useExtendedThinking: boolean }
   ) => void | Promise<void>;
   status: ChatStatus;
   isCreatingConversation: boolean;
@@ -185,7 +185,7 @@ export function ChatInput({
       setPendingFiles(message.files);
     }
 
-    onSubmit(message, event, { useWebSearch });
+    onSubmit(message, event, { useWebSearch, useExtendedThinking });
   };
 
   return (
@@ -240,6 +240,7 @@ export function ChatInput({
                   useWebSearch || useExtendedThinking ? "default" : "ghost"
                 }
                 type="button"
+                disabled={isLoading || isCreatingConversation}
               >
                 <Settings2 size={16} />
                 {/* <span>Settings</span> */}
@@ -256,10 +257,12 @@ export function ChatInput({
               <div className="space-y-1">
                 {/* Web Search Toggle */}
                 <div
-                  className="flex items-center justify-between hover:bg-secondary rounded-md p-2"
-                  onClick={() => {
-                    setUseWebSearch((prev) => !prev);
-                  }}
+                  className="flex items-center justify-between hover:bg-secondary rounded-md p-2 cursor-pointer"
+                  onClick={() =>
+                    !isLoading &&
+                    !isCreatingConversation &&
+                    setUseWebSearch(!useWebSearch)
+                  }
                 >
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">Web Search</label>
@@ -276,10 +279,12 @@ export function ChatInput({
 
                 {/* Extended Thinking Toggle */}
                 <div
-                  className="flex items-center justify-between  hover:bg-secondary rounded-md p-2"
-                  onClick={() => {
-                    setUseExtendedThinking((prev) => !prev);
-                  }}
+                  className="flex items-center justify-between  hover:bg-secondary rounded-md p-2 cursor-pointer"
+                  onClick={() =>
+                    !isLoading &&
+                    !isCreatingConversation &&
+                    setUseExtendedThinking(!useExtendedThinking)
+                  }
                 >
                   <div className="space-y-0.5">
                     <label className="text-sm font-medium">

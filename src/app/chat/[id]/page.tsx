@@ -183,15 +183,16 @@ export default function ChatPage() {
   const handleSubmit = useCallback(
     async (
       message: { text: string; files?: any[] },
-      options: { useWebSearch: boolean }
+      settings: { useWebSearch: boolean; useExtendedThinking: boolean }
     ) => {
       if (status === "streaming" || status === "submitted") {
         return;
       }
 
-      // Pass both text and files to submitChat
+      // Pass both text and files to submitChat with settings
       await submitChat(message.text, message.files || [], setInput, {
-        useWebsearch: options.useWebSearch,
+        useWebsearch: settings.useWebSearch,
+        useExtendedThinking: settings.useExtendedThinking,
       });
     },
     [status, submitChat, setInput]
@@ -345,8 +346,8 @@ export default function ChatPage() {
               <ChatInput
                 input={input}
                 onInputChange={setInput}
-                onSubmit={(message, event, options) => {
-                  handleSubmit(message, options);
+                onSubmit={(message, event, setings) => {
+                  handleSubmit(message, setings);
                 }}
                 status={status}
                 isCreatingConversation={isCreatingConversation}

@@ -30,11 +30,13 @@ export function useChatSubmit({
     input: string,
     files: FileUIPart[],
     setInput: (value: string) => void,
-    options: {
+    settings: {
       useWebsearch?: boolean;
+      useExtendedThinking?: boolean;
     }
   ) => {
-    const useWebsearch = options?.useWebsearch || false;
+    const useWebsearch = settings?.useWebsearch || false;
+    const useExtendedThinking = settings?.useExtendedThinking || false;
 
     if ((!input.trim() && files.length === 0) || isCreatingConversation) return;
 
@@ -43,11 +45,17 @@ export function useChatSubmit({
       setIsCreatingConversation(true);
 
       try {
-        // Create the conversation first with the selected model
+        // Create the conversation first with the selected model and settings
         const createResponse = await fetch("/api/conversations/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ modelId: selectedModel, useWebsearch }),
+          body: JSON.stringify({
+            modelId: selectedModel,
+            settings: {
+              websearch: useWebsearch,
+              extendedThinking: useExtendedThinking,
+            },
+          }),
         });
 
         if (!createResponse.ok) {
