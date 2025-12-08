@@ -191,7 +191,7 @@ export function ChatInput({
   return (
     <PromptInput
       onSubmit={handleSubmit}
-      className="mt-4 rounded-2xl"
+      className="mt-4 rounded-2xl max-w-4xl mx-auto"
       globalDrop
       multiple
       accept="image/*"

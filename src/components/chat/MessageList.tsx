@@ -100,7 +100,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
       return (
         <Message from={"assistant"} key={message.id}>
-          <div className={cn("flex flex-col gap-4 ")}>
+          <div className={cn("flex flex-col gap-4")}>
             {/* Timeline - wrap all reasoning and tools in single ChainOfThought */}
             {hasTimelineParts && (
               <div className="w-full space-y-2">
@@ -401,7 +401,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
     return (
       <Conversation className="flex-1">
-        <ConversationContent>
+        <ConversationContent className="max-w-4xl mx-auto">
           {messages.map((message) => (
             <div key={message.id}>
               {message.role === "assistant" &&
