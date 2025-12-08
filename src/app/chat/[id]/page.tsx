@@ -110,7 +110,10 @@ export default function ChatPage() {
           if (data.title) {
             setChatTitle(data.title);
           }
-          if (data.websearch !== undefined) {
+          // Read websearch from settings (preferred) or fallback to deprecated column
+          if (data.settings?.websearch !== undefined) {
+            setInitialWebSearch(data.settings.websearch);
+          } else if (data.websearch !== undefined) {
             setInitialWebSearch(data.websearch);
           }
           if (data.settings?.extendedThinking !== undefined) {
@@ -157,41 +160,42 @@ export default function ChatPage() {
   const shouldAutoScrollRef = useRef(true);
 
   // Detect when user manually scrolls
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current;
-    if (!scrollArea) return;
+  // useEffect(() => {
+  //   const scrollArea = scrollAreaRef.current;
+  //   if (!scrollArea) return;
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 30; // Xpx threshold
+  //   const handleScroll = () => {
+  //     const { scrollTop, scrollHeight, clientHeight } = scrollArea;
+  //     const isNearBottom = scrollHeight - scrollTop - clientHeight < 30; // Xpx threshold
 
-      // Update auto-scroll preference based on scroll position
-      shouldAutoScrollRef.current = isNearBottom;
-    };
+  //     // Update auto-scroll preference based on scroll position
+  //     shouldAutoScrollRef.current = isNearBottom;
+  //   };
 
-    scrollArea.addEventListener("scroll", handleScroll);
-    return () => scrollArea.removeEventListener("scroll", handleScroll);
-  }, []);
+  //   scrollArea.addEventListener("scroll", handleScroll);
+  //   return () => scrollArea.removeEventListener("scroll", handleScroll);
+  // }, []);
 
   // Auto-scroll to bottom when messages change (only if user hasn't scrolled up)
-  useEffect(() => {
-    if (scrollAreaRef.current && shouldAutoScrollRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   if (scrollAreaRef.current && shouldAutoScrollRef.current) {
+  //     scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+  //   }
+  // }, [messages]);
 
   const handleSubmit = useCallback(
     async (
       message: { text: string; files?: any[] },
-      options: { useWebSearch: boolean }
+      settings: { useWebSearch: boolean; useExtendedThinking: boolean }
     ) => {
       if (status === "streaming" || status === "submitted") {
         return;
       }
 
-      // Pass both text and files to submitChat
+      // Pass both text and files to submitChat with settings
       await submitChat(message.text, message.files || [], setInput, {
-        useWebsearch: options.useWebSearch,
+        useWebsearch: settings.useWebSearch,
+        useExtendedThinking: settings.useExtendedThinking,
       });
     },
     [status, submitChat, setInput]
@@ -268,7 +272,6 @@ export default function ChatPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-
   // Check if chat is empty (no messages and not loading)
   const isChatEmpty = messages.length === 0 && !isLoadingMessages;
 
@@ -276,74 +279,101 @@ export default function ChatPage() {
   const [randomGreeting] = useState(() => getRandomGreeting());
 
   return (
-    <TooltipProvider>
-      <div className="flex h-screen bg-white dark:bg-gray-950">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          currentConversationId={conversationId}
-          onNewChat={handleNewChat}
-          conversations={conversations}
-          isLoadingConversations={isLoadingConversations}
-          onDelete={handleDelete}
-          onClearAll={handleClearAll}
-          onRename={handleRename}
-        />
+    <div className="flex h-screen bg-white dark:bg-gray-950">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        currentConversationId={conversationId}
+        onNewChat={handleNewChat}
+        conversations={conversations}
+        isLoadingConversations={isLoadingConversations}
+        onDelete={handleDelete}
+        onClearAll={handleClearAll}
+        onRename={handleRename}
+      />
 
-        <div className="flex-1 flex flex-col">
-          {/* Show header only when there are messages */}
-          {!isChatEmpty && (
-            <ChatHeader
-              sidebarOpen={sidebarOpen}
-              onToggleSidebar={() => setSidebarOpen(true)}
-              chatTitle={chatTitle}
-              onTitleChange={setChatTitle}
-              conversationId={conversationId}
-              isNew={isNewChat}
-              onDelete={handleDelete}
-              onRename={handleRename}
-            />
-          )}
+      <div className="flex-1 flex flex-col">
+        {/* Show header for specific chat */}
+        {!isChatEmpty && (
+          <ChatHeader
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen(true)}
+            chatTitle={chatTitle}
+            onTitleChange={setChatTitle}
+            conversationId={conversationId}
+            isNew={isNewChat}
+            onDelete={handleDelete}
+            onRename={handleRename}
+          />
+        )}
 
-          {/* Centered layout for empty chat */}
-          {isChatEmpty ? (
-            <div className="flex-1 flex flex-col items-center justify-center px-4">
-              {/* Toggle sidebar button for empty state */}
-              {!sidebarOpen && (
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        {/* Centered layout for empty chat */}
+        {isChatEmpty ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
+            {/* Toggle sidebar button for empty state */}
+            {!sidebarOpen && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
-                  </svg>
-                </button>
-              )}
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </button>
+            )}
 
-              {/* Greeting */}
-              <div className="text-center mb-8">
-                <h1 className="text-4xl font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  {randomGreeting.title}
-                </h1>
-                <p className="text-lg text-gray-500 dark:text-gray-400">
-                  {randomGreeting.subtitle}
-                </p>
-              </div>
+            {/* Greeting */}
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+                {randomGreeting.title}
+              </h1>
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                {randomGreeting.subtitle}
+              </p>
+            </div>
 
-              {/* Centered input */}
-              <div className="w-full max-w-3xl">
+            {/* Centered input */}
+            <div className="w-full max-w-3xl">
+              <ChatInput
+                input={input}
+                onInputChange={setInput}
+                onSubmit={(message, event, setings) => {
+                  handleSubmit(message, setings);
+                }}
+                status={status}
+                isCreatingConversation={isCreatingConversation}
+                selectedModel={selectedModel}
+                onModelChange={setSelectedModel}
+                conversationId={conversationId}
+                isNewChat={isNewChat}
+                initialWebSearch={initialWebSearch}
+                initialExtendedThinking={initialExtendedThinking}
+              />
+            </div>
+          </div>
+        ) : (
+          /* Standard layout with messages */
+          <div className="flex-1 overflow-hidden border">
+            <div className="mx-auto p-2 relative h-full">
+              <div className="flex flex-col h-full">
+                <MessageList
+                  ref={scrollAreaRef}
+                  messages={messages}
+                  status={status}
+                  isLoadingMessages={isLoadingMessages}
+                />
                 <ChatInput
                   input={input}
                   onInputChange={setInput}
@@ -361,35 +391,9 @@ export default function ChatPage() {
                 />
               </div>
             </div>
-          ) : (
-            /* Standard layout with messages */
-            <>
-              <MessageList
-                ref={scrollAreaRef}
-                messages={messages}
-                status={status}
-                isLoadingMessages={isLoadingMessages}
-              />
-
-              <ChatInput
-                input={input}
-                onInputChange={setInput}
-                onSubmit={(message, event, options) => {
-                  handleSubmit(message, options);
-                }}
-                status={status}
-                isCreatingConversation={isCreatingConversation}
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-                conversationId={conversationId}
-                isNewChat={isNewChat}
-                initialWebSearch={initialWebSearch}
-                initialExtendedThinking={initialExtendedThinking}
-              />
-            </>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-    </TooltipProvider>
+    </div>
   );
 }

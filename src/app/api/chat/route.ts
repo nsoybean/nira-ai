@@ -152,7 +152,7 @@ export async function POST(req: Request) {
       },
       tools: {
         // web search
-        ...(conversation.websearch && {
+        ...(settings.websearch && {
           webSearch: tavilySearchTool,
           webExtract: tavilyExtractTool,
         }),

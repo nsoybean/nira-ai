@@ -1,8 +1,7 @@
 "use client";
 
-import { ChatState, ChatStatus, UIMessage } from "ai";
+import { ChatStatus, UIMessage } from "ai";
 import {
-  Sparkles,
   Loader2,
   Loader,
   CopyIcon,
@@ -10,13 +9,11 @@ import {
   Check,
   GlobeIcon,
   BookIcon,
-  CrossIcon,
   ChevronDownIcon,
   XIcon,
   BrainIcon,
 } from "lucide-react";
-import { forwardRef, Fragment, useState } from "react";
-import { Streamdown } from "streamdown";
+import { forwardRef, useState } from "react";
 import {
   Message,
   MessageContent,
@@ -42,18 +39,12 @@ import {
   SourcesTrigger,
 } from "../ai-elements/sources";
 import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-  ToolOutput,
-} from "../ai-elements/tool";
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { cn, isDevelopment } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { webSearchToolUIPart, webExtractToolUIPart } from "@/types/tools";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -99,7 +90,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
       return (
         <Message from={"assistant"} key={message.id}>
-          <div className={cn("flex flex-col gap-4 ")}>
+          <div className={cn("flex flex-col gap-4")}>
             {/* Timeline - wrap all reasoning and tools in single ChainOfThought */}
             {hasTimelineParts && (
               <div className="w-full space-y-2">
@@ -399,168 +390,287 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
     }
 
     return (
-      <div className="flex flex-col overflow-hidden size-full h-screen">
-        {/* scroll */}
-        <div ref={ref} className="h-full overflow-y-auto">
-          {/* conversation */}
-          <div className="max-w-4xl mx-auto p-6 h-full">
-            <Conversation className="">
-              <ConversationContent>
-                {/* empty */}
-                {/* {messages.length === 0 && !isLoadingMessages && (
-                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
-                    <Sparkles className="h-12 w-12 text-gray-300 dark:text-gray-700" />
-                    <div>
-                      <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
-                        Start a new conversation
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Ask me anything...
-                      </p>
-                    </div>
-                  </div>
-                )} */}
+      <Conversation>
+        <ConversationContent className="max-w-4xl mx-auto">
+          {/* loading */}
+          {isLoadingMessages && !messages.length && (
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
+              <Loader2 className="h-12 w-12 text-gray-300 dark:text-gray-700 animate-spin" />
+              <div>
+                <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
+                  Loading messages...
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Please wait
+                </p>
+              </div>
+            </div>
+          )}
 
-                {/* isloading */}
-                {isLoadingMessages && !messages.length && (
-                  <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
-                    <Loader2 className="h-12 w-12 text-gray-300 dark:text-gray-700 animate-spin" />
-                    <div>
-                      <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
-                        Loading messages...
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Please wait
-                      </p>
-                    </div>
-                  </div>
+          {/* messages */}
+          {messages.map((message, msgIndex) => (
+            <div key={message.id}>
+              {/* source url */}
+              {message.role === "assistant" &&
+                message.parts.filter((part) => part.type === "source-url")
+                  .length > 0 && (
+                  <Sources>
+                    <SourcesTrigger
+                      count={
+                        message.parts.filter(
+                          (part) => part.type === "source-url"
+                        ).length
+                      }
+                      label={"Sources"}
+                      resultLabel="results"
+                    />
+                    {message.parts
+                      .filter((part) => part.type === "source-url")
+                      .map((part, i) => (
+                        <SourcesContent key={`${message.id}-${i}`}>
+                          <Source
+                            key={`${message.id}-${i}`}
+                            href={part.url}
+                            title={part.url}
+                          />
+                        </SourcesContent>
+                      ))}
+                  </Sources>
                 )}
 
-                {/* messages */}
-                {messages.map((message, msgIndex) => (
-                  <div key={message.id}>
-                    {/* User message - with attachments above */}
-                    {message.role === "user" && (
-                      <div className="flex flex-col items-end mb-6">
-                        {/* Render file attachments above */}
-                        {message.parts.some((part) => part.type === "file") && (
-                          <div className="flex flex-wrap gap-2 mb-2 max-w-[75%]">
-                            {message.parts
-                              .filter((part) => part.type === "file")
-                              .map((part: any, i) => (
-                                <MessageAttachment
-                                  className="border border-gray-200"
-                                  key={`${message.id}-file-${i}`}
-                                  data={part}
+              {/* text */}
+              {message.parts.map((part, i) => {
+                switch (part.type) {
+                  case "text":
+                    const isLastMessage = msgIndex === messages.length - 1;
+
+                    return (
+                      <Message
+                        key={`${message.id}-${i}`}
+                        from={message.role}
+                        className="mb-2"
+                      >
+                        <MessageContent>
+                          <MessageResponse>{part.text}</MessageResponse>
+                        </MessageContent>
+
+                        {/* show action only for last text part */}
+                        {message.role === "assistant" && (
+                          <MessageActions>
+                            {isLastMessage &&
+                              i === message.parts.length - 1 && (
+                                <MessageAction onClick={() => {}} label="Retry">
+                                  <RefreshCcwIcon className="size-3" />
+                                </MessageAction>
+                              )}
+                            {isLastMessage &&
+                              i === message.parts.length - 1 && (
+                                <MessageAction
+                                  onClick={() => {
+                                    handleCopy(part.text, message.id);
+                                  }}
+                                  label={
+                                    copiedMessageId === message.id
+                                      ? "Copied"
+                                      : "Copy"
+                                  }
+                                >
+                                  {copiedMessageId === message.id ? (
+                                    <Check className="size-3" />
+                                  ) : (
+                                    <CopyIcon className="size-3" />
+                                  )}
+                                </MessageAction>
+                              )}
+                          </MessageActions>
+                        )}
+                      </Message>
+                    );
+                  case "reasoning":
+                    return (
+                      <Reasoning
+                        key={`${message.id}-${i}`}
+                        className="w-full"
+                        isStreaming={
+                          status === "streaming" &&
+                          i === message.parts.length - 1 &&
+                          message.id === messages.at(-1)?.id
+                        }
+                      >
+                        <ReasoningTrigger />
+                        <ReasoningContent>{part.text}</ReasoningContent>
+                      </Reasoning>
+                    );
+
+                  case "file":
+                    return (
+                      <MessageAttachment
+                        key={`${message.id}-${i}`}
+                        data={part}
+                        className="ml-auto border border-gray-250 rounded-md mb-2"
+                      />
+                    );
+
+                  case "tool-webSearch":
+                    const webSearchPart = part as webSearchToolUIPart;
+
+                    return (
+                      <Sources>
+                        <SourcesTrigger
+                          count={webSearchPart?.output?.results?.length || 0}
+                          label={
+                            webSearchPart?.input?.query
+                              ? // capitalize first letter
+                                webSearchPart?.input?.query
+                                  .charAt(0)
+                                  .toUpperCase() +
+                                webSearchPart?.input?.query.slice(1)
+                              : "Web search"
+                          }
+                          isLoading={!webSearchPart?.output?.results?.length}
+                          resultLabel={
+                            webSearchPart?.output?.results != undefined &&
+                            webSearchPart?.output?.results?.length > 0
+                              ? `result${
+                                  webSearchPart?.output?.results.length > 1
+                                    ? "s"
+                                    : ""
+                                }`
+                              : ""
+                          }
+                        />
+                        <SourcesContent
+                          key={`${message.id}-${webSearchPart.toolCallId}`}
+                          className="ml-2 pl-4 border-l"
+                        >
+                          {webSearchPart?.output?.results?.map(
+                            (result: any, i: number) => {
+                              let domain = "";
+                              try {
+                                const url = new URL(result.url);
+                                domain = url.hostname.replace("www.", "");
+                              } catch (e) {
+                                domain = result.url;
+                              }
+
+                              return (
+                                <Source
+                                  key={`${message.id}-websearch-result-${i}`}
+                                  href={result.url}
+                                  title={result.title}
+                                  icon={
+                                    <img
+                                      src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
+                                      alt={`${domain} logo`}
+                                      className="size-5 rounded-sm shrink-0 bg-white"
+                                    />
+                                  }
                                 />
-                              ))}
-                          </div>
-                        )}
+                              );
+                            }
+                          )}
+                        </SourcesContent>
+                      </Sources>
+                    );
 
-                        {/* Render text content below */}
-                        {message.parts.some(
-                          (part) => part.type === "text" && part.text
-                        ) && (
-                          <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2.5 max-w-[75%]">
-                            <p className="text-[15px] text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
-                              {message.parts
-                                .filter((part) => part.type === "text")
-                                .map((part: any, i) => (
-                                  <span key={i}>{part.text}</span>
-                                ))}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  case "tool-webExtract":
+                    const webExtractPart = part as webExtractToolUIPart;
 
-                    {/* Assistant message */}
-                    {message.role === "assistant" && (
-                      <div className="flex flex-col mb-6">
-                        {/* message */}
-                        <div className="flex gap-3">
-                          {/* left - icon */}
-                          <div className="shrink-0 mt-0.5">
-                            <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
-                              <Sparkles className="h-4 w-4 text-white" />
-                            </div>
-                          </div>
+                    return (
+                      <Sources>
+                        <SourcesTrigger
+                          count={undefined}
+                          resultLabel={""}
+                          label={isLoading ? "Reading web" : "Read web"}
+                          icon={<BookIcon className="h-4 w-4" />}
+                          disableResultCount={true}
+                        />
+                        <SourcesContent
+                          key={`${message.id}-${webExtractPart.toolCallId}`}
+                          className="ml-2 pl-4 border-l"
+                        >
+                          {/* successful */}
+                          {webExtractPart?.output?.results?.map(
+                            (result: any, i: number) => {
+                              let domain = "";
+                              try {
+                                const url = new URL(result.url);
+                                domain = url.hostname.replace("www.", "");
+                              } catch (e) {
+                                domain = result.url;
+                              }
 
-                          {/* right - text content */}
-                          <div className="flex-1 flex-col w-full">
-                            {/* initial loader when no message parts */}
-                            {isLoading &&
-                              msgIndex == messages.length - 1 &&
-                              message.parts.length === 0 && (
-                                <div className="flex items-center mt-1">
-                                  <Loader
-                                    size={24}
-                                    className="animate-spin animation-duration-[1.3s]"
-                                  />
-                                </div>
-                              )}
+                              return (
+                                <Source
+                                  key={`${message.id}-websearch-result-${i}`}
+                                  href={result.url}
+                                  title={result.url}
+                                  icon={
+                                    <img
+                                      src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
+                                      alt={`${domain} logo`}
+                                      className="size-5 rounded-sm shrink-0 bg-white"
+                                    />
+                                  }
+                                />
+                              );
+                            }
+                          )}
 
-                            {/* actual message content */}
-                            {renderMessageContent(
-                              message,
-                              msgIndex == messages.length - 1,
-                              isLoading
-                            )}
+                          {webExtractPart?.output?.failedResults?.map(
+                            (failedResult: any, i: number) => {
+                              let domain = "";
+                              try {
+                                const url = new URL(failedResult.url);
+                                domain = url.hostname.replace("www.", "");
+                              } catch (e) {
+                                domain = failedResult.url;
+                              }
 
-                            {/* Show loader below text during streaming */}
-                            {status === "streaming" &&
-                              msgIndex === messages.length - 1 &&
-                              message.parts.length > 0 && (
-                                <div className="flex items-center mt-1">
-                                  <Loader
-                                    size={24}
-                                    className="animate-spin animation-duration-[1.3s]"
-                                  />
-                                </div>
-                              )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {/* 
-                {isLoading && (
-                  <div className="flex items-center mt-1">
-                    <Loader
-                      size={24}
-                      className="animate-spin animation-duration-[1.3s]"
-                    />
-                  </div>
-                )} */}
-                {/* Show loading placeholder if waiting for assistant response */}
-                {isLoading &&
-                  messages[messages.length - 1]?.role === "user" && (
-                    <div className="flex flex-col mb-6">
-                      <div className="flex gap-3">
-                        <div className="shrink-0 mt-0.5">
-                          <div className="h-7 w-7 rounded-lg bg-linear-to-br from-orange-400 to-pink-500 flex items-center justify-center shadow-sm">
-                            <Sparkles className="h-4 w-4 text-white" />
-                          </div>
-                        </div>
+                              return (
+                                <Source
+                                  key={`${message.id}-websearch-result-${i}`}
+                                  href={failedResult.url}
+                                  className="flex flex-row items-center space-x-2"
+                                  children={
+                                    <>
+                                      <img
+                                        src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
+                                        alt={`${domain} logo`}
+                                        className="size-5 rounded-sm shrink-0 bg-white"
+                                      />
+                                      <XIcon
+                                        size={16}
+                                        className="text-red-400 mt-0.5 shrink-0"
+                                      />
+                                      <span className="block font-medium">
+                                        {failedResult.url}
+                                      </span>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        {failedResult.error}
+                                      </p>
+                                    </>
+                                  }
+                                />
+                              );
+                            }
+                          )}
+                        </SourcesContent>
+                      </Sources>
+                    );
 
-                        <div className="flex-1 flex-col w-full">
-                          <div className="flex items-center mt-1">
-                            <Loader
-                              size={24}
-                              className="animate-spin animation-duration-[1.3s]"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-              </ConversationContent>
-              <ConversationScrollButton />
-            </Conversation>
-          </div>
-        </div>
-      </div>
+                  default:
+                    return null;
+                }
+              })}
+            </div>
+          ))}
+
+          {/* submitted */}
+          {status === "submitted" && <Loader />}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </Conversation>
     );
   }
 );

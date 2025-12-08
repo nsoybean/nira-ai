@@ -24,6 +24,8 @@ export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
   label: string;
   resultLabel: string;
   isLoading?: boolean;
+  icon?: React.ReactNode;
+  disableResultCount?: boolean;
 };
 
 export const SourcesTrigger = ({
@@ -33,6 +35,8 @@ export const SourcesTrigger = ({
   label,
   resultLabel,
   isLoading,
+  icon,
+  disableResultCount,
   ...props
 }: SourcesTriggerProps) => {
   return (
@@ -42,7 +46,7 @@ export const SourcesTrigger = ({
     >
       {children ?? (
         <>
-          <GlobeIcon size={16} />
+          {icon ?? <GlobeIcon size={16} />}
           {/* render query max 2 lines truncate  */}
           {label && isLoading ? (
             <Shimmer
@@ -55,9 +59,11 @@ export const SourcesTrigger = ({
           ) : label ? (
             <p className="font-medium truncate max-w-lg">{label}</p>
           ) : null}
-          <p className="font-medium">
-            {isLoading ? "..." : `${count} ${resultLabel}`}
-          </p>
+          {!disableResultCount && (
+            <p className="font-medium">
+              {isLoading ? "..." : `${count} ${resultLabel}`}
+            </p>
+          )}
           <ChevronDownIcon className="h-4 w-4" />
         </>
       )}
@@ -83,7 +89,13 @@ export const SourcesContent = ({
 
 export type SourceProps = ComponentProps<"a">;
 
-export const Source = ({ href, title, children, ...props }: SourceProps) => (
+export const Source = ({
+  href,
+  title,
+  children,
+  icon,
+  ...props
+}: SourceProps & { icon?: React.ReactNode }) => (
   <a
     className="flex items-center gap-2"
     href={href}
@@ -93,7 +105,7 @@ export const Source = ({ href, title, children, ...props }: SourceProps) => (
   >
     {children ?? (
       <>
-        <BookIcon className="h-4 w-4" />
+        {icon ?? <BookIcon className="h-4 w-4" />}
         <span className="block font-medium">{title}</span>
       </>
     )}

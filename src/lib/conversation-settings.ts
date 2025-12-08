@@ -3,6 +3,7 @@
  */
 export interface ConversationSettings {
   extendedThinking: boolean;
+  websearch: boolean;
   // Future settings can be added here without schema changes
 }
 
@@ -11,6 +12,7 @@ export interface ConversationSettings {
  */
 export const DEFAULT_CONVERSATION_SETTINGS: ConversationSettings = {
   extendedThinking: false,
+  websearch: false,
 };
 
 /**
