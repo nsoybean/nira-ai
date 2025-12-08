@@ -1,6 +1,6 @@
 "use client";
 
-import { ChatState, ChatStatus, UIMessage, UIMessagePart } from "ai";
+import { ChatState, ChatStatus, UIMessage } from "ai";
 import {
   Sparkles,
   Loader2,
@@ -13,6 +13,7 @@ import {
   CrossIcon,
   ChevronDownIcon,
   XIcon,
+  BrainIcon,
 } from "lucide-react";
 import { forwardRef, Fragment, useState } from "react";
 import { Streamdown } from "streamdown";
@@ -47,6 +48,11 @@ import {
   ToolInput,
   ToolOutput,
 } from "../ai-elements/tool";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn, isDevelopment } from "@/lib/utils";
 
 interface MessageListProps {
@@ -68,286 +74,310 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
       }, 2000);
     };
 
-    // Helper to group consecutive text and source-url parts together
-    function groupMessageParts(parts: UIMessage["parts"]) {
-      const groups: Array<
-        | {
-            type: (typeof parts)[number]["type"];
-            parts: typeof parts;
-          }
-        | {
-            type: "tool-webSearch";
-            parts: Array<
-              UIMessagePart<
-                {},
-                {
-                  webSearch: {
-                    input: {
-                      query: string;
-                      timeRange?: string;
-                    };
-                    output: {
-                      answer: string | null;
-                      images: any[];
-                      query: string;
-                      requestId: string;
-                      responseTime: number;
-                      results: Array<{
-                        content: string;
-                        rawContent: string | null;
-                        score: number;
-                        title: string;
-                        url: string;
-                      }>;
-                    };
-                  };
-                }
-              >
-            >;
-          }
-      > = [];
-
-      let currentTextGroup: typeof parts = [];
-      let currentSourceGroup: typeof parts = [];
-
-      parts.forEach((part) => {
-        if (part.type === "text" && part.text) {
-          // Flush accumulated source parts
-          if (currentSourceGroup.length > 0) {
-            groups.push({ type: "source-url", parts: currentSourceGroup });
-            currentSourceGroup = [];
-          }
-          currentTextGroup.push(part);
-        } else if (part.type === "source-url") {
-          // Flush accumulated text parts
-          if (currentTextGroup.length > 0) {
-            groups.push({ type: "text", parts: currentTextGroup });
-            currentTextGroup = [];
-          }
-          currentSourceGroup.push(part);
-        } else {
-          // Flush accumulated text parts
-          if (currentTextGroup.length > 0) {
-            groups.push({ type: "text", parts: currentTextGroup });
-            currentTextGroup = [];
-          }
-          // Flush accumulated source parts
-          if (currentSourceGroup.length > 0) {
-            groups.push({ type: "source-url", parts: currentSourceGroup });
-            currentSourceGroup = [];
-          }
-
-          // Add non-text/non-source part as its own group
-          if (part.type === "reasoning" && part.text) {
-            groups.push({ type: "reasoning", parts: [part] });
-          } else {
-            groups.push({ type: part.type, parts: [part] });
-          }
-        }
-      });
-
-      // Flush any remaining text parts
-      if (currentTextGroup.length > 0) {
-        groups.push({ type: "text", parts: currentTextGroup });
-      }
-      // Flush any remaining source parts
-      if (currentSourceGroup.length > 0) {
-        groups.push({ type: "source-url", parts: currentSourceGroup });
-      }
-
-      return groups;
-    }
-
     function renderMessageContent(
       message: UIMessage,
       isLastMessage: boolean,
       isLoading: boolean
     ) {
-      const groups = groupMessageParts(message.parts);
       const allText = message.parts
         .filter((p) => p.type === "text" && p.text)
         .map((p: any) => p.text)
         .join("");
 
+      // Check if message has any reasoning or tool parts that need timeline
+      const hasTimelineParts = message.parts.some(
+        (p) =>
+          p.type === "reasoning" ||
+          p.type === "tool-webSearch" ||
+          p.type === "tool-webExtract" ||
+          p.type === "step-start"
+      );
+
+      const textParts = message.parts.filter(
+        (p) => p.type === "text" && p.text
+      );
+
       return (
-        <div className="flex flex-col w-full">
-          {/* render diff group */}
-          {groups.map((group, groupIndex) => {
-            const isLastGroup = groupIndex === groups.length - 1;
+        <div className="flex flex-col w-full gap-4">
+          {/* Timeline - wrap all reasoning and tools in single ChainOfThought */}
+          {hasTimelineParts && (
+            <div className="w-full space-y-2">
+              {message.parts.map((part: any, partIndex) => {
+                const isLastPart = partIndex === message.parts.length - 1;
+                const isStreaming =
+                  status === "streaming" && isLastPart && isLastMessage;
 
-            if (group.type === "reasoning") {
-              const part = group.parts[0] as any;
-              return (
-                <Reasoning
-                  key={`${message.id}-reasoning-${groupIndex}`}
-                  className="w-full"
-                  isStreaming={
-                    status === "streaming" && isLastGroup && isLastMessage
-                  }
-                >
-                  <ReasoningTrigger />
-                  <ReasoningContent>{part.text}</ReasoningContent>
-                </Reasoning>
-              );
-            } else if (group.type === "text") {
-              const textContent = group.parts.map((p: any) => p.text).join("");
-
-              return (
-                <div key={`${message.id}-text-${groupIndex}`}>
-                  <Message className={cn("max-w-[90%]")} from={message.role}>
-                    <MessageContent className="text-md">
-                      <MessageResponse>{textContent}</MessageResponse>
-                    </MessageContent>
-                  </Message>
-                </div>
-              );
-            } else if (group.type === "source-url") {
-              return (
-                <Sources key={`${message.id}-sources-${groupIndex}`}>
-                  <SourcesTrigger
-                    count={group.parts.length}
-                    label="Reading pages"
-                    resultLabel="results"
-                  />
-                  <SourcesContent>
-                    {group.parts.map((part: any, partIndex) => (
-                      <Source
-                        key={`${message.id}-source-${groupIndex}-${partIndex}`}
-                        href={part.url}
-                        title={part.title}
-                      />
-                    ))}
-                  </SourcesContent>
-                </Sources>
-              );
-            } else if (group.type === "tool-webSearch") {
-              const part = group.parts[0] as any;
-              const output = part?.output;
-              const input = part?.input;
-              const resultsCount = output?.results?.length;
-              const query = input?.query;
-              // const responseTime = output?.responseTime;
-
-              return (
-                <Sources key={`${message.id}-websearch-${groupIndex}`}>
-                  <SourcesTrigger
-                    className="bg-white border border-gray-300 rounded-md p-4"
-                    count={resultsCount}
-                    isLoading={!resultsCount}
-                    label={query}
-                    resultLabel={`result${resultsCount > 1 ? "s" : ""}`}
-                  />
-                  <SourcesContent>
-                    <div>
-                      {output?.results?.map((result: any, i: number) => {
-                        let domain = "";
-                        try {
-                          const url = new URL(result.url);
-                          domain = url.hostname.replace("www.", "");
-                        } catch (e) {
-                          domain = result.url;
-                        }
-
-                        return (
-                          <a
-                            key={`${message.id}-websearch-result-${i}`}
-                            href={result.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-start gap-2 hover:bg-gray-50 -mx-2 px-2 py-1 rounded"
-                          >
-                            <div className="flex flex-row items-center gap-2 flex-1 min-w-0 max-w-2xl">
-                              <BookIcon className="h-4 w-4" />
-                              <div className="text-sm text-gray-900 truncate">
-                                {result.title || result.url}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {domain}
-                              </div>
-                            </div>
-                          </a>
-                        );
-                      })}
-                    </div>
-                  </SourcesContent>
-                </Sources>
-              );
-            } else if (group.type === "tool-webExtract") {
-              const part = group.parts[0] as any;
-              const output = part?.output;
-              const successCount = output?.results?.length || 0;
-              const failCount = output?.failedResults?.length || 0;
-              const totalCount = successCount + failCount;
-              const responseTime = output?.responseTime;
-              // const urls = input?.urls || [];
-
-              return (
-                <Sources key={`${message.id}-webextract-${groupIndex}`}>
-                  <SourcesTrigger
-                    className="bg-white border border-gray-300 rounded-md p-4"
-                    count={totalCount}
-                    label="Reading"
-                    isLoading={responseTime === undefined}
-                    resultLabel={`result${totalCount > 1 ? "s" : ""}`}
-                  />
-                  <SourcesContent>
-                    <div className="space-y-2">
-                      {/* Success Results */}
-                      {output?.results?.map((result: any, i: number) => {
-                        return (
-                          <div
-                            key={`${message.id}-extract-success-${i}`}
-                            className="flex items-start gap-2 text-sm hover:bg-gray-50 -mx-2 px-2 py-1 rounded"
-                          >
-                            <a
-                              href={result.url}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              <div className="flex flex-row items-center gap-2 flex-1 min-w-0 max-w-2xl">
-                                <Check
-                                  size={14}
-                                  className="text-green-600 mt-0.5 shrink-0"
-                                />
-                                <div className="text-sm text-gray-900 truncate">
-                                  {result.url}
-                                </div>
-                              </div>
-                            </a>
+                // Reasoning step
+                if (part.type === "reasoning" && part.text) {
+                  return (
+                    <Collapsible
+                      key={`${message.id}-reasoning-${partIndex}`}
+                      defaultOpen={true}
+                      open={isStreaming ? isStreaming && isLastPart : undefined}
+                    >
+                      <div className="flex gap-2 text-sm">
+                        <div className="relative mt-0.5">
+                          <div className="size-4 flex items-center justify-center">
+                            {/* <div
+                              className={cn(
+                                "size-2 rounded-full",
+                                isStreaming
+                                  ? "bg-blue-500 animate-pulse"
+                                  : "bg-gray-400"
+                              )}
+                            /> */}
+                            <BrainIcon className="size-4" />
                           </div>
-                        );
-                      })}
-
-                      {/* Failed Results */}
-                      {output?.failedResults?.map((failed: any, i: number) => (
-                        <div
-                          key={`${message.id}-extract-fail-${i}`}
-                          className="flex items-start gap-2 text-sm hover:bg-gray-50 -mx-2 px-2 py-1 rounded"
-                        >
-                          <XIcon
-                            size={14}
-                            className="text-red-400 mt-0.5 shrink-0 "
-                          />
-                          <div className="flex-1">
-                            <a
-                              href={failed.url}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              {failed.url}
-                            </a>
-                            <p className="text-gray-500 mt-1">{failed.error}</p>
-                          </div>
+                          {!isLastPart && (
+                            <div className="-mx-px absolute top-7 bottom-0 left-1/2 w-px bg-border" />
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </SourcesContent>
-                </Sources>
-              );
-            } else {
-              return null;
-            }
-          })}
+                        <div className="flex-1 space-y-2 pb-2">
+                          <CollapsibleTrigger className="flex items-center gap-2 hover:text-foreground transition-colors group w-full">
+                            <span className="font-medium text-sm">
+                              Reasoning
+                            </span>
+                            <ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="relative max-h-[400px] overflow-y-auto">
+                              <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-2">
+                                {part.text}
+                              </div>
+                              {/* Fade gradient at bottom */}
+                              <div className="sticky bottom-0 h-8 bg-linear-to-t from-white dark:from-gray-900 to-transparent pointer-events-none" />
+                            </div>
+                          </CollapsibleContent>
+                        </div>
+                      </div>
+                    </Collapsible>
+                  );
+                }
+
+                // Web search tool step
+                if (part.type === "tool-webSearch") {
+                  const output = part?.output;
+                  const input = part?.input;
+                  const resultsCount = output?.results?.length || 0;
+                  const query = input?.query;
+                  const isToolLoading = !output?.results;
+
+                  return (
+                    <Collapsible
+                      key={`${message.id}-websearch-${partIndex}`}
+                      defaultOpen={false}
+                    >
+                      <div className="flex gap-2 text-sm">
+                        <div className="relative mt-0.5">
+                          <GlobeIcon className="size-4" />
+                          {!isLastPart && (
+                            <div className="-mx-px absolute top-7 bottom-0 left-1/2 w-px bg-border" />
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2 pb-2">
+                          <CollapsibleTrigger className="flex items-center gap-2 hover:text-foreground transition-colors group w-full">
+                            <span className="font-medium text-sm flex-1 text-left">
+                              {query || "Web search"}
+                            </span>
+                            {resultsCount > 0 && (
+                              <span className="text-xs text-muted-foreground">
+                                {resultsCount} result
+                                {resultsCount > 1 ? "s" : ""}
+                              </span>
+                            )}
+                            <ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            {output?.results && (
+                              <div className="relative max-h-[220px] overflow-y-auto">
+                                <div className="pr-2">
+                                  {output.results.map(
+                                    (result: any, i: number) => {
+                                      let domain = "";
+                                      try {
+                                        const url = new URL(result.url);
+                                        domain = url.hostname.replace(
+                                          "www.",
+                                          ""
+                                        );
+                                      } catch (e) {
+                                        domain = result.url;
+                                      }
+
+                                      return (
+                                        <a
+                                          key={`${message.id}-websearch-result-${i}`}
+                                          href={result.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="flex items-start gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-4 py-2 rounded transition-colors"
+                                        >
+                                          <div className="flex flex-row items-center gap-1 flex-1 min-w-0">
+                                            <img
+                                              src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
+                                              alt={`${domain} logo`}
+                                              className="size-4 rounded-sm shrink-0 bg-white"
+                                            />
+                                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                              {result.title || result.url}
+                                            </div>
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              {domain}
+                                            </div>
+
+                                            {/* remove verbose content */}
+                                            {/* {result.content && (
+                                              <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                                {result.content}
+                                              </div>
+                                            )} */}
+                                          </div>
+                                        </a>
+                                      );
+                                    }
+                                  )}
+                                </div>
+                                {/* Fade gradient at bottom */}
+                                <div className="sticky bottom-0 h-8 bg-linear-to-t from-white dark:from-gray-900 to-transparent pointer-events-none" />
+                              </div>
+                            )}
+                          </CollapsibleContent>
+                        </div>
+                      </div>
+                    </Collapsible>
+                  );
+                }
+
+                // Web extract tool step
+                if (part.type === "tool-webExtract") {
+                  const input = part?.input;
+                  const numUrls = input?.urls?.length || 0;
+                  const output = part?.output;
+                  const successCount = output?.results?.length || 0;
+                  const failCount = output?.failedResults?.length || 0;
+                  const isToolLoading = output?.responseTime === undefined;
+
+                  return (
+                    <Collapsible
+                      key={`${message.id}-webextract-${partIndex}`}
+                      defaultOpen={false}
+                    >
+                      <div className="flex gap-2 text-sm">
+                        <div className="relative mt-0.5">
+                          <BookIcon className="size-4" />
+                          {!isLastPart && (
+                            <div className="-mx-px absolute top-7 bottom-0 left-1/2 w-px bg-border" />
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-2 pb-2">
+                          <CollapsibleTrigger className="flex items-center gap-2 hover:text-foreground transition-colors group w-full">
+                            <span className="font-medium text-sm flex-1 text-left">
+                              Reading {numUrls} page{numUrls > 1 ? "s" : ""}
+                            </span>
+                            {(successCount > 0 || failCount > 0) && (
+                              <span className="text-xs text-muted-foreground">
+                                {`${successCount} success ${
+                                  failCount ? `, ${failCount} failed` : ""
+                                }`.trim()}
+                              </span>
+                            )}
+                            <ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="relative max-h-[220px] overflow-y-auto">
+                              <div className="pr-2">
+                                {/* Success Results */}
+                                {output?.results?.map(
+                                  (result: any, i: number) => {
+                                    let domain = "";
+                                    try {
+                                      const url = new URL(result.url);
+                                      domain = url.hostname.replace("www.", "");
+                                    } catch (e) {
+                                      domain = result.url;
+                                    }
+
+                                    return (
+                                      <a
+                                        key={`${message.id}-extract-success-${i}`}
+                                        href={result.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex flex-row items-center gap-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-4 py-2 rounded transition-colors"
+                                      >
+                                        <img
+                                          src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
+                                          alt={`${domain} logo`}
+                                          className="size-4 rounded-sm shrink-0 bg-white"
+                                        />
+                                        {/* dont need show check when succeed */}
+                                        {/* <Check
+                                          size={16}
+                                          className="text-green-600 mt-0.5 shrink-0"
+                                        /> */}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-sm text-gray-900 dark:text-gray-100 truncate max-w-[90%]">
+                                            {result.url}
+                                          </div>
+                                        </div>
+                                      </a>
+                                    );
+                                  }
+                                )}
+
+                                {/* Failed Results */}
+                                {output?.failedResults?.map(
+                                  (failed: any, i: number) => (
+                                    <div
+                                      key={`${message.id}-extract-fail-${i}`}
+                                      className="flex items-start gap-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-2 py-2 rounded"
+                                    >
+                                      <XIcon
+                                        size={16}
+                                        className="text-red-400 mt-0.5 shrink-0"
+                                      />
+                                      <div className="flex-1 min-w-0">
+                                        <a
+                                          href={failed.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-sm text-gray-900 dark:text-gray-100 truncate block"
+                                        >
+                                          {failed.url}
+                                        </a>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                          {failed.error}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                              {/* Fade gradient at bottom */}
+                              <div className="sticky bottom-0 h-8 bg-linear-to-t from-white dark:from-gray-900 to-transparent pointer-events-none" />
+                            </div>
+                          </CollapsibleContent>
+                        </div>
+                      </div>
+                    </Collapsible>
+                  );
+                }
+
+                return null;
+              })}
+            </div>
+          )}
+
+          {/* Text content - render all text parts as messages */}
+          {textParts.map((part: any, textIndex) => (
+            <div key={`${message.id}-text-${textIndex}`}>
+              <Message className={cn("max-w-[90%]")} from={message.role}>
+                <MessageContent className="text-md">
+                  <MessageResponse>{part.text}</MessageResponse>
+                </MessageContent>
+              </Message>
+            </div>
+          ))}
 
           {/* Show copy action once complete - only after last text group */}
           {!isLoading && allText && (
