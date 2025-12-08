@@ -25,6 +25,7 @@ export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
   resultLabel: string;
   isLoading?: boolean;
   icon?: React.ReactNode;
+  disableResultCount?: boolean;
 };
 
 export const SourcesTrigger = ({
@@ -35,6 +36,7 @@ export const SourcesTrigger = ({
   resultLabel,
   isLoading,
   icon,
+  disableResultCount,
   ...props
 }: SourcesTriggerProps) => {
   return (
@@ -57,9 +59,11 @@ export const SourcesTrigger = ({
           ) : label ? (
             <p className="font-medium truncate max-w-lg">{label}</p>
           ) : null}
-          <p className="font-medium">
-            {isLoading ? "..." : `${count} ${resultLabel}`}
-          </p>
+          {!disableResultCount && (
+            <p className="font-medium">
+              {isLoading ? "..." : `${count} ${resultLabel}`}
+            </p>
+          )}
           <ChevronDownIcon className="h-4 w-4" />
         </>
       )}

@@ -527,6 +527,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                 webSearchPart?.input?.query.slice(1)
                               : "Web search"
                           }
+                          isLoading={!webSearchPart?.output?.results?.length}
                           resultLabel={
                             webSearchPart?.output?.results != undefined &&
                             webSearchPart?.output?.results?.length > 0
@@ -561,7 +562,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                     <img
                                       src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
                                       alt={`${domain} logo`}
-                                      className="size-4 rounded-sm shrink-0 bg-white"
+                                      className="size-5 rounded-sm shrink-0 bg-white"
                                     />
                                   }
                                 />
@@ -574,20 +575,15 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
                   case "tool-webExtract":
                     const webExtractPart = part as webExtractToolUIPart;
-                    const input = webExtractPart?.input;
-                    const output = webExtractPart?.output;
-                    const successCount = output?.results?.length || 0;
-                    const failCount = output?.failedResults?.length || 0;
 
                     return (
                       <Sources>
                         <SourcesTrigger
-                          count={successCount || 0}
+                          count={undefined}
+                          resultLabel={""}
                           label={isLoading ? "Reading web" : "Read web"}
-                          resultLabel={`success ${
-                            failCount ? `, ${failCount} failed` : ""
-                          }`.trim()}
                           icon={<BookIcon className="h-4 w-4" />}
+                          disableResultCount={true}
                         />
                         <SourcesContent
                           key={`${message.id}-${webExtractPart.toolCallId}`}
@@ -613,7 +609,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                     <img
                                       src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
                                       alt={`${domain} logo`}
-                                      className="size-4 rounded-sm shrink-0 bg-white"
+                                      className="size-5 rounded-sm shrink-0 bg-white"
                                     />
                                   }
                                 />
@@ -641,7 +637,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                       <img
                                         src={`https://img.logo.dev/${domain}?token=${process.env.NEXT_PUBLIC_LOGO_DEV}`}
                                         alt={`${domain} logo`}
-                                        className="size-4 rounded-sm shrink-0 bg-white"
+                                        className="size-5 rounded-sm shrink-0 bg-white"
                                       />
                                       <XIcon
                                         size={16}
