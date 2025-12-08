@@ -454,12 +454,14 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                               </MessageAction>
                             )}
                             <MessageAction
-                              onClick={() =>
-                                navigator.clipboard.writeText(part.text)
-                              }
-                              label="Copy"
+                              onClick={() => handleCopy(part.text, message.id)}
+                              label={copiedMessageId === message.id ? "Copied" : "Copy"}
                             >
-                              <CopyIcon className="size-3" />
+                              {copiedMessageId === message.id ? (
+                                <Check className="size-3" />
+                              ) : (
+                                <CopyIcon className="size-3" />
+                              )}
                             </MessageAction>
                           </MessageActions>
                         )}
