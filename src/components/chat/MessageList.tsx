@@ -1,8 +1,7 @@
 "use client";
 
-import { ChatState, ChatStatus, UIMessage } from "ai";
+import { ChatStatus, UIMessage } from "ai";
 import {
-  Sparkles,
   Loader2,
   Loader,
   CopyIcon,
@@ -10,13 +9,11 @@ import {
   Check,
   GlobeIcon,
   BookIcon,
-  CrossIcon,
   ChevronDownIcon,
   XIcon,
   BrainIcon,
 } from "lucide-react";
-import { forwardRef, Fragment, useState } from "react";
-import { Streamdown } from "streamdown";
+import { forwardRef, useState } from "react";
 import {
   Message,
   MessageContent,
@@ -24,7 +21,6 @@ import {
   MessageActions,
   MessageAction,
   MessageAttachment,
-  MessageBranch,
 } from "../ai-elements/message";
 import {
   Reasoning,
@@ -43,19 +39,12 @@ import {
   SourcesTrigger,
 } from "../ai-elements/sources";
 import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-  ToolOutput,
-} from "../ai-elements/tool";
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { cn, isDevelopment } from "@/lib/utils";
-import { Tooltip, TooltipContent } from "../ui/tooltip";
+import { cn } from "@/lib/utils";
+import { webSearchToolUIPart, webExtractToolUIPart } from "@/types/tools";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -523,30 +512,37 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     );
 
                   case "tool-webSearch":
+                    const webSearchPart = part as webSearchToolUIPart;
+
                     return (
                       <Sources>
                         <SourcesTrigger
-                          count={part?.output?.results?.length || ""}
+                          count={webSearchPart?.output?.results?.length || 0}
                           label={
-                            part?.input?.query
+                            webSearchPart?.input?.query
                               ? // capitalize first letter
-                                part?.input?.query.charAt(0).toUpperCase() +
-                                part?.input?.query.slice(1)
+                                webSearchPart?.input?.query
+                                  .charAt(0)
+                                  .toUpperCase() +
+                                webSearchPart?.input?.query.slice(1)
                               : "Web search"
                           }
                           resultLabel={
-                            part?.output?.results.length > 0
+                            webSearchPart?.output?.results != undefined &&
+                            webSearchPart?.output?.results?.length > 0
                               ? `result${
-                                  part?.output?.results.length > 1 ? "s" : ""
+                                  webSearchPart?.output?.results.length > 1
+                                    ? "s"
+                                    : ""
                                 }`
                               : ""
                           }
                         />
                         <SourcesContent
-                          key={`${message.id}-${part.toolCallId}`}
+                          key={`${message.id}-${webSearchPart.toolCallId}`}
                           className="ml-2 pl-4 border-l"
                         >
-                          {part?.output?.results?.map(
+                          {webSearchPart?.output?.results?.map(
                             (result: any, i: number) => {
                               let domain = "";
                               try {
@@ -577,15 +573,16 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                     );
 
                   case "tool-webExtract":
-                    const input = part?.input;
-                    const output = part?.output;
+                    const webExtractPart = part as webExtractToolUIPart;
+                    const input = webExtractPart?.input;
+                    const output = webExtractPart?.output;
                     const successCount = output?.results?.length || 0;
                     const failCount = output?.failedResults?.length || 0;
 
                     return (
                       <Sources>
                         <SourcesTrigger
-                          count={successCount || ""}
+                          count={successCount || 0}
                           label={isLoading ? "Reading web" : "Read web"}
                           resultLabel={`success ${
                             failCount ? `, ${failCount} failed` : ""
@@ -593,11 +590,11 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                           icon={<BookIcon className="h-4 w-4" />}
                         />
                         <SourcesContent
-                          key={`${message.id}-${part.toolCallId}`}
+                          key={`${message.id}-${webExtractPart.toolCallId}`}
                           className="ml-2 pl-4 border-l"
                         >
                           {/* successful */}
-                          {part?.output?.results?.map(
+                          {webExtractPart?.output?.results?.map(
                             (result: any, i: number) => {
                               let domain = "";
                               try {
@@ -624,7 +621,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                             }
                           )}
 
-                          {part?.output?.failedResults?.map(
+                          {webExtractPart?.output?.failedResults?.map(
                             (failedResult: any, i: number) => {
                               let domain = "";
                               try {
