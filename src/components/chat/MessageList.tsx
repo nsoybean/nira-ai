@@ -519,7 +519,13 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                       <Sources>
                         <SourcesTrigger
                           count={part?.output?.results?.length}
-                          label={part?.input?.query || "Web search"}
+                          label={
+                            part?.input?.query
+                              ? // capitalize first letter
+                                part?.input?.query.charAt(0).toUpperCase() +
+                                part?.input?.query.slice(1)
+                              : "Web search"
+                          }
                           resultLabel={
                             part?.output?.results.length > 0
                               ? `result${
