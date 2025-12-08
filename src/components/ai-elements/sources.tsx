@@ -6,8 +6,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { BookIcon, ChevronDownIcon } from "lucide-react";
+import { BookIcon, ChevronDownIcon, GlobeIcon } from "lucide-react";
 import type { ComponentProps } from "react";
+import { Shimmer } from "./shimmer";
 
 export type SourcesProps = ComponentProps<"div">;
 
@@ -19,27 +20,50 @@ export const Sources = ({ className, ...props }: SourcesProps) => (
 );
 
 export type SourcesTriggerProps = ComponentProps<typeof CollapsibleTrigger> & {
-  count: number;
+  count?: number;
+  label: string;
+  resultLabel: string;
+  isLoading?: boolean;
 };
 
 export const SourcesTrigger = ({
   className,
   count,
   children,
+  label,
+  resultLabel,
+  isLoading,
   ...props
-}: SourcesTriggerProps) => (
-  <CollapsibleTrigger
-    className={cn("flex items-center gap-2", className)}
-    {...props}
-  >
-    {children ?? (
-      <>
-        <p className="font-medium">Used {count} sources</p>
-        <ChevronDownIcon className="h-4 w-4" />
-      </>
-    )}
-  </CollapsibleTrigger>
-);
+}: SourcesTriggerProps) => {
+  return (
+    <CollapsibleTrigger
+      className={cn("flex items-center gap-2", className)}
+      {...props}
+    >
+      {children ?? (
+        <>
+          <GlobeIcon size={16} />
+          {/* render query max 2 lines truncate  */}
+          {label && isLoading ? (
+            <Shimmer
+              as="span"
+              duration={1.5}
+              className="font-medium truncate max-w-lg"
+            >
+              {label}
+            </Shimmer>
+          ) : label ? (
+            <p className="font-medium truncate max-w-lg">{label}</p>
+          ) : null}
+          <p className="font-medium">
+            {isLoading ? "..." : `${count} ${resultLabel}`}
+          </p>
+          <ChevronDownIcon className="h-4 w-4" />
+        </>
+      )}
+    </CollapsibleTrigger>
+  );
+};
 
 export type SourcesContentProps = ComponentProps<typeof CollapsibleContent>;
 
