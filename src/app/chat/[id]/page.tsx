@@ -20,7 +20,6 @@ export default function ChatPage() {
   const conversationId = params.id as string;
 
   const [input, setInput] = useState("");
-  const [chatTitle, setChatTitle] = useState("New Chat");
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL_ID);
   const [initialWebSearch, setInitialWebSearch] = useState(false);
   const [initialExtendedThinking, setInitialExtendedThinking] = useState(false);
@@ -103,7 +102,7 @@ export default function ChatPage() {
     }
   }, [loadedMessages, setMessages]);
 
-  // Load conversation details including model and title
+  // Load conversation details including model (title now comes from context)
   useEffect(() => {
     if (conversationId) {
       fetch(`/api/conversations/${conversationId}`)
@@ -111,9 +110,6 @@ export default function ChatPage() {
         .then((data) => {
           if (data.modelId) {
             setSelectedModel(data.modelId);
-          }
-          if (data.title) {
-            setChatTitle(data.title);
           }
           // Read websearch from settings (preferred) or fallback to deprecated column
           if (data.settings?.websearch !== undefined) {
@@ -182,14 +178,10 @@ export default function ChatPage() {
 
   const handleRename = useCallback(
     async (conversationId: string, newTitle: string) => {
-      const success = await handleSidebarRename(conversationId, newTitle);
-      // Update the header title if we're renaming the current conversation
-      if (success && conversationId === params.id) {
-        setChatTitle(newTitle);
-      }
-      return success;
+      // Title will be automatically synced from context, no need to set local state
+      return await handleSidebarRename(conversationId, newTitle);
     },
-    [handleSidebarRename, params.id]
+    [handleSidebarRename]
   );
 
   // Check if chat is empty (no messages and not loading)
@@ -215,8 +207,6 @@ export default function ChatPage() {
           <ChatHeader
             sidebarOpen={sidebarOpen}
             onToggleSidebar={() => setSidebarOpen(true)}
-            chatTitle={chatTitle}
-            onTitleChange={setChatTitle}
             conversationId={conversationId}
             isNew={false}
             onDelete={handleDelete}
