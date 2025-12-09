@@ -149,30 +149,6 @@ export default function ChatPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
 
-  // Detect when user manually scrolls
-  // useEffect(() => {
-  //   const scrollArea = scrollAreaRef.current;
-  //   if (!scrollArea) return;
-
-  //   const handleScroll = () => {
-  //     const { scrollTop, scrollHeight, clientHeight } = scrollArea;
-  //     const isNearBottom = scrollHeight - scrollTop - clientHeight < 30; // Xpx threshold
-
-  //     // Update auto-scroll preference based on scroll position
-  //     shouldAutoScrollRef.current = isNearBottom;
-  //   };
-
-  //   scrollArea.addEventListener("scroll", handleScroll);
-  //   return () => scrollArea.removeEventListener("scroll", handleScroll);
-  // }, []);
-
-  // Auto-scroll to bottom when messages change (only if user hasn't scrolled up)
-  // useEffect(() => {
-  //   if (scrollAreaRef.current && shouldAutoScrollRef.current) {
-  //     scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-  //   }
-  // }, [messages]);
-
   const handleSubmit = useCallback(
     async (
       message: { text: string; files?: any[] },
