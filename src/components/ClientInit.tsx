@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
-import { initializeFetchInterceptor } from "@/lib/fetch-interceptor";
-
 /**
  * ClientInit component
  * Initializes client-side features that need to run once on app load
+ *
+ * Note: Fetch interceptor disabled - now using Better Auth with cookies
+ * which are automatically sent with requests
  */
 export function ClientInit() {
-  useEffect(() => {
-    // Initialize the fetch interceptor to add beta token to all requests
-    initializeFetchInterceptor();
-  }, []);
+  // No initialization needed - Better Auth handles authentication via cookies
 
   return null;
 }

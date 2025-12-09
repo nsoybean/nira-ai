@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ConversationSettings } from "@/lib/conversation-settings";
+import { requireAuth } from "@/lib/auth-server";
 
 /**
  * GET /api/conversations/[id]
@@ -12,10 +13,11 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await requireAuth();
     const { id } = await context.params;
 
     const conversation = await prisma.conversation.findUnique({
-      where: { id },
+      where: { id, userId: user.userId },
       select: {
         id: true,
         title: true,
@@ -67,6 +69,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await requireAuth();
     const { id } = await context.params;
     const body: {
       title?: string;
@@ -83,7 +86,7 @@ export async function PATCH(
 
     // Check if conversation exists
     const conversation = await prisma.conversation.findUnique({
-      where: { id },
+      where: { id, userId: user.userId },
     });
 
     if (!conversation) {
@@ -112,7 +115,7 @@ export async function PATCH(
 
     // Update the conversation
     const updatedConversation = await prisma.conversation.update({
-      where: { id },
+      where: { id, userId: user.userId },
       data: {
         ...(body.title !== undefined && { title: body.title }),
         settings: updatedSettings as any,
@@ -159,6 +162,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await requireAuth();
     const { id } = await context.params;
 
     if (!id) {
@@ -170,7 +174,7 @@ export async function DELETE(
 
     // Check if conversation exists
     const conversation = await prisma.conversation.findUnique({
-      where: { id },
+      where: { id, userId: user.userId },
     });
 
     if (!conversation) {
@@ -182,7 +186,7 @@ export async function DELETE(
 
     // Delete the conversation (messages will be cascade deleted)
     await prisma.conversation.delete({
-      where: { id },
+      where: { id, userId: user.userId },
     });
 
     return NextResponse.json({

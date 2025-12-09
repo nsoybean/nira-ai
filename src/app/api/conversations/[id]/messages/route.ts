@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-server";
 
 /**
  * GET /api/conversations/[id]/messages
@@ -21,16 +22,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await requireAuth();
     const { id: conversationId } = await params;
 
     // Verify conversation exists
     const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
+      where: { id: conversationId, userId: user.userId },
     });
 
     if (!conversation) {
       return NextResponse.json(
-        { error: 'Conversation not found' },
+        { error: "Conversation not found" },
         { status: 404 }
       );
     }
@@ -38,7 +40,7 @@ export async function GET(
     // Get all messages for this conversation
     const messages = await prisma.message.findMany({
       where: { conversationId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: "asc" },
     });
 
     // Transform to UIMessage format (already in the correct format from DB)
@@ -50,10 +52,10 @@ export async function GET(
 
     return NextResponse.json(uiMessages);
   } catch (error) {
-    console.error('[Messages API] Error loading messages:', error);
+    console.error("[Messages API] Error loading messages:", error);
 
     return NextResponse.json(
-      { error: 'Failed to load messages' },
+      { error: "Failed to load messages" },
       { status: 500 }
     );
   }

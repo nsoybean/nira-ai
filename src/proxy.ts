@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Proxy to validate beta authentication token
- * Protects API routes by checking for X-Beta-Token header
+ * Proxy middleware
+ * Now using Better Auth for authentication instead of beta tokens
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip proxy for:
-  // 1. Beta verification endpoint (needs to accept requests without token)
+  // 1. All auth endpoints (Better Auth handles authentication)
   // 2. Static files and Next.js internal routes
   // 3. Public assets
   if (
-    pathname.startsWith("/api/auth/beta-verify") ||
+    pathname.startsWith("/api/auth/") || // Allow all Better Auth routes
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
     pathname.match(
@@ -22,27 +22,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Only validate API routes
-  if (pathname.startsWith("/api/")) {
-    const betaToken = request.headers.get("X-Beta-Token");
-    const expectedToken = process.env.BETA_AUTH_TOKEN;
-
-    // If BETA_AUTH_TOKEN is not set, allow all requests (no beta protection)
-    if (!expectedToken) {
-      return NextResponse.next();
-    }
-
-    // Validate the token
-    if (!betaToken || betaToken !== expectedToken) {
-      return NextResponse.json(
-        {
-          error: "Unauthorized",
-          message: "Valid beta authentication token is required",
-        },
-        { status: 401 }
-      );
-    }
-  }
+  // Optional: Add any additional route protection here
+  // For now, we allow all routes and let individual API routes handle auth
+  // using the requireAuth() or getUserId() helpers
 
   return NextResponse.next();
 }

@@ -5,6 +5,7 @@ import {
   ConversationSettings,
   DEFAULT_CONVERSATION_SETTINGS,
 } from "@/lib/conversation-settings";
+import { requireAuth } from "@/lib/auth-server";
 
 /**
  * POST /api/conversations/create
@@ -30,7 +31,9 @@ import {
  */
 export async function POST(req: Request) {
   try {
-    // Parse request body to get optional modelId
+    const user = await requireAuth();
+    // Parse request
+    //  body to get optional modelId
     let modelId = DEFAULT_MODEL_ID;
     let settings: ConversationSettings = DEFAULT_CONVERSATION_SETTINGS;
 
@@ -54,7 +57,7 @@ export async function POST(req: Request) {
     // Create a new conversation
     const conversation = await prisma.conversation.create({
       data: {
-        userId: null, // Anonymous for now
+        userId: user.userId,
         title: "New Chat",
         modelId,
         settings: settings as any, // Prisma Json type

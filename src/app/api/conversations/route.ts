@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth-server";
 
 /**
  * GET /api/conversations
@@ -20,8 +21,10 @@ import { prisma } from '@/lib/prisma';
  */
 export async function GET(req: Request) {
   try {
+    const user = await requireAuth();
     const conversations = await prisma.conversation.findMany({
-      orderBy: { lastMessageAt: 'desc' },
+      where: { userId: user.userId },
+      orderBy: { lastMessageAt: "desc" },
       include: {
         _count: {
           select: { messages: true },
@@ -32,7 +35,7 @@ export async function GET(req: Request) {
     // Transform to include message count
     const conversationsWithMetadata = conversations.map((conv) => ({
       id: conv.id,
-      title: conv.title || 'Untitled Chat',
+      title: conv.title || "Untitled Chat",
       messageCount: conv._count.messages,
       createdAt: conv.createdAt,
       updatedAt: conv.updatedAt,
@@ -40,10 +43,10 @@ export async function GET(req: Request) {
 
     return NextResponse.json(conversationsWithMetadata);
   } catch (error) {
-    console.error('[Conversations API] Error fetching conversations:', error);
+    console.error("[Conversations API] Error fetching conversations:", error);
 
     return NextResponse.json(
-      { error: 'Failed to fetch conversations' },
+      { error: "Failed to fetch conversations" },
       { status: 500 }
     );
   }
@@ -64,22 +67,31 @@ export async function GET(req: Request) {
  */
 export async function DELETE(req: Request) {
   try {
+    const user = await requireAuth();
+
     // Count conversations before deletion
-    const count = await prisma.conversation.count();
+    const count = await prisma.conversation.count({
+      where: { userId: user.userId },
+    });
 
     // Delete all conversations (messages will be cascade deleted)
-    await prisma.conversation.deleteMany({});
+    await prisma.conversation.deleteMany({
+      where: { userId: user.userId },
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'All conversations deleted successfully',
+      message: "All conversations deleted successfully",
       deletedCount: count,
     });
   } catch (error) {
-    console.error('[Conversations API] Error deleting all conversations:', error);
+    console.error(
+      "[Conversations API] Error deleting all conversations:",
+      error
+    );
 
     return NextResponse.json(
-      { error: 'Failed to delete conversations' },
+      { error: "Failed to delete conversations" },
       { status: 500 }
     );
   }

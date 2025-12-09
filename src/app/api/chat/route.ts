@@ -20,6 +20,7 @@ import { getModelById, calculateCost } from "@/lib/models";
 import { tavilyExtractTool, tavilySearchTool } from "@/lib/tools";
 import { mergeConversationSettings } from "@/lib/conversation-settings";
 import { MyUIMessage } from "@/lib/types";
+import { getUserId, requireAuth } from "@/lib/auth-server";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -40,6 +41,8 @@ export const maxDuration = 60;
  */
 export async function POST(req: Request) {
   try {
+    const user = await requireAuth();
+
     const {
       conversationId,
       message,
@@ -59,7 +62,7 @@ export async function POST(req: Request) {
 
     // Verify conversation exists
     const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
+      where: { id: conversationId, userId: user.userId },
     });
 
     if (!conversation) {
@@ -118,7 +121,7 @@ export async function POST(req: Request) {
           // Update conversation title in database
           if (generatedTitle) {
             await prisma.conversation.update({
-              where: { id: conversationId },
+              where: { id: conversationId, userId: user.userId },
               data: { title: generatedTitle },
             });
 
@@ -213,6 +216,7 @@ export async function POST(req: Request) {
               // Track model usage for analytics
               await prisma.modelUsage.create({
                 data: {
+                  userId: user.userId,
                   conversationId,
                   modelId: selectedModelId,
                   modelProvider: modelConfig.provider,
@@ -268,7 +272,7 @@ export async function POST(req: Request) {
 
                 // Update conversation's updatedAt and lastMessageAt timestamps
                 await prisma.conversation.update({
-                  where: { id: conversationId },
+                  where: { id: conversationId, userId: user.userId },
                   data: {
                     updatedAt: new Date(),
                     lastMessageAt: new Date(),
