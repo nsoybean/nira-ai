@@ -21,9 +21,7 @@ export function useChatSubmit({
 }: UseChatSubmitProps) {
   // hook
   const router = useRouter();
-
-  // ✅ OPTIMIZED: Use addConversation instead of refreshConversations
-  const { addConversation } = useConversations();
+  const { refreshConversations } = useConversations();
 
   // state
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
@@ -64,33 +62,27 @@ export function useChatSubmit({
           throw new Error("Failed to create conversation");
         }
 
-        const newConversation = await createResponse.json();
+        const { id: newConversationId } = await createResponse.json();
 
-        if (newConversation.id) {
-          // ✅ OPTIMIZED: Add to sidebar immediately (no refetch needed!)
-          addConversation({
-            id: newConversation.id,
-            title: newConversation.title || "New Chat",
-            settings: {
-              websearch: useWebsearch,
-              extendedThinking: useExtendedThinking,
-            },
-          });
-
+        if (newConversationId) {
           // Store the pending message and files in sessionStorage so the new page can send it
           sessionStorage.setItem("pendingMessage", input);
           if (files.length > 0) {
             sessionStorage.setItem("pendingFiles", JSON.stringify(files));
           }
 
-          // Navigate to the new conversation
-          router.push(`/chat/${newConversation.id}`);
+          // Don't clear input yet - keep it visible during loading
+          // Input will be cleared when navigating to the new chat
 
-          // ❌ REMOVED: No need for refreshConversations() anymore!
-          // The conversation is already in the sidebar from addConversation()
+          // Navigate to the new conversation
+          router.push(`/chat/${newConversationId}`);
+
+          // Reload conversations list
+          refreshConversations();
 
           // Add a small delay before clearing loading state
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          // This makes the transition feel smoother and hides the internal step
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       } catch (error) {
         console.error("Error creating conversation:", error);

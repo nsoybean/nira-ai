@@ -11,6 +11,7 @@ import React, {
   useRef,
 } from "react";
 import { ConversationSettings } from "@/lib/conversation-settings";
+import { toast } from "sonner";
 
 interface Conversation {
   id: string;
@@ -23,6 +24,7 @@ interface ConversationsContextType {
   conversations: Conversation[];
   isLoadingConversations: boolean;
   refreshConversations: () => Promise<void>;
+  // Optimistic operations
   addConversation: (conversation: Conversation) => void;
   deleteConversation: (conversationId: string) => Promise<boolean>;
   clearAllConversations: () => Promise<boolean>;
