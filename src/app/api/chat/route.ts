@@ -1,15 +1,10 @@
-import { anthropic, AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import {
-  openai,
-  OpenAIProviderSettings,
-  OpenAIResponsesProviderOptions,
-} from "@ai-sdk/openai";
+import { AnthropicProviderOptions } from "@ai-sdk/anthropic";
+import { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import {
   streamText,
   convertToModelMessages,
   UIMessage,
   createIdGenerator,
-  LanguageModel,
   stepCountIs,
   generateText,
   createUIMessageStream,
@@ -20,6 +15,7 @@ import { getModelById, calculateCost } from "@/lib/models";
 import { tavilyExtractTool, tavilySearchTool } from "@/lib/tools";
 import { mergeConversationSettings } from "@/lib/conversation-settings";
 import { MyUIMessage } from "@/lib/types";
+import { withAuth } from "@/lib/auth-server";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -38,7 +34,7 @@ export const maxDuration = 60;
  * Response:
  * - Server-Sent Events stream with chat completion
  */
-export async function POST(req: Request) {
+export const POST = withAuth(async (req, { userId }) => {
   try {
     const {
       conversationId,
@@ -59,7 +55,7 @@ export async function POST(req: Request) {
 
     // Verify conversation exists
     const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
+      where: { id: conversationId, userId },
     });
 
     if (!conversation) {
@@ -118,7 +114,7 @@ export async function POST(req: Request) {
           // Update conversation title in database
           if (generatedTitle) {
             await prisma.conversation.update({
-              where: { id: conversationId },
+              where: { id: conversationId, userId },
               data: { title: generatedTitle },
             });
 
@@ -213,6 +209,7 @@ export async function POST(req: Request) {
               // Track model usage for analytics
               await prisma.modelUsage.create({
                 data: {
+                  userId,
                   conversationId,
                   modelId: selectedModelId,
                   modelProvider: modelConfig.provider,
@@ -268,7 +265,7 @@ export async function POST(req: Request) {
 
                 // Update conversation's updatedAt and lastMessageAt timestamps
                 await prisma.conversation.update({
-                  where: { id: conversationId },
+                  where: { id: conversationId, userId },
                   data: {
                     updatedAt: new Date(),
                     lastMessageAt: new Date(),
@@ -305,4 +302,4 @@ export async function POST(req: Request) {
 
     return new Response("Internal server error", { status: 500 });
   }
-}
+});

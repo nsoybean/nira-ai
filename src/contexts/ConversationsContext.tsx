@@ -26,6 +26,7 @@ interface ConversationsContextType {
   addConversation: (conversation: Conversation) => void;
   deleteConversation: (conversationId: string) => Promise<boolean>;
   clearAllConversations: () => Promise<boolean>;
+  clearConversationsState: () => void;
   updateConversation: (
     conversationId: string,
     updates: Partial<Conversation>
@@ -173,6 +174,11 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     [conversations]
   );
 
+  // Clear conversations state
+  const clearConversationsState = useCallback(() => {
+    setConversations([]);
+  }, []);
+
   // Initial load only
   useEffect(() => {
     if (!hasLoadedRef.current) {
@@ -189,6 +195,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       addConversation,
       deleteConversation,
       clearAllConversations,
+      clearConversationsState,
       updateConversation,
     }),
     [
@@ -198,6 +205,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       addConversation,
       deleteConversation,
       clearAllConversations,
+      clearConversationsState,
       updateConversation,
     ]
   );

@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Kbd } from "@/components/ui/kbd";
@@ -33,8 +32,8 @@ import {
   Sun,
   Moon,
   Share2,
-  Trash2,
   Edit3,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -45,6 +44,7 @@ import { RenameConversationDialog } from "./RenameConversationDialog";
 import { BetaAuthDialog } from "@/components/BetaAuthDialog";
 import { useBetaAuth } from "@/contexts/BetaAuthContext";
 import { toast } from "sonner";
+import { AuthButton } from "@/components/auth/AuthButton";
 import { cn, isDevelopment } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -287,38 +287,8 @@ const SidebarContent = ({
 
         <Separator />
 
-        {/* User Profile */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-linear-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
-                  EK
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                  Elizabeth Keen
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                  hey@unspace.agency
-                </p>
-              </div>
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="w-56 dark:bg-gray-900 dark:border-gray-800"
-          >
-            <DropdownMenuItem
-              onClick={handleClearAllClick}
-              className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/20"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Clear all chats
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* User Profile / Auth */}
+        <AuthButton onClearAll={handleClearAllClick} />
       </div>
 
       {/* Beta Auth Dialog */}

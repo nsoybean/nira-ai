@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useConversations } from "@/contexts/ConversationsContext";
 import { FileUIPart } from "ai";
+import { toast } from "sonner";
 
 interface UseChatSubmitProps {
   isNewChat: boolean;
@@ -59,6 +60,21 @@ export function useChatSubmit({
             },
           }),
         });
+
+        // if missing beta token
+        if (createResponse.status === 401) {
+          const response = await createResponse.json();
+          if (
+            response.error === "Unauthorized" &&
+            response.message === "Valid beta authentication token is required"
+          ) {
+            toast.error(
+              "Thanks for trying! Still in beta 🙂 Email me: nyangbin@gmail.com"
+            );
+
+            return;
+          }
+        }
 
         if (!createResponse.ok) {
           throw new Error("Failed to create conversation");
