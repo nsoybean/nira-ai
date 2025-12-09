@@ -8,7 +8,6 @@ import React, {
   useCallback,
   useMemo,
   ReactNode,
-  useRef,
 } from "react";
 import { ConversationSettings } from "@/lib/conversation-settings";
 
@@ -23,7 +22,6 @@ interface ConversationsContextType {
   conversations: Conversation[];
   isLoadingConversations: boolean;
   refreshConversations: () => Promise<void>;
-  addConversation: (conversation: Conversation) => void;
   deleteConversation: (conversationId: string) => Promise<boolean>;
   clearAllConversations: () => Promise<boolean>;
   updateConversation: (
@@ -40,9 +38,6 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
 
-  // Track if we've done initial load to prevent unnecessary refetches
-  const hasLoadedRef = useRef(false);
-
   const loadConversations = useCallback(async () => {
     try {
       setIsLoadingConversations(true);
@@ -55,7 +50,6 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       setConversations(data);
-      hasLoadedRef.current = true;
     } catch (error) {
       console.error("Error loading conversations:", error);
     } finally {
@@ -67,86 +61,52 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     await loadConversations();
   }, [loadConversations]);
 
-  // ✅ OPTIMISTIC: Add conversation to list immediately (when creating new chat)
-  const addConversation = useCallback((conversation: Conversation) => {
-    setConversations((prev) => [conversation, ...prev]);
-  }, []);
-
-  // ✅ OPTIMISTIC: Delete with rollback on error
   const deleteConversation = useCallback(
     async (conversationId: string) => {
-      // Store previous state for rollback
-      const previousConversations = conversations;
-
       try {
-        // Optimistically remove from UI immediately
-        setConversations((prev) =>
-          prev.filter((conv) => conv.id !== conversationId)
-        );
-
         const response = await fetch(`/api/conversations/${conversationId}`, {
           method: "DELETE",
         });
 
         if (!response.ok) {
-          // Rollback on error
-          setConversations(previousConversations);
           console.error("Failed to delete conversation");
           return false;
         }
 
+        // Refresh the conversation list after successful deletion
+        await loadConversations();
         return true;
       } catch (error) {
-        // Rollback on error
-        setConversations(previousConversations);
         console.error("Error deleting conversation:", error);
         return false;
       }
     },
-    [conversations]
+    [loadConversations]
   );
 
-  // ✅ OPTIMISTIC: Clear all with rollback
   const clearAllConversations = useCallback(async () => {
-    const previousConversations = conversations;
-
     try {
-      // Optimistically clear UI
-      setConversations([]);
-
       const response = await fetch("/api/conversations", {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        // Rollback on error
-        setConversations(previousConversations);
         console.error("Failed to clear all conversations");
         return false;
       }
 
+      // Refresh the conversation list after successful deletion
+      await loadConversations();
       return true;
     } catch (error) {
-      // Rollback on error
-      setConversations(previousConversations);
       console.error("Error clearing all conversations:", error);
       return false;
     }
-  }, [conversations]);
+  }, [loadConversations]);
 
-  // ✅ OPTIMISTIC: Update with rollback (for rename, etc.)
   const updateConversation = useCallback(
     async (conversationId: string, updates: Partial<Conversation>) => {
-      const previousConversations = conversations;
-
       try {
-        // Optimistically update UI
-        setConversations((prev) =>
-          prev.map((conv) =>
-            conv.id === conversationId ? { ...conv, ...updates } : conv
-          )
-        );
-
         const response = await fetch(`/api/conversations/${conversationId}`, {
           method: "PATCH",
           headers: {
@@ -156,28 +116,23 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
         });
 
         if (!response.ok) {
-          // Rollback on error
-          setConversations(previousConversations);
           console.error("Failed to update conversation");
           return false;
         }
 
+        // Refresh the conversation list after successful update
+        await loadConversations();
         return true;
       } catch (error) {
-        // Rollback on error
-        setConversations(previousConversations);
         console.error("Error updating conversation:", error);
         return false;
       }
     },
-    [conversations]
+    [loadConversations]
   );
 
-  // Initial load only
   useEffect(() => {
-    if (!hasLoadedRef.current) {
-      loadConversations();
-    }
+    loadConversations();
   }, [loadConversations]);
 
   // Memoize the context value to prevent unnecessary re-renders
@@ -186,7 +141,6 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       conversations,
       isLoadingConversations,
       refreshConversations,
-      addConversation,
       deleteConversation,
       clearAllConversations,
       updateConversation,
@@ -195,7 +149,6 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
       conversations,
       isLoadingConversations,
       refreshConversations,
-      addConversation,
       deleteConversation,
       clearAllConversations,
       updateConversation,
