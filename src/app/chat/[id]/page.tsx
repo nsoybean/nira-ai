@@ -147,7 +147,6 @@ export default function ChatPage() {
   }, [conversationId, sendMessage]);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const shouldAutoScrollRef = useRef(true);
 
   const handleSubmit = useCallback(
     async (
