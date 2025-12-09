@@ -5,7 +5,7 @@ import {
   ConversationSettings,
   DEFAULT_CONVERSATION_SETTINGS,
 } from "@/lib/conversation-settings";
-import { requireAuth } from "@/lib/auth-server";
+import { withAuth } from "@/lib/auth-server";
 
 /**
  * POST /api/conversations/create
@@ -29,11 +29,9 @@ import { requireAuth } from "@/lib/auth-server";
  *   "createdAt": "2025-11-30T..."
  * }
  */
-export async function POST(req: Request) {
+export const POST = withAuth(async (req, { userId }) => {
   try {
-    const user = await requireAuth();
-    // Parse request
-    //  body to get optional modelId
+    // Parse request body to get optional modelId
     let modelId = DEFAULT_MODEL_ID;
     let settings: ConversationSettings = DEFAULT_CONVERSATION_SETTINGS;
 
@@ -57,7 +55,7 @@ export async function POST(req: Request) {
     // Create a new conversation
     const conversation = await prisma.conversation.create({
       data: {
-        userId: user.userId,
+        userId,
         title: "New Chat",
         modelId,
         settings: settings as any, // Prisma Json type
@@ -69,6 +67,7 @@ export async function POST(req: Request) {
       createdAt: conversation.createdAt,
     });
   } catch (error) {
+    // Handle other errors
     console.error(
       "[Create Conversation API] Error creating conversation:",
       error
@@ -79,4 +78,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-}
+});

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth-server";
+import { withAuth } from "@/lib/auth-server";
 
 /**
  * GET /api/conversations
@@ -19,11 +19,10 @@ import { requireAuth } from "@/lib/auth-server";
  *   }
  * ]
  */
-export async function GET(req: Request) {
+export const GET = withAuth(async (req, { userId }) => {
   try {
-    const user = await requireAuth();
     const conversations = await prisma.conversation.findMany({
-      where: { userId: user.userId },
+      where: { userId },
       orderBy: { lastMessageAt: "desc" },
       include: {
         _count: {
@@ -50,7 +49,7 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * DELETE /api/conversations
@@ -65,18 +64,16 @@ export async function GET(req: Request) {
  *   "deletedCount": 5
  * }
  */
-export async function DELETE(req: Request) {
+export const DELETE = withAuth(async (req, { userId }) => {
   try {
-    const user = await requireAuth();
-
     // Count conversations before deletion
     const count = await prisma.conversation.count({
-      where: { userId: user.userId },
+      where: { userId },
     });
 
     // Delete all conversations (messages will be cascade deleted)
     await prisma.conversation.deleteMany({
-      where: { userId: user.userId },
+      where: { userId },
     });
 
     return NextResponse.json({
@@ -95,4 +92,4 @@ export async function DELETE(req: Request) {
       { status: 500 }
     );
   }
-}
+});
