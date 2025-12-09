@@ -7,5 +7,5 @@ export type MyUIMessage = UIMessage<
     title: {
       value: string;
     };
-  } // data parts type
+  }
 >;

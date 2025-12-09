@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, UIMessagePart } from "ai";
+import { DefaultChatTransport, UIMessage, UIMessagePart } from "ai";
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/chat/Sidebar";
@@ -41,7 +41,7 @@ export default function ChatPage() {
   // Memoize transport to prevent re-creating on every render
   const transport = useMemo(
     () =>
-      new DefaultChatTransport({
+      new DefaultChatTransport<UIMessage>({
         api: "/api/chat",
         // send only last message with model info
         prepareSendMessagesRequest({ messages, id, body }) {
@@ -71,11 +71,12 @@ export default function ChatPage() {
     experimental_throttle: 50, // to make streaming smoother
     transport,
     onData: (dataPart) => {
-      if (dataPart.type === "data-title") {
+      const part = dataPart as MyUIMessage["parts"][number];
+      if (part.type === "data-title") {
         const conversationId = dataPart.id;
         if (conversationId) {
           updateConversation(conversationId, {
-            title: dataPart.data?.value || "New Chat",
+            title: part.data.value || "New Chat",
           });
         }
       }
