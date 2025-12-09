@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, UIMessagePart } from "ai";
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/chat/Sidebar";
@@ -12,6 +12,8 @@ import { useMessageLoader } from "@/hooks/useMessageLoader";
 import { useChatSubmit } from "@/hooks/useChatSubmit";
 import { useChatSidebar } from "@/hooks/useChatSidebar";
 import { DEFAULT_MODEL_ID } from "@/lib/models";
+import { MyUIMessage } from "@/lib/types";
+import { useConversations } from "@/contexts/ConversationsContext";
 
 export default function ChatPage() {
   const params = useParams();
@@ -34,6 +36,8 @@ export default function ChatPage() {
     handleClearAll,
     handleRename: handleSidebarRename,
   } = useChatSidebar(conversationId);
+
+  const { updateConversation } = useConversations();
 
   // Memoize transport to prevent re-creating on every render
   const transport = useMemo(
@@ -63,10 +67,20 @@ export default function ChatPage() {
     error,
     stop,
     regenerate,
-  } = useChat({
+  } = useChat<MyUIMessage>({
     id: conversationId || undefined,
     experimental_throttle: 50, // to make streaming smoother
     transport,
+    onData: (dataPart) => {
+      if (dataPart.type === "data-title") {
+        const conversationId = dataPart.id;
+        if (conversationId) {
+          updateConversation(conversationId, {
+            title: dataPart.data?.value || "New Chat",
+          });
+        }
+      }
+    },
   });
 
   // conversation messages

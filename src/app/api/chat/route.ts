@@ -11,16 +11,15 @@ import {
   createIdGenerator,
   LanguageModel,
   stepCountIs,
+  generateText,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
-import {
-  anthropicWebSearchTool,
-  openaiWebSearchTool,
-  tavilyExtractTool,
-  tavilySearchTool,
-} from "@/lib/tools";
+import { tavilyExtractTool, tavilySearchTool } from "@/lib/tools";
 import { mergeConversationSettings } from "@/lib/conversation-settings";
+import { MyUIMessage } from "@/lib/types";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -87,10 +86,51 @@ export async function POST(req: Request) {
       orderBy: { createdAt: "asc" },
     });
 
-    // if no previous message, means is a new conversation, generate short title
+    // if no previous message, generate a short title for the new conversation
+    let generatedTitle: string | null = null;
     if (existingMessages.length === 0) {
-      // Generate a short title for the new conversation
-      // (Implementation for title generation can be added here)
+      // Extract text from the user message
+      const userMessageText =
+        message.parts
+          ?.filter((part: any) => part.type === "text")
+          .map((part: any) => part.text)
+          .join(" ") || "";
+
+      if (userMessageText.trim()) {
+        try {
+          // Generate title using a fast model
+          const { text } = await generateText({
+            model: `google/gemini-2.5-flash-lite`,
+            messages: [
+              {
+                role: "user",
+                content: `Generate a concise 3-5 word title for this message. Return only the title, no quotes or punctuation at the end: "${userMessageText.slice(
+                  0,
+                  200
+                )}"`,
+              },
+            ],
+            maxOutputTokens: 20,
+          });
+
+          generatedTitle = text.trim();
+
+          // Update conversation title in database
+          if (generatedTitle) {
+            await prisma.conversation.update({
+              where: { id: conversationId },
+              data: { title: generatedTitle },
+            });
+
+            if (process.env.NODE_ENV === "development") {
+              console.log("[Chat API] Generated title:", generatedTitle);
+            }
+          }
+        } catch (error) {
+          console.error("[Chat API] Error generating title:", error);
+          // Continue with the chat even if title generation fails
+        }
+      }
     }
 
     // Combine existing messages with the new message
@@ -117,155 +157,141 @@ export async function POST(req: Request) {
     // useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
     const modelMessages = convertToModelMessages(allMessages);
 
-    // Get the language model instance based on provider
-    // let languageModel: LanguageModel;
-    // if (modelConfig.provider === "anthropic") {
-    //   languageModel = anthropic(selectedModelId, {api});
-    // } else if (modelConfig.provider === "openai") {
-    //   languageModel = openai(selectedModelId);
-    // } else {
-    //   return new Response(`Unsupported provider: ${modelConfig.provider}`, {
-    //     status: 400,
-    //   });
-    // }
-
     // Track request start time for metrics
     const startTime = Date.now();
 
-    // Stream the chat completion
-    const result = streamText({
-      model: `${modelConfig.provider}/${selectedModelId}`,
-      stopWhen: stepCountIs(5),
-      providerOptions: {
-        // anthropic
-        anthropic: {
-          ...(settings.extendedThinking && {
-            thinking: { type: "enabled", budgetTokens: 2000 },
-          }),
-        } satisfies AnthropicProviderOptions,
-        // openai
-        openai: {
-          ...(settings.extendedThinking && {
-            reasoningSummary: "auto",
-          }),
-        } satisfies OpenAIResponsesProviderOptions,
-      },
-      tools: {
-        // web search
-        ...(settings.websearch && {
-          webSearch: tavilySearchTool,
-          webExtract: tavilyExtractTool,
-        }),
+    const stream = createUIMessageStream<MyUIMessage>({
+      execute: ({ writer }) => {
+        writer.write({
+          type: "data-title",
+          id: conversationId,
+          data: { value: generatedTitle || "New Chat" },
+          transient: true, // This part won't be added to message history
+        });
 
-        // // anthropic
-        // ...(modelConfig.provider === "anthropic" && {
-        //   // ned to evaluate, seems abit spammy
-        //   // code_execution: codeExecutionTool,
-        //   ...(conversation.websearch && { web_search: anthropicWebSearchTool }),
-        // }),
-        // // openai
-        // ...(modelConfig.provider === "openai" && {
-        //   ...(conversation.websearch && { web_search: openaiWebSearchTool }),
-        // }),
-      },
-      messages: modelMessages,
-      system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
-      temperature: 0.7,
-      maxOutputTokens: 4000,
-      onFinish: async (event) => {
-        // Calculate token costs using model-specific pricing
-        const inputTokens = event.usage.inputTokens || 0;
-        const outputTokens = event.usage.outputTokens || 0;
-        const estimatedCost = calculateCost(
-          selectedModelId,
-          inputTokens,
-          outputTokens
+        // Stream the chat completion
+        const result = streamText({
+          model: `${modelConfig.provider}/${selectedModelId}`,
+          stopWhen: stepCountIs(5),
+          providerOptions: {
+            // anthropic
+            anthropic: {
+              ...(settings.extendedThinking && {
+                thinking: { type: "enabled", budgetTokens: 2000 },
+              }),
+            } satisfies AnthropicProviderOptions,
+            // openai
+            openai: {
+              ...(settings.extendedThinking && {
+                reasoningSummary: "auto",
+              }),
+            } satisfies OpenAIResponsesProviderOptions,
+          },
+          tools: {
+            // web search
+            ...(settings.websearch && {
+              webSearch: tavilySearchTool,
+              webExtract: tavilyExtractTool,
+            }),
+          },
+          messages: modelMessages,
+          system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
+          temperature: 0.7,
+          maxOutputTokens: 4000,
+          onFinish: async (event) => {
+            // Calculate token costs using model-specific pricing
+            const inputTokens = event.usage.inputTokens || 0;
+            const outputTokens = event.usage.outputTokens || 0;
+            const estimatedCost = calculateCost(
+              selectedModelId,
+              inputTokens,
+              outputTokens
+            );
+            const responseTimeMs = Date.now() - startTime;
+
+            try {
+              // Track model usage for analytics
+              await prisma.modelUsage.create({
+                data: {
+                  conversationId,
+                  modelId: selectedModelId,
+                  modelProvider: modelConfig.provider,
+                  inputTokens,
+                  outputTokens,
+                  totalTokens:
+                    event.usage.totalTokens || inputTokens + outputTokens,
+                  estimatedCost,
+                  responseTimeMs,
+                  success: true,
+                },
+              });
+
+              // Log metrics (development only)
+              if (process.env.NODE_ENV === "development") {
+                console.log("[Chat API] Completion metrics:", {
+                  conversationId,
+                  model: selectedModelId,
+                  provider: modelConfig.provider,
+                  inputTokens,
+                  outputTokens,
+                  totalTokens: event.usage.totalTokens,
+                  cost: `$${estimatedCost.toFixed(4)}`,
+                  responseTime: `${responseTimeMs}ms`,
+                });
+              }
+            } catch (error) {
+              console.error("[Chat API] Error tracking usage:", error);
+            }
+          },
+        });
+
+        writer.merge(
+          result.toUIMessageStream({
+            sendReasoning: true,
+            sendSources: true,
+            generateMessageId: createIdGenerator({
+              prefix: "msg",
+              size: 16,
+            }),
+            async onFinish({ messages }) {
+              try {
+                // Save only assistant messages (user message already saved above)
+                await prisma.message.createMany({
+                  data: messages.map((msg) => ({
+                    id: msg.id,
+                    conversationId,
+                    role: msg.role,
+                    parts: msg.parts as any,
+                  })),
+                  skipDuplicates: true,
+                });
+
+                // Update conversation's updatedAt and lastMessageAt timestamps
+                await prisma.conversation.update({
+                  where: { id: conversationId },
+                  data: {
+                    updatedAt: new Date(),
+                    lastMessageAt: new Date(),
+                  },
+                });
+
+                if (process.env.NODE_ENV === "development") {
+                  console.log("[Chat API] Messages saved:", {
+                    conversationId,
+                    messagesSaved: allMessages.length,
+                  });
+                }
+              } catch (error) {
+                console.error("[Chat API] Error saving messages:", error);
+                // Don't throw - we still want to return the response to the user
+              }
+            },
+          })
         );
-        const responseTimeMs = Date.now() - startTime;
-
-        try {
-          // Track model usage for analytics
-          await prisma.modelUsage.create({
-            data: {
-              conversationId,
-              modelId: selectedModelId,
-              modelProvider: modelConfig.provider,
-              inputTokens,
-              outputTokens,
-              totalTokens:
-                event.usage.totalTokens || inputTokens + outputTokens,
-              estimatedCost,
-              responseTimeMs,
-              success: true,
-            },
-          });
-
-          // Log metrics (development only)
-          if (process.env.NODE_ENV === "development") {
-            console.log("[Chat API] Completion metrics:", {
-              conversationId,
-              model: selectedModelId,
-              provider: modelConfig.provider,
-              inputTokens,
-              outputTokens,
-              totalTokens: event.usage.totalTokens,
-              cost: `$${estimatedCost.toFixed(4)}`,
-              responseTime: `${responseTimeMs}ms`,
-            });
-          }
-        } catch (error) {
-          console.error("[Chat API] Error tracking usage:", error);
-        }
       },
     });
 
-    // Return stream with message persistence
-    const response = result.toUIMessageStreamResponse({
-      sendReasoning: true,
-      sendSources: true,
-      generateMessageId: createIdGenerator({
-        prefix: "msg",
-        size: 16,
-      }),
-      async onFinish({ messages }) {
-        try {
-          // Save only assistant messages (user message already saved above)
-          await prisma.message.createMany({
-            data: messages.map((msg) => ({
-              id: msg.id,
-              conversationId,
-              role: msg.role,
-              parts: msg.parts as any,
-            })),
-            skipDuplicates: true,
-          });
-
-          // Update conversation's updatedAt and lastMessageAt timestamps
-          await prisma.conversation.update({
-            where: { id: conversationId },
-            data: {
-              updatedAt: new Date(),
-              lastMessageAt: new Date(),
-            },
-          });
-
-          if (process.env.NODE_ENV === "development") {
-            console.log("[Chat API] Messages saved:", {
-              conversationId,
-              messagesSaved: allMessages.length,
-            });
-          }
-        } catch (error) {
-          console.error("[Chat API] Error saving messages:", error);
-          // Don't throw - we still want to return the response to the user
-        }
-      },
-    });
-
-    // Add conversation ID to response headers
-    response.headers.set("X-Conversation-Id", conversation.id);
-
-    return response;
+    return createUIMessageStreamResponse({ stream });
   } catch (error) {
     console.error("[Chat API] Error:", error);
 
