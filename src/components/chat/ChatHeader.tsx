@@ -13,17 +13,17 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { PanelLeft, Share2, Trash2, Edit3 } from "lucide-react";
+import { PanelLeft, Share2, Trash2, Edit3, HamburgerIcon } from "lucide-react";
 import { useState, memo, useRef, useEffect } from "react";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useConversations } from "@/contexts/ConversationsContext";
 
 interface ChatHeaderProps {
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
-  chatTitle: string;
-  onTitleChange: (title: string) => void;
   conversationId: string;
   isNew: boolean;
   onDelete?: (conversationId: string) => Promise<boolean>;
@@ -33,13 +33,18 @@ interface ChatHeaderProps {
 export const ChatHeader = memo(function ChatHeader({
   sidebarOpen,
   onToggleSidebar,
-  chatTitle,
-  onTitleChange,
   conversationId,
   isNew,
   onDelete,
   onRename,
 }: ChatHeaderProps) {
+  const { conversations } = useConversations();
+
+  // Get title from context
+  const chatTitle =
+    conversations.find((conv) => conv.id === conversationId)?.title ||
+    "New Chat";
+
   // state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -48,21 +53,24 @@ export const ChatHeader = memo(function ChatHeader({
   >(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(chatTitle);
   const originalTitleRef = useRef(chatTitle);
+  const isMobile = useIsMobile();
 
-  // Update the ref when chatTitle changes from external sources
+  // Update local editing state and ref when chatTitle prop changes from context
   useEffect(() => {
+    setEditingTitle(chatTitle);
     originalTitleRef.current = chatTitle;
   }, [chatTitle]);
 
   const handleTitleBlur = async () => {
     if (isNew || !onRename) return;
 
-    const trimmedTitle = chatTitle.trim();
+    const trimmedTitle = editingTitle.trim();
 
     // If title hasn't changed or is empty, revert to original
     if (!trimmedTitle || trimmedTitle === originalTitleRef.current) {
-      onTitleChange(originalTitleRef.current);
+      setEditingTitle(originalTitleRef.current);
       return;
     }
 
@@ -73,7 +81,7 @@ export const ChatHeader = memo(function ChatHeader({
         originalTitleRef.current = trimmedTitle;
       } else {
         // Revert to original on failure
-        onTitleChange(originalTitleRef.current);
+        setEditingTitle(originalTitleRef.current);
       }
     }
   };
@@ -107,7 +115,7 @@ export const ChatHeader = memo(function ChatHeader({
     const success = await onRename(conversationId, newTitle);
 
     if (success) {
-      onTitleChange(newTitle);
+      setEditingTitle(newTitle);
     }
 
     setIsRenaming(false);
@@ -130,14 +138,18 @@ export const ChatHeader = memo(function ChatHeader({
               className="h-8 w-8 shrink-0 dark:hover:bg-gray-800"
               onClick={onToggleSidebar}
             >
-              <PanelLeft className="h-4 w-4 dark:text-gray-400" />
+              {isMobile ? (
+                <HamburgerIcon className="h-4 w-4 dark:text-gray-400" />
+              ) : (
+                <PanelLeft className="h-4 w-4 dark:text-gray-400" />
+              )}
             </Button>
           )}
           <div className="flex items-center gap-1">
             <input
               type="text"
-              value={chatTitle}
-              onChange={(e) => onTitleChange(e.target.value)}
+              value={editingTitle}
+              onChange={(e) => setEditingTitle(e.target.value)}
               onBlur={handleTitleBlur}
               className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors"
               style={{ width: "fit-content", minWidth: "100px" }}

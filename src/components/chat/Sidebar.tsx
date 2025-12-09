@@ -128,7 +128,7 @@ const SidebarContent = ({
               BETA
             </Badge>
           </div>
-          {onClose && (
+          {onClose && !isMobile && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -352,7 +352,6 @@ export const Sidebar = memo(function Sidebar({
   const [isRenaming, setIsRenaming] = useState(false);
 
   // hook
-  const router = useRouter();
   const isMobile = useIsMobile();
 
   const handleDeleteClick = (e: React.MouseEvent, conversationId: string) => {

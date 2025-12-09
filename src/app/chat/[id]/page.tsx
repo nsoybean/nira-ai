@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, UIMessage, UIMessagePart } from "ai";
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/chat/Sidebar";
@@ -12,16 +12,24 @@ import { useMessageLoader } from "@/hooks/useMessageLoader";
 import { useChatSubmit } from "@/hooks/useChatSubmit";
 import { useChatSidebar } from "@/hooks/useChatSidebar";
 import { DEFAULT_MODEL_ID } from "@/lib/models";
+import { MyUIMessage } from "@/lib/types";
+import { useConversations } from "@/contexts/ConversationsContext";
 
 export default function ChatPage() {
   const params = useParams();
   const conversationId = params.id as string;
 
   const [input, setInput] = useState("");
-  const [chatTitle, setChatTitle] = useState("New Chat");
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL_ID);
   const [initialWebSearch, setInitialWebSearch] = useState(false);
   const [initialExtendedThinking, setInitialExtendedThinking] = useState(false);
+
+  // For streaming title effect
+  const streamingTitleRef = useRef<{
+    fullTitle: string;
+    currentIndex: number;
+    intervalId?: NodeJS.Timeout;
+  }>({ fullTitle: "", currentIndex: 0 });
 
   // Sidebar logic
   const {
@@ -35,10 +43,12 @@ export default function ChatPage() {
     handleRename: handleSidebarRename,
   } = useChatSidebar(conversationId);
 
+  const { updateConversation } = useConversations();
+
   // Memoize transport to prevent re-creating on every render
   const transport = useMemo(
     () =>
-      new DefaultChatTransport({
+      new DefaultChatTransport<UIMessage>({
         api: "/api/chat",
         // send only last message with model info
         prepareSendMessagesRequest({ messages, id, body }) {
@@ -63,10 +73,52 @@ export default function ChatPage() {
     error,
     stop,
     regenerate,
-  } = useChat({
+  } = useChat<MyUIMessage>({
     id: conversationId || undefined,
     experimental_throttle: 50, // to make streaming smoother
     transport,
+    onData: (dataPart) => {
+      const part = dataPart as MyUIMessage["parts"][number];
+      if (part.type === "data-title") {
+        const convId = dataPart.id;
+        if (convId) {
+          const fullTitle = part.data.value || "New Chat";
+
+          // Clear any existing streaming interval
+          if (streamingTitleRef.current.intervalId) {
+            clearInterval(streamingTitleRef.current.intervalId);
+          }
+
+          // Reset streaming state
+          streamingTitleRef.current = {
+            fullTitle,
+            currentIndex: 0,
+            intervalId: undefined,
+          };
+
+          // Stream the title character by character
+          const intervalId = setInterval(() => {
+            const { fullTitle, currentIndex } = streamingTitleRef.current;
+
+            if (currentIndex < fullTitle.length) {
+              const streamedTitle = fullTitle.slice(0, currentIndex + 1);
+              updateConversation(convId, {
+                title: streamedTitle,
+              });
+              streamingTitleRef.current.currentIndex += 1;
+            } else {
+              // Streaming complete, clear the interval
+              if (streamingTitleRef.current.intervalId) {
+                clearInterval(streamingTitleRef.current.intervalId);
+                streamingTitleRef.current.intervalId = undefined;
+              }
+            }
+          }, 30); // Stream every 30ms for smooth effect
+
+          streamingTitleRef.current.intervalId = intervalId;
+        }
+      }
+    },
   });
 
   // conversation messages
@@ -89,7 +141,7 @@ export default function ChatPage() {
     }
   }, [loadedMessages, setMessages]);
 
-  // Load conversation details including model and title
+  // Load conversation details including model (title now comes from context)
   useEffect(() => {
     if (conversationId) {
       fetch(`/api/conversations/${conversationId}`)
@@ -97,9 +149,6 @@ export default function ChatPage() {
         .then((data) => {
           if (data.modelId) {
             setSelectedModel(data.modelId);
-          }
-          if (data.title) {
-            setChatTitle(data.title);
           }
           // Read websearch from settings (preferred) or fallback to deprecated column
           if (data.settings?.websearch !== undefined) {
@@ -168,15 +217,20 @@ export default function ChatPage() {
 
   const handleRename = useCallback(
     async (conversationId: string, newTitle: string) => {
-      const success = await handleSidebarRename(conversationId, newTitle);
-      // Update the header title if we're renaming the current conversation
-      if (success && conversationId === params.id) {
-        setChatTitle(newTitle);
-      }
-      return success;
+      // Title will be automatically synced from context, no need to set local state
+      return await handleSidebarRename(conversationId, newTitle);
     },
-    [handleSidebarRename, params.id]
+    [handleSidebarRename]
   );
+
+  // Cleanup streaming interval on unmount
+  useEffect(() => {
+    return () => {
+      if (streamingTitleRef.current.intervalId) {
+        clearInterval(streamingTitleRef.current.intervalId);
+      }
+    };
+  }, []);
 
   // Check if chat is empty (no messages and not loading)
   const isChatEmpty = messages.length === 0 && !isLoadingMessages;
@@ -201,8 +255,6 @@ export default function ChatPage() {
           <ChatHeader
             sidebarOpen={sidebarOpen}
             onToggleSidebar={() => setSidebarOpen(true)}
-            chatTitle={chatTitle}
-            onTitleChange={setChatTitle}
             conversationId={conversationId}
             isNew={false}
             onDelete={handleDelete}
