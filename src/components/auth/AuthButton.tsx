@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { useSession } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +21,7 @@ interface AuthButtonProps {
 }
 
 export function AuthButton({ onClearAll }: AuthButtonProps) {
+  const router = useRouter();
   const { data: session, isPending } = useSession();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
@@ -27,7 +29,7 @@ export function AuthButton({ onClearAll }: AuthButtonProps) {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.reload();
+          router.push("/new");
         },
       },
     });
