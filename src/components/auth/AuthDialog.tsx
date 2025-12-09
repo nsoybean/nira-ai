@@ -39,7 +39,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         onSuccess: () => {
           toast.success("Signed in successfully!");
           onOpenChange(false);
-          window.location.reload();
+          // Redirect to /new if not already there, otherwise reload
+          if (window.location.pathname !== "/new") {
+            window.location.href = "/new";
+          } else {
+            window.location.reload();
+          }
         },
         onError: (ctx) => {
           toast.error(ctx.error.message || "Failed to sign in");
@@ -63,7 +68,12 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         onSuccess: () => {
           toast.success("Account created successfully!");
           onOpenChange(false);
-          window.location.reload();
+          // Redirect to /new if not already there, otherwise reload
+          if (window.location.pathname !== "/new") {
+            window.location.href = "/new";
+          } else {
+            window.location.reload();
+          }
         },
         onError: (ctx) => {
           toast.error(ctx.error.message || "Failed to create account");
@@ -79,7 +89,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: "/",
+        callbackURL: "/new",
       });
     } catch (error) {
       toast.error("Failed to sign in with " + provider);

@@ -30,6 +30,8 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import { useSession } from "@/contexts/AuthContext";
+import { AuthDialog } from "@/components/auth/AuthDialog";
 
 interface ChatInputProps {
   input: string;
@@ -64,6 +66,10 @@ export function ChatInput({
 }: ChatInputProps) {
   // ref
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auth
+  const { data: session, isPending: isAuthPending } = useSession();
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   // Internal state for settings
   const [useWebSearch, setUseWebSearch] = useState(initialWebSearch);
@@ -166,6 +172,13 @@ export function ChatInput({
     message: PromptInputMessage,
     event: FormEvent<HTMLFormElement>
   ) => {
+    // Check if user is logged in
+    if (!session && !isAuthPending) {
+      // Show auth dialog
+      setAuthDialogOpen(true);
+      return;
+    }
+
     // If creating a new conversation, store the files
     if (isNewChat && message.files && message.files.length > 0) {
       setPendingFiles(message.files);
@@ -175,6 +188,7 @@ export function ChatInput({
   };
 
   return (
+    <>
     <PromptInput
       onSubmit={handleSubmit}
       className="mt-4 rounded-2xl max-w-4xl mx-auto"
@@ -312,5 +326,9 @@ export function ChatInput({
         </PromptInputSubmit>
       </PromptInputFooter>
     </PromptInput>
+
+    {/* Auth Dialog for non-logged-in users */}
+    <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+  </>
   );
 }

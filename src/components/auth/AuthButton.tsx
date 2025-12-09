@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { useSession } from "@/contexts/AuthContext";
+import { useConversations } from "@/contexts/ConversationsContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -23,9 +24,12 @@ interface AuthButtonProps {
 export function AuthButton({ onClearAll }: AuthButtonProps) {
   const router = useRouter();
   const { data: session, isPending } = useSession();
+  const { clearConversationsState } = useConversations();
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   const handleSignOut = async () => {
+    clearConversationsState();
+
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
@@ -63,12 +67,15 @@ export function AuthButton({ onClearAll }: AuthButtonProps) {
     );
   }
 
-  const initials = session.user.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || session.user.email?.slice(0, 2).toUpperCase() || "U";
+  const initials =
+    session.user.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) ||
+    session.user.email?.slice(0, 2).toUpperCase() ||
+    "U";
 
   return (
     <DropdownMenu>
