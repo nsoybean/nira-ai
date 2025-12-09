@@ -112,6 +112,25 @@ export function withAuth<T extends any[]>(
   return async (request: Request, ...args: T): Promise<NextResponse> => {
     try {
       const authContext = await requireAuth();
+
+      const betaToken = request.headers.get("X-Beta-Token");
+      const expectedToken = process.env.BETA_AUTH_TOKEN;
+
+      // If BETA_AUTH_TOKEN is not set, allow access
+      if (!expectedToken) {
+        return NextResponse.next();
+      }
+
+      // Validate the token
+      if (!betaToken || betaToken !== expectedToken) {
+        return NextResponse.json(
+          {
+            error: "Unauthorized",
+            message: "Valid beta authentication token is required",
+          },
+          { status: 401 }
+        );
+      }
       return await handler(request, authContext, ...args);
     } catch (error) {
       return handleAuthError(error);
