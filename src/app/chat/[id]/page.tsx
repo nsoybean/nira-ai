@@ -24,6 +24,13 @@ export default function ChatPage() {
   const [initialWebSearch, setInitialWebSearch] = useState(false);
   const [initialExtendedThinking, setInitialExtendedThinking] = useState(false);
 
+  // For streaming title effect
+  const streamingTitleRef = useRef<{
+    fullTitle: string;
+    currentIndex: number;
+    intervalId?: NodeJS.Timeout;
+  }>({ fullTitle: "", currentIndex: 0 });
+
   // Sidebar logic
   const {
     sidebarOpen,
@@ -73,11 +80,42 @@ export default function ChatPage() {
     onData: (dataPart) => {
       const part = dataPart as MyUIMessage["parts"][number];
       if (part.type === "data-title") {
-        const conversationId = dataPart.id;
-        if (conversationId) {
-          updateConversation(conversationId, {
-            title: part.data.value || "New Chat",
-          });
+        const convId = dataPart.id;
+        if (convId) {
+          const fullTitle = part.data.value || "New Chat";
+
+          // Clear any existing streaming interval
+          if (streamingTitleRef.current.intervalId) {
+            clearInterval(streamingTitleRef.current.intervalId);
+          }
+
+          // Reset streaming state
+          streamingTitleRef.current = {
+            fullTitle,
+            currentIndex: 0,
+            intervalId: undefined,
+          };
+
+          // Stream the title character by character
+          const intervalId = setInterval(() => {
+            const { fullTitle, currentIndex } = streamingTitleRef.current;
+
+            if (currentIndex < fullTitle.length) {
+              const streamedTitle = fullTitle.slice(0, currentIndex + 1);
+              updateConversation(convId, {
+                title: streamedTitle,
+              });
+              streamingTitleRef.current.currentIndex += 1;
+            } else {
+              // Streaming complete, clear the interval
+              if (streamingTitleRef.current.intervalId) {
+                clearInterval(streamingTitleRef.current.intervalId);
+                streamingTitleRef.current.intervalId = undefined;
+              }
+            }
+          }, 30); // Stream every 30ms for smooth effect
+
+          streamingTitleRef.current.intervalId = intervalId;
         }
       }
     },
@@ -184,6 +222,15 @@ export default function ChatPage() {
     },
     [handleSidebarRename]
   );
+
+  // Cleanup streaming interval on unmount
+  useEffect(() => {
+    return () => {
+      if (streamingTitleRef.current.intervalId) {
+        clearInterval(streamingTitleRef.current.intervalId);
+      }
+    };
+  }, []);
 
   // Check if chat is empty (no messages and not loading)
   const isChatEmpty = messages.length === 0 && !isLoadingMessages;
