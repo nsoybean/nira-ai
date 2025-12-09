@@ -9,12 +9,16 @@ import { useChatSubmit } from "@/hooks/useChatSubmit";
 import { useChatSidebar } from "@/hooks/useChatSidebar";
 import { DEFAULT_MODEL_ID } from "@/lib/models";
 import { getRandomGreeting } from "@/data/greetings";
+import { Button } from "@/components/ui/button";
+import { HamburgerIcon, PanelLeftIcon } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function NewChatPage() {
   const [input, setInput] = useState("");
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL_ID);
   const [initialWebSearch, setInitialWebSearch] = useState(false);
   const [initialExtendedThinking, setInitialExtendedThinking] = useState(false);
+  const isMobile = useIsMobile();
 
   // Sidebar logic
   const {
@@ -48,11 +52,7 @@ export default function NewChatPage() {
     []
   );
 
-  const {
-    messages,
-    status,
-    sendMessage,
-  } = useChat({
+  const { messages, status, sendMessage } = useChat({
     experimental_throttle: 50, // to make streaming smoother
     transport,
   });
@@ -105,26 +105,17 @@ export default function NewChatPage() {
         <div className="flex-1 flex flex-col items-center justify-center px-4">
           {/* Toggle sidebar button */}
           {!sidebarOpen && (
-            <button
-              onClick={() => setSidebarOpen(true)}
+            <Button
+              variant={"ghost"}
               className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              onClick={() => setSidebarOpen(true)}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            </button>
+              {isMobile ? (
+                <HamburgerIcon size={10} />
+              ) : (
+                <PanelLeftIcon size={10} />
+              )}
+            </Button>
           )}
 
           {/* Greeting */}

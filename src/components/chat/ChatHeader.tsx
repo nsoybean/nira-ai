@@ -13,11 +13,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { PanelLeft, Share2, Trash2, Edit3 } from "lucide-react";
+import { PanelLeft, Share2, Trash2, Edit3, HamburgerIcon } from "lucide-react";
 import { useState, memo, useRef, useEffect } from "react";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatHeaderProps {
   sidebarOpen: boolean;
@@ -49,6 +50,7 @@ export const ChatHeader = memo(function ChatHeader({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const originalTitleRef = useRef(chatTitle);
+  const isMobile = useIsMobile();
 
   // Update the ref when chatTitle changes from external sources
   useEffect(() => {
@@ -130,7 +132,11 @@ export const ChatHeader = memo(function ChatHeader({
               className="h-8 w-8 shrink-0 dark:hover:bg-gray-800"
               onClick={onToggleSidebar}
             >
-              <PanelLeft className="h-4 w-4 dark:text-gray-400" />
+              {isMobile ? (
+                <HamburgerIcon className="h-4 w-4 dark:text-gray-400" />
+              ) : (
+                <PanelLeft className="h-4 w-4 dark:text-gray-400" />
+              )}
             </Button>
           )}
           <div className="flex items-center gap-1">
