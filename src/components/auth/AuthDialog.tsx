@@ -99,26 +99,28 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
-        {/* Gradient Header with Decorative Bubbles */}
-        <div className="relative bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 pt-8 pb-6 px-6 overflow-hidden">
-          {/* Decorative bubbles */}
-          <div className="absolute top-4 right-12 w-24 h-24 bg-white/20 rounded-full blur-2xl" />
-          <div className="absolute top-12 right-24 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -top-8 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
-          <div className="absolute top-0 left-8 w-20 h-20 bg-white/15 rounded-full blur-xl" />
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 dark:from-blue-600 dark:via-blue-700 dark:to-blue-900 border-none">
+        {/* Decorative bubbles */}
+        <div className="absolute top-4 right-12 w-24 h-24 bg-white/20 rounded-full blur-2xl" />
+        <div className="absolute top-12 right-24 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute -top-8 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+        <div className="absolute top-0 left-8 w-20 h-20 bg-white/15 rounded-full blur-xl" />
+        <div className="absolute bottom-8 left-12 w-28 h-28 bg-white/10 rounded-full blur-2xl" />
 
-          <DialogHeader className="relative z-10">
+        {/* Header */}
+        <div className="relative pt-8 pb-6 px-6 z-10">
+          <DialogHeader>
             <DialogTitle className="text-white text-2xl text-center">
               Welcome to Nira AI
             </DialogTitle>
-            <DialogDescription className="text-white/90 text-center">
+            <DialogDescription className="text-white/95 text-center">
               Sign in to your account or create a new one
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        <div className="p-6 bg-white dark:bg-gray-950">
+        {/* Content with semi-transparent background */}
+        <div className="relative p-6 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm z-10 rounded-t-2xl">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -155,10 +157,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-gray-300 dark:border-gray-700" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
+                <span className="bg-white/95 dark:bg-gray-950/95 px-2 text-muted-foreground">
                   Or continue with
                 </span>
               </div>
@@ -244,10 +246,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-gray-300 dark:border-gray-700" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
+                <span className="bg-white/95 dark:bg-gray-950/95 px-2 text-muted-foreground">
                   Or continue with
                 </span>
               </div>
