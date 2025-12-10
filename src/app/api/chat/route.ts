@@ -1,5 +1,5 @@
 import { AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import {
   streamText,
   convertToModelMessages,
@@ -189,6 +189,8 @@ export const POST = withAuth(async (req, { userId }) => {
               webSearch: tavilySearchTool,
               webExtract: tavilyExtractTool,
             }),
+
+            ...(modelConfig.provider === 'openai' && { image_generation: openai.tools.imageGeneration({ outputFormat: 'png' }), })
           },
           messages: modelMessages,
           system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
