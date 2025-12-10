@@ -129,7 +129,7 @@ export const ChatHeader = memo(function ChatHeader({
 
   return (
     <>
-      <header className="h-10 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-gray-950">
+      <header className="h-10 flex items-center justify-between px-4 bg-white dark:bg-gray-950">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {!sidebarOpen && (
             <Button

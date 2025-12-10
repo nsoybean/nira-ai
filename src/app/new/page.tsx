@@ -102,9 +102,9 @@ export default function NewChatPage() {
         onRename={handleRename}
       />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col p-2 bg-sidebar">
         {/* Centered layout for new chat */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 bg-background rounded-md overflow-hidden">
           {/* Toggle sidebar button */}
           {!sidebarOpen && (
             <Button

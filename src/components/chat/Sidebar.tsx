@@ -120,7 +120,7 @@ const SidebarContent = ({
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="font-rem text-gray-900 dark:text-gray-100 font-bold">
+            <span className="font-rem text-lg text-gray-900 dark:text-gray-100 font-bold">
               Nira AI
             </span>
             <Badge
@@ -156,7 +156,7 @@ const SidebarContent = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              className="w-full py-5 justify-start gap-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 hover:shadow-md"
+              className="w-full py-5 justify-start gap-2 rounded-lg hover:bg-background dark:hover:bg-background hover:shadow-md"
               size="sm"
               variant={"outline"}
               onClick={handleNewChatClick}
@@ -196,9 +196,9 @@ const SidebarContent = ({
                 key={conv.id}
                 onClick={() => handleConversationClick(conv.id)}
                 className={cn(
-                  `group text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 cursor-pointer ${
+                  `group text-left px-3 py-2.5 text-sm rounded-lg hover:bg-sidebar-accent transition-colors flex items-center gap-2 cursor-pointer ${
                     conv.id === currentConversationId
-                      ? "text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800"
+                      ? "text-gray-700 dark:text-gray-300 bg-sidebar-accent"
                       : "text-gray-600 dark:text-gray-400"
                   }`,
                   isDevelopment() && "border-2 border-green-400"
@@ -394,7 +394,7 @@ export const Sidebar = memo(function Sidebar({
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
           <SheetContent
             side="left"
-            className="w-[280px] sm:w-[320px] p-0 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800"
+            className="w-[280px] sm:w-[320px] p-0 bg-accent dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
@@ -448,7 +448,7 @@ export const Sidebar = memo(function Sidebar({
       <aside
         className={`${
           isOpen ? "w-64" : "w-0"
-        } transition-all duration-300 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden`}
+        } transition-all duration-300 flex flex-col overflow-hidden bg-sidebar`}
       >
         <SidebarContent
           currentConversationId={currentConversationId}
