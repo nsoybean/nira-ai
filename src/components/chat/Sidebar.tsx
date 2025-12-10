@@ -34,6 +34,8 @@ import {
   Share2,
   Edit3,
   Trash2,
+  MessageCirclePlusIcon,
+  PanelLeft,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -47,6 +49,7 @@ import { toast } from "sonner";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { cn, isDevelopment } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { KbdKeyboard } from "@/components/kbdKeyboard";
 
 interface Conversation {
   id: string;
@@ -137,13 +140,13 @@ const SidebarContent = ({
                   className="h-8 w-8 dark:hover:bg-gray-800"
                   onClick={onClose}
                 >
-                  <PanelLeftClose className="h-4 w-4 dark:text-gray-400" />
+                  <PanelLeft className="h-4 w-4 dark:text-gray-400" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
                 <div className="flex items-center gap-2">
                   <span>Close sidebar</span>
-                  <Kbd>⌘.</Kbd>
+                  <KbdKeyboard keystrokes={"⌘_."} />
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -153,12 +156,16 @@ const SidebarContent = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              className="w-full justify-start gap-2 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+              className="w-full py-5 justify-start gap-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 hover:shadow-md"
               size="sm"
+              variant={"outline"}
               onClick={handleNewChatClick}
             >
-              <MessageSquarePlus className="h-4 w-4" />
+              <MessageCirclePlusIcon className="h-4 w-4" />
               New Chat
+              <div className="ml-auto">
+                {!isMobile && <KbdKeyboard keystrokes="⌘_K" />}
+              </div>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">

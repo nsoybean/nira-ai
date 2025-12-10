@@ -69,6 +69,20 @@ export function useChatSidebar(currentConversationId?: string) {
     [updateConversation]
   );
 
+  // Keyboard shortcut to start new chat 
+  useEffect(() => {
+    const handleNewChatShortcut = (event: KeyboardEvent) => {
+      if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        handleNewChat();
+      }
+    };
+
+    window.addEventListener("keydown", handleNewChatShortcut);
+    return () => window.removeEventListener("keydown", handleNewChatShortcut);
+  }, []);
+
+
   // Keyboard shortcut to toggle sidebar (Cmd/Ctrl + .)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
