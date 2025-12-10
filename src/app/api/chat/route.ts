@@ -190,7 +190,7 @@ export const POST = withAuth(async (req, { userId }) => {
               webExtract: tavilyExtractTool,
             }),
 
-            ...(modelConfig.provider === 'openai' && { image_generation: openai.tools.imageGeneration({ outputFormat: 'png' }), })
+            // ...(modelConfig.provider === 'openai' && { image_generation: openai.tools.imageGeneration({ outputFormat: 'png' }), })
           },
           messages: modelMessages,
           system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
