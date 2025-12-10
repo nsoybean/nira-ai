@@ -12,6 +12,7 @@ import { getRandomGreeting } from "@/data/greetings";
 import { Button } from "@/components/ui/button";
 import { HamburgerIcon, PanelLeftIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSession } from "@/contexts/AuthContext";
 
 export default function NewChatPage() {
   const [input, setInput] = useState("");
@@ -19,6 +20,7 @@ export default function NewChatPage() {
   const [initialWebSearch, setInitialWebSearch] = useState(false);
   const [initialExtendedThinking, setInitialExtendedThinking] = useState(false);
   const isMobile = useIsMobile();
+  const { data: session, isPending: isAuthPending } = useSession();
 
   // Sidebar logic
   const {
@@ -125,15 +127,17 @@ export default function NewChatPage() {
             </h1>
           </div>
 
-          {/* Greeting */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-medium text-gray-900 dark:text-gray-100 mb-2">
-              {randomGreeting.title}
-            </h2>
-            <p className="text-lg text-gray-500 dark:text-gray-400">
-              {randomGreeting.subtitle}
-            </p>
-          </div>
+          {/* Greeting (only for authenticated users) */}
+          {!isAuthPending && session && (
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+                {randomGreeting.title}
+              </h2>
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                {randomGreeting.subtitle}
+              </p>
+            </div>
+          )}
 
           {/* Centered input */}
           <div className="w-full max-w-3xl">
