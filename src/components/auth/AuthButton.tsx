@@ -42,10 +42,10 @@ export function AuthButton({ onClearAll }: AuthButtonProps) {
   if (isPending) {
     return (
       <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
-        <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse" />
+        <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
         <div className="flex-1 min-w-0">
-          <div className="h-4 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-1" />
-          <div className="h-3 w-32 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+          <div className="h-4 w-24 bg-muted rounded animate-pulse mb-1" />
+          <div className="h-3 w-32 bg-muted rounded animate-pulse" />
         </div>
       </div>
     );
@@ -80,7 +80,7 @@ export function AuthButton({ onClearAll }: AuthButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-accent cursor-pointer transition-colors">
           <Avatar className="h-8 w-8">
             {session.user.image && <AvatarImage src={session.user.image} />}
             <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-semibold">
@@ -88,10 +88,10 @@ export function AuthButton({ onClearAll }: AuthButtonProps) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <p className="text-sm font-medium text-foreground truncate">
               {session.user.name || "User"}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            <p className="text-xs text-muted-foreground truncate">
               {session.user.email}
             </p>
           </div>
@@ -99,13 +99,13 @@ export function AuthButton({ onClearAll }: AuthButtonProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-56 dark:bg-gray-900 dark:border-gray-800"
+        className="w-56 bg-popover border-border"
       >
         {onClearAll && (
           <>
             <DropdownMenuItem
               onClick={onClearAll}
-              className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-950/20"
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear all chats
@@ -115,7 +115,7 @@ export function AuthButton({ onClearAll }: AuthButtonProps) {
         )}
         <DropdownMenuItem
           onClick={handleSignOut}
-          className="cursor-pointer dark:hover:bg-gray-800"
+          className="cursor-pointer hover:bg-accent"
         >
           <LogOut className="h-4 w-4 mr-2" />
           Sign Out

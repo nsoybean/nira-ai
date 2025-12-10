@@ -236,7 +236,7 @@ export default function ChatPage() {
   const isChatEmpty = messages.length === 0 && !isLoadingMessages;
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950">
+    <div className="flex h-screen bg-background">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -269,7 +269,7 @@ export default function ChatPage() {
               {!sidebarOpen && (
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -335,7 +335,7 @@ export default function ChatPage() {
                     initialExtendedThinking={initialExtendedThinking}
                   />
 
-                  <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-2">
+                  <p className="text-xs text-center text-muted-foreground mt-2">
                     Nira can make mistakes. Check important info.
                   </p>
                 </div>

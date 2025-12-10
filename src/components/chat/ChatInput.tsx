@@ -325,7 +325,7 @@ export function ChatInput({
           <PromptInputSubmit
             disabled={!input || !status}
             status={status}
-            className="h-8 w-8 rounded-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-200 dark:disabled:bg-gray-800 disabled:text-gray-400 dark:disabled:text-gray-600 text-white dark:text-gray-900 transition-all"
+            className="h-8 w-8 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground transition-all"
           >
             {isLoading || isCreatingConversation ? (
               <Loader2 className="h-4 w-4 animate-spin" />

@@ -27,12 +27,12 @@ export function ClearAllChatsDialog({
 }: ClearAllChatsDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="dark:bg-gray-900 dark:border-gray-800">
+      <AlertDialogContent className="bg-card border-border">
         <AlertDialogHeader>
-          <AlertDialogTitle className="dark:text-gray-100">
+          <AlertDialogTitle className="text-foreground">
             Clear all chats?
           </AlertDialogTitle>
-          <AlertDialogDescription className="dark:text-gray-400">
+          <AlertDialogDescription className="text-muted-foreground">
             This will permanently delete all conversations and their messages.
             This action cannot be undone.
           </AlertDialogDescription>
@@ -40,14 +40,14 @@ export function ClearAllChatsDialog({
         <AlertDialogFooter>
           <AlertDialogCancel
             disabled={isClearing}
-            className="dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+            className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
           >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isClearing}
-            className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
           >
             {isClearing ? (
               <>
