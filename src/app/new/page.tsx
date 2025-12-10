@@ -120,12 +120,14 @@ export default function NewChatPage() {
             </Button>
           )}
 
-          {/* Nira AI Branding */}
-          <div className="text-center mb-12">
-            <h1 className="font-rem text-7xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-8">
-              NIRA AI
-            </h1>
-          </div>
+          {/* Nira AI Branding (for unauthenticated users) */}
+          {!isAuthPending && !session && (
+            <div className="text-center mb-3">
+              <h1 className="font-rem text-6xl font-medium text-gray-900 dark:text-gray-100 tracking-tight">
+                NIRA AI
+              </h1>
+            </div>
+          )}
 
           {/* Greeting (only for authenticated users) */}
           {!isAuthPending && session && (
