@@ -99,21 +99,33 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Welcome to Nira AI</DialogTitle>
-          <DialogDescription>
-            Sign in to your account or create a new one
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden">
+        {/* Gradient Header with Decorative Bubbles */}
+        <div className="relative bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 pt-8 pb-6 px-6 overflow-hidden">
+          {/* Decorative bubbles */}
+          <div className="absolute top-4 right-12 w-24 h-24 bg-white/20 rounded-full blur-2xl" />
+          <div className="absolute top-12 right-24 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute -top-8 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+          <div className="absolute top-0 left-8 w-20 h-20 bg-white/15 rounded-full blur-xl" />
 
-        <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
+          <DialogHeader className="relative z-10">
+            <DialogTitle className="text-white text-2xl text-center">
+              Welcome to Nira AI
+            </DialogTitle>
+            <DialogDescription className="text-white/90 text-center">
+              Sign in to your account or create a new one
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-          <TabsContent value="signin" className="space-y-4">
+        <div className="p-6 bg-white dark:bg-gray-950">
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="signin" className="space-y-4 mt-0">
             <form onSubmit={handleEmailSignIn} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signin-email">Email</Label>
@@ -189,7 +201,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             </div>
           </TabsContent>
 
-          <TabsContent value="signup" className="space-y-4">
+          <TabsContent value="signup" className="space-y-4 mt-0">
             <form onSubmit={handleEmailSignUp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signup-name">Name</Label>
@@ -278,6 +290,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             </div>
           </TabsContent>
         </Tabs>
+        </div>
       </DialogContent>
     </Dialog>
   );
