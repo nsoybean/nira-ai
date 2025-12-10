@@ -9,8 +9,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { AVAILABLE_MODELS } from "@/lib/models";
-import { AnthropicIcon } from "@/components/icons/AnthropicIcon";
-import { OpenAIIcon } from "@/components/icons/OpenAIIcon";
+import { ModelSelectorLogo } from "../ai-elements/model-selector";
 
 interface ModelSelectorInlineProps {
   selectedModel: string;
@@ -21,10 +20,13 @@ interface ModelSelectorInlineProps {
 // Icon mapping for different model providers
 const getModelIcon = (provider: string) => {
   if (provider === "anthropic") {
-    return <AnthropicIcon className="h-3.5 w-3.5" />;
+    return <ModelSelectorLogo provider={"anthropic"} className="h-4 w-4" />;
   }
   if (provider === "openai") {
-    return <OpenAIIcon className="h-3.5 w-3.5" />;
+    return <ModelSelectorLogo provider={"openai"} className="h-4 w-4" />;
+  }
+  if (provider === "google") {
+    return <ModelSelectorLogo provider={"google"} className="h-4 w-4" />;
   }
   return null;
 };
@@ -39,6 +41,7 @@ export function ModelSelectorInline({
     (m) => m.provider === "anthropic"
   );
   const openaiModels = AVAILABLE_MODELS.filter((m) => m.provider === "openai");
+  const googleModels = AVAILABLE_MODELS.filter((m) => m.provider === "google");
 
   const selectedModelConfig = AVAILABLE_MODELS.find(
     (m) => m.id === selectedModel
@@ -58,7 +61,8 @@ export function ModelSelectorInline({
           </span>
         </div>
       </SelectTrigger>
-      <SelectContent align="start">
+
+      <SelectContent align="start" className="min-w-sm">
         <SelectGroup>
           <SelectLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">
             Anthropic
@@ -69,9 +73,9 @@ export function ModelSelectorInline({
                 {getModelIcon(model.provider)}
                 <div className="flex flex-col">
                   <span className="font-medium">{model.name}</span>
-                  <span className="text-[10px] text-muted-foreground">
+                  {/* <span className="text-[10px] text-muted-foreground">
                     {model.description}
-                  </span>
+                  </span> */}
                 </div>
               </div>
             </SelectItem>
@@ -88,9 +92,28 @@ export function ModelSelectorInline({
                 {getModelIcon(model.provider)}
                 <div className="flex flex-col">
                   <span className="font-medium">{model.name}</span>
-                  <span className="text-[10px] text-muted-foreground">
+                  {/* <span className="text-[10px] text-muted-foreground">
                     {model.description}
-                  </span>
+                  </span> */}
+                </div>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectGroup>
+
+        <SelectGroup>
+          <SelectLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5 mt-1">
+            Google
+          </SelectLabel>
+          {googleModels.map((model) => (
+            <SelectItem key={model.id} value={model.id} className="text-xs">
+              <div className="flex items-center gap-2">
+                {getModelIcon(model.provider)}
+                <div className="flex flex-col">
+                  <span className="font-medium">{model.name}</span>
+                  {/* <span className="text-[10px] text-muted-foreground">
+                    {model.description}
+                  </span> */}
                 </div>
               </div>
             </SelectItem>
