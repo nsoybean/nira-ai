@@ -118,11 +118,18 @@ export default function NewChatPage() {
             </Button>
           )}
 
+          {/* Nira AI Branding */}
+          <div className="text-center mb-12">
+            <h1 className="font-rem text-7xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mb-8">
+              NIRA AI
+            </h1>
+          </div>
+
           {/* Greeting */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <h2 className="text-2xl font-medium text-gray-900 dark:text-gray-100 mb-2">
               {randomGreeting.title}
-            </h1>
+            </h2>
             <p className="text-lg text-gray-500 dark:text-gray-400">
               {randomGreeting.subtitle}
             </p>
