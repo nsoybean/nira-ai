@@ -11,6 +11,7 @@ import React, {
   useRef,
 } from "react";
 import { ConversationSettings } from "@/lib/conversation-settings";
+import { useSession } from "@/contexts/AuthContext";
 
 interface Conversation {
   id: string;
@@ -39,12 +40,22 @@ const ConversationsContext = createContext<
 
 export function ConversationsProvider({ children }: { children: ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+
+  // Get authentication status
+  const { data: session } = useSession();
 
   // Track if we've done initial load to prevent unnecessary refetches
   const hasLoadedRef = useRef(false);
 
   const loadConversations = useCallback(async () => {
+    // Don't fetch if user is not authenticated
+    if (!session) {
+      setConversations([]);
+      setIsLoadingConversations(false);
+      return;
+    }
+
     try {
       setIsLoadingConversations(true);
       const response = await fetch("/api/conversations");
@@ -62,7 +73,7 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoadingConversations(false);
     }
-  }, []);
+  }, [session]);
 
   const refreshConversations = useCallback(async () => {
     await loadConversations();
@@ -179,12 +190,20 @@ export function ConversationsProvider({ children }: { children: ReactNode }) {
     setConversations([]);
   }, []);
 
-  // Initial load only
+  // Initial load - only fetch when authenticated
   useEffect(() => {
-    if (!hasLoadedRef.current) {
+    if (!hasLoadedRef.current && session) {
       loadConversations();
     }
-  }, [loadConversations]);
+  }, [loadConversations, session]);
+
+  // Clear conversations when user logs out
+  useEffect(() => {
+    if (!session) {
+      setConversations([]);
+      hasLoadedRef.current = false;
+    }
+  }, [session]);
 
   // Memoize the context value to prevent unnecessary re-renders
   const contextValue = useMemo(
