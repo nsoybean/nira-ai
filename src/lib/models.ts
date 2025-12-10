@@ -132,7 +132,7 @@ export function calculateCost(
   const model = getModelById(modelId);
   if (!model) return 0;
 
-  const inputCost = (inputTokens) * model.inputCostPerM;
-  const outputCost = (outputTokens) * model.outputCostPerM;
+  const inputCost = (inputTokens / 1000000) * model.inputCostPerM;
+  const outputCost = (outputTokens / 1000000) * model.outputCostPerM;
   return inputCost + outputCost;
 }

@@ -44,7 +44,12 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { webSearchToolUIPart, webExtractToolUIPart } from "@/types/tools";
+import {
+  webSearchToolUIPart,
+  webExtractToolUIPart,
+  imageGenerationToolUIPart,
+} from "@/types/tools";
+import { Image } from "../ai-elements/image";
 
 interface MessageListProps {
   messages: UIMessage[];
@@ -400,9 +405,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                 <h2 className="text-xl font-medium mb-2 text-foreground">
                   Loading messages...
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  Please wait
-                </p>
+                <p className="text-sm text-muted-foreground">Please wait</p>
               </div>
             </div>
           )}
@@ -486,6 +489,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                         )}
                       </Message>
                     );
+
                   case "reasoning":
                     return (
                       <Reasoning
@@ -659,7 +663,26 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                       </Sources>
                     );
 
+                  case "tool-image_generation":
+                    const imageGenerationPart =
+                      part as imageGenerationToolUIPart;
+                    const image = {
+                      base64: imageGenerationPart.output?.result || "",
+                      mediaType: "image/jpeg",
+                      uint8Array: new Uint8Array([]),
+                    };
+
+                    return (
+                      image.base64 && (
+                        <Image
+                          {...image}
+                          alt="Example generated image"
+                          className="aspect-square h-[150px] border"
+                        />
+                      )
+                    );
                   default:
+                    console.log("part", part);
                     return null;
                 }
               })}
