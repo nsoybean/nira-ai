@@ -35,34 +35,37 @@ export function BetaAuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const authenticate = useCallback(async (password: string): Promise<boolean> => {
-    try {
-      // Verify the password against the server
-      const response = await fetch("/api/auth/beta-verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ password }),
-      });
+  const authenticate = useCallback(
+    async (password: string): Promise<boolean> => {
+      try {
+        // Verify the password against the server
+        const response = await fetch("/api/auth/beta-verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ password }),
+        });
 
-      if (response.ok) {
-        const { token: verifiedToken } = await response.json();
+        if (response.ok) {
+          const { token: verifiedToken } = await response.json();
 
-        // Store the token
-        setToken(verifiedToken);
-        setIsAuthenticated(true);
-        localStorage.setItem(STORAGE_KEY, verifiedToken);
+          // Store the token
+          setToken(verifiedToken);
+          setIsAuthenticated(true);
+          localStorage.setItem(STORAGE_KEY, verifiedToken);
 
-        return true;
+          return true;
+        }
+
+        return false;
+      } catch (error) {
+        console.error("Error authenticating:", error);
+        return false;
       }
-
-      return false;
-    } catch (error) {
-      console.error("Error authenticating:", error);
-      return false;
-    }
-  }, []);
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     setToken(null);

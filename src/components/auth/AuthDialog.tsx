@@ -126,7 +126,7 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
         </div>
 
         {/* Content with semi-transparent background */}
-        <div className="relative p-6 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm z-10 rounded-2xl">
+        <div className="relative p-6 bg-background/95 backdrop-blur-sm z-10 rounded-2xl">
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -163,10 +163,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300 dark:border-gray-700" />
+                  <span className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white/95 dark:bg-gray-950/95 px-2 text-muted-foreground">
+                  <span className="bg-background/95 px-2 text-muted-foreground">
                     Or continue with
                   </span>
                 </div>
@@ -252,10 +252,10 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300 dark:border-gray-700" />
+                  <span className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white/95 dark:bg-gray-950/95 px-2 text-muted-foreground">
+                  <span className="bg-background/95 px-2 text-muted-foreground">
                     Or continue with
                   </span>
                 </div>

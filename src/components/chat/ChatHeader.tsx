@@ -129,19 +129,19 @@ export const ChatHeader = memo(function ChatHeader({
 
   return (
     <>
-      <header className="h-10 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 bg-white dark:bg-gray-950">
+      <header className="h-10 flex items-center justify-between px-4 bg-background">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {!sidebarOpen && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0 dark:hover:bg-gray-800"
+              className="h-8 w-8 shrink-0 hover:bg-accent"
               onClick={onToggleSidebar}
             >
               {isMobile ? (
-                <HamburgerIcon className="h-4 w-4 dark:text-gray-400" />
+                <HamburgerIcon className="h-4 w-4 text-muted-foreground" />
               ) : (
-                <PanelLeft className="h-4 w-4 dark:text-gray-400" />
+                <PanelLeft className="h-4 w-4 text-muted-foreground" />
               )}
             </Button>
           )}
@@ -151,7 +151,7 @@ export const ChatHeader = memo(function ChatHeader({
               value={editingTitle}
               onChange={(e) => setEditingTitle(e.target.value)}
               onBlur={handleTitleBlur}
-              className="font-medium text-sm text-gray-900 dark:text-gray-100 bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors"
+              className="font-medium text-sm text-foreground bg-transparent border-none outline-none focus:outline-none px-2 py-1 rounded-md hover:bg-accent focus:bg-gray-100 dark:focus:bg-gray-800 transition-colors"
               style={{ width: "fit-content", minWidth: "100px" }}
               placeholder="Chat title..."
               disabled={isNew}
@@ -165,7 +165,7 @@ export const ChatHeader = memo(function ChatHeader({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 dark:hover:bg-gray-800"
+                        className="h-6 w-6 hover:bg-accent"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +177,7 @@ export const ChatHeader = memo(function ChatHeader({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="text-gray-600 dark:text-gray-400"
+                          className="text-muted-foreground"
                         >
                           <path d="m6 9 6 6 6-6" />
                         </svg>
@@ -190,17 +190,17 @@ export const ChatHeader = memo(function ChatHeader({
                 </Tooltip>
                 <DropdownMenuContent
                   align="start"
-                  className="w-48 dark:bg-gray-900 dark:border-gray-800"
+                  className="w-48 bg-popover border-border"
                 >
                   <DropdownMenuItem
-                    className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200"
+                    className="cursor-pointer hover:bg-accent text-foreground"
                     onClick={handleRenameClick}
                   >
                     <Edit3 className="h-4 w-4 mr-2" />
                     Rename
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200"
+                    className="cursor-pointer hover:bg-accent text-foreground"
                     onClick={handleShareClick}
                   >
                     <Share2 className="h-4 w-4 mr-2" />
@@ -208,7 +208,7 @@ export const ChatHeader = memo(function ChatHeader({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800"
+                    className="cursor-pointer text-destructive hover:bg-accent"
                     onClick={(e) => handleDeleteClick(e, conversationId)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />

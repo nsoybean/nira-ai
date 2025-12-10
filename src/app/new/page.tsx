@@ -89,7 +89,7 @@ export default function NewChatPage() {
   const [randomGreeting] = useState(() => getRandomGreeting());
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950">
+    <div className="flex h-screen bg-background">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -102,14 +102,14 @@ export default function NewChatPage() {
         onRename={handleRename}
       />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col p-2 bg-sidebar">
         {/* Centered layout for new chat */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 bg-background rounded-md overflow-hidden">
           {/* Toggle sidebar button */}
           {!sidebarOpen && (
             <Button
               variant={"ghost"}
-              className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground"
               onClick={() => setSidebarOpen(true)}
             >
               {isMobile ? (
@@ -123,7 +123,7 @@ export default function NewChatPage() {
           {/* Nira AI Branding (for unauthenticated users) */}
           {!isAuthPending && !session && (
             <div className="text-center mb-3">
-              <h1 className="font-rem text-6xl font-medium text-gray-900 dark:text-gray-100 tracking-tight">
+              <h1 className="font-rem text-6xl font-medium text-foreground tracking-tight">
                 NIRA AI
               </h1>
             </div>
@@ -132,10 +132,10 @@ export default function NewChatPage() {
           {/* Greeting (only for authenticated users) */}
           {!isAuthPending && session && (
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <h2 className="text-2xl font-medium text-foreground mb-2">
                 {randomGreeting.title}
               </h2>
-              <p className="text-lg text-gray-500 dark:text-gray-400">
+              <p className="text-lg text-muted-foreground">
                 {randomGreeting.subtitle}
               </p>
             </div>

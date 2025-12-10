@@ -50,7 +50,7 @@ export function ModelSelectorInline({
       onValueChange={onModelChange}
       disabled={disabled}
     >
-      <SelectTrigger className="h-8 w-auto border-0 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs gap-1.5 px-2 focus:ring-0 focus:ring-offset-0">
+      <SelectTrigger className="h-8 w-auto border-0 bg-transparent hover:bg-accent text-muted-foreground text-xs gap-1.5 px-2 focus:ring-0 focus:ring-offset-0">
         <div className="flex items-center gap-1.5">
           {selectedModelConfig && getModelIcon(selectedModelConfig.provider)}
           <span className="font-medium">

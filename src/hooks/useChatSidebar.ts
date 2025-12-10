@@ -2,10 +2,19 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useConversations } from "@/contexts/ConversationsContext";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function useChatSidebar(currentConversationId?: string) {
   const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const isMobile = useIsMobile();
+
+  // Initialize sidebar state: closed on mobile, open on desktop
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+
+  // Update sidebar state when switching between mobile and desktop
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
 
   const {
     deleteConversation,
@@ -68,6 +77,20 @@ export function useChatSidebar(currentConversationId?: string) {
     },
     [updateConversation]
   );
+
+  // Keyboard shortcut to start new chat 
+  useEffect(() => {
+    const handleNewChatShortcut = (event: KeyboardEvent) => {
+      if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        handleNewChat();
+      }
+    };
+
+    window.addEventListener("keydown", handleNewChatShortcut);
+    return () => window.removeEventListener("keydown", handleNewChatShortcut);
+  }, []);
+
 
   // Keyboard shortcut to toggle sidebar (Cmd/Ctrl + .)
   useEffect(() => {

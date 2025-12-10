@@ -236,7 +236,7 @@ export default function ChatPage() {
   const isChatEmpty = messages.length === 0 && !isLoadingMessages;
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-950">
+    <div className="flex h-screen bg-background">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -248,82 +248,54 @@ export default function ChatPage() {
         onClearAll={handleClearAll}
         onRename={handleRename}
       />
+      <div className="flex-1 flex flex-col p-2 bg-sidebar">
+        <div className="flex-1 flex flex-col bg-background rounded-md overflow-hidden">
+          {/* Show header for specific chat */}
+          {!isChatEmpty && (
+            <ChatHeader
+              sidebarOpen={sidebarOpen}
+              onToggleSidebar={() => setSidebarOpen(true)}
+              conversationId={conversationId}
+              isNew={false}
+              onDelete={handleDelete}
+              onRename={handleRename}
+            />
+          )}
 
-      <div className="flex-1 flex flex-col">
-        {/* Show header for specific chat */}
-        {!isChatEmpty && (
-          <ChatHeader
-            sidebarOpen={sidebarOpen}
-            onToggleSidebar={() => setSidebarOpen(true)}
-            conversationId={conversationId}
-            isNew={false}
-            onDelete={handleDelete}
-            onRename={handleRename}
-          />
-        )}
-
-        {/* Centered layout for empty chat */}
-        {isChatEmpty ? (
-          <div className="flex-1 flex flex-col items-center justify-center px-4">
-            {/* Toggle sidebar button for empty state */}
-            {!sidebarOpen && (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="absolute top-4 left-4 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+          {/* Centered layout for empty chat */}
+          {isChatEmpty ? (
+            <div className="flex-1 flex flex-col items-center justify-center px-4">
+              {/* Toggle sidebar button for empty state */}
+              {!sidebarOpen && (
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground"
                 >
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
-                </svg>
-              </button>
-            )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                  </svg>
+                </button>
+              )}
 
-            {/* Centered input */}
-            <div className="w-full max-w-3xl">
-              <ChatInput
-                input={input}
-                onInputChange={setInput}
-                onSubmit={(message, event, settings) => {
-                  handleSubmit(message, settings);
-                }}
-                status={status}
-                isCreatingConversation={isCreatingConversation}
-                selectedModel={selectedModel}
-                onModelChange={setSelectedModel}
-                conversationId={conversationId}
-                isNewChat={false}
-                initialWebSearch={initialWebSearch}
-                initialExtendedThinking={initialExtendedThinking}
-              />
-            </div>
-          </div>
-        ) : (
-          /* Standard layout with messages */
-          <div className="flex-1 overflow-hidden border">
-            <div className="mx-auto p-2 relative h-full">
-              <div className="flex flex-col h-full">
-                <MessageList
-                  ref={scrollAreaRef}
-                  messages={messages}
-                  status={status}
-                  isLoadingMessages={isLoadingMessages}
-                />
+              {/* Centered input */}
+              <div className="w-full max-w-3xl">
                 <ChatInput
                   input={input}
                   onInputChange={setInput}
-                  onSubmit={(message, event, options) => {
-                    handleSubmit(message, options);
+                  onSubmit={(message, event, settings) => {
+                    handleSubmit(message, settings);
                   }}
                   status={status}
                   isCreatingConversation={isCreatingConversation}
@@ -336,8 +308,41 @@ export default function ChatPage() {
                 />
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            /* Standard layout with messages */
+            <div className="flex-1 overflow-hidden">
+              <div className="mx-auto p-2 relative h-full">
+                <div className="flex flex-col h-full">
+                  <MessageList
+                    ref={scrollAreaRef}
+                    messages={messages}
+                    status={status}
+                    isLoadingMessages={isLoadingMessages}
+                  />
+                  <ChatInput
+                    input={input}
+                    onInputChange={setInput}
+                    onSubmit={(message, event, options) => {
+                      handleSubmit(message, options);
+                    }}
+                    status={status}
+                    isCreatingConversation={isCreatingConversation}
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
+                    conversationId={conversationId}
+                    isNewChat={false}
+                    initialWebSearch={initialWebSearch}
+                    initialExtendedThinking={initialExtendedThinking}
+                  />
+
+                  <p className="text-xs text-center text-muted-foreground mt-2">
+                    Nira can make mistakes. Check important info.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

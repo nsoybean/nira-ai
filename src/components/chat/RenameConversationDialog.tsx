@@ -43,12 +43,12 @@ export function RenameConversationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="dark:bg-gray-900 dark:border-gray-800 sm:max-w-[425px]">
+      <DialogContent className="bg-card border-border sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="dark:text-gray-100">
+          <DialogTitle className="text-foreground">
             Rename conversation
           </DialogTitle>
-          <DialogDescription className="dark:text-gray-400">
+          <DialogDescription className="text-muted-foreground">
             Enter a new title for this conversation.
           </DialogDescription>
         </DialogHeader>
@@ -58,7 +58,7 @@ export function RenameConversationDialog({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Conversation title"
-              className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
+              className="bg-background border-input text-foreground"
               disabled={isRenaming}
               autoFocus
             />
@@ -69,14 +69,14 @@ export function RenameConversationDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isRenaming}
-              className="dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 dark:border-gray-700"
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isRenaming || !title.trim() || title === currentTitle}
-              className="dark:bg-blue-600 dark:hover:bg-blue-700"
+              className="bg-info hover:bg-info/90 text-info-foreground"
             >
               {isRenaming ? (
                 <>

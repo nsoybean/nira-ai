@@ -34,6 +34,8 @@ import {
   Share2,
   Edit3,
   Trash2,
+  MessageCirclePlusIcon,
+  PanelLeft,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -47,6 +49,7 @@ import { toast } from "sonner";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { cn, isDevelopment } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { KbdKeyboard } from "@/components/kbdKeyboard";
 
 interface Conversation {
   id: string;
@@ -114,10 +117,10 @@ const SidebarContent = ({
   return (
     <>
       {/* Sidebar Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="font-rem text-gray-900 dark:text-gray-100 font-bold">
+            <span className="font-rem text-lg text-foreground font-bold">
               Nira AI
             </span>
             <Badge
@@ -134,16 +137,16 @@ const SidebarContent = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 dark:hover:bg-gray-800"
+                  className="h-8 w-8 hover:bg-accent"
                   onClick={onClose}
                 >
-                  <PanelLeftClose className="h-4 w-4 dark:text-gray-400" />
+                  <PanelLeft className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">
                 <div className="flex items-center gap-2">
                   <span>Close sidebar</span>
-                  <Kbd>⌘.</Kbd>
+                  <KbdKeyboard keystrokes={"⌘_."} />
                 </div>
               </TooltipContent>
             </Tooltip>
@@ -153,12 +156,16 @@ const SidebarContent = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              className="w-full justify-start gap-2 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700"
+              className="w-full py-5 justify-start gap-2 rounded-lg hover:bg-background dark:hover:bg-background hover:shadow-md"
               size="sm"
+              variant={"outline"}
               onClick={handleNewChatClick}
             >
-              <MessageSquarePlus className="h-4 w-4" />
+              <MessageCirclePlusIcon className="h-4 w-4" />
               New Chat
+              <div className="ml-auto">
+                {!isMobile && <KbdKeyboard keystrokes="⌘_K" />}
+              </div>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">
@@ -177,10 +184,10 @@ const SidebarContent = ({
         <div className={cn("space-y-1 p-3")}>
           {isLoadingConversations ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           ) : conversations.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-sm text-muted-foreground">
               No conversations yet
             </div>
           ) : (
@@ -189,10 +196,10 @@ const SidebarContent = ({
                 key={conv.id}
                 onClick={() => handleConversationClick(conv.id)}
                 className={cn(
-                  `group text-left px-3 py-2.5 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors flex items-center gap-2 cursor-pointer ${
+                  `group text-left px-3 py-2.5 text-sm rounded-lg hover:bg-sidebar-accent transition-colors flex items-center gap-2 cursor-pointer ${
                     conv.id === currentConversationId
-                      ? "text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-800"
-                      : "text-gray-600 dark:text-gray-400"
+                      ? "text-sidebar-accent-foreground bg-sidebar-accent"
+                      : "text-muted-foreground"
                   }`,
                   isDevelopment() && "border-2 border-green-400"
                 )}
@@ -218,17 +225,17 @@ const SidebarContent = ({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-48 dark:bg-gray-900 dark:border-gray-800"
+                    className="w-48 bg-popover dark:border-gray-800"
                   >
                     <DropdownMenuItem
-                      className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200"
+                      className="cursor-pointer hover:bg-accent text-foreground"
                       onClick={(e) => handleRenameClick(e, conv)}
                     >
                       <Edit3 className="h-4 w-4 mr-2" />
                       Rename
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="cursor-pointer dark:hover:bg-gray-800 dark:text-gray-200"
+                      className="cursor-pointer hover:bg-accent text-foreground"
                       onClick={handleShareClick}
                     >
                       <Share2 className="h-4 w-4 mr-2" />
@@ -236,7 +243,7 @@ const SidebarContent = ({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="cursor-pointer text-red-600 dark:text-red-400 dark:hover:bg-gray-800"
+                      className="cursor-pointer text-destructive hover:bg-accent"
                       onClick={(e) => handleDeleteClick(e, conv.id)}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
@@ -251,17 +258,17 @@ const SidebarContent = ({
       </ScrollArea>
 
       {/* Sidebar Footer */}
-      <div className="p-3 space-y-3 border-t border-gray-200 dark:border-gray-800">
+      <div className="p-3 space-y-3 border-t border-border">
         {/* Theme Toggle */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
               <button
                 onClick={() => setTheme("light")}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   theme === "light"
-                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Sun className="h-3.5 w-3.5" />
@@ -271,8 +278,8 @@ const SidebarContent = ({
                 onClick={() => setTheme("dark")}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   theme === "dark"
-                    ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Moon className="h-3.5 w-3.5" />
@@ -387,7 +394,7 @@ export const Sidebar = memo(function Sidebar({
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
           <SheetContent
             side="left"
-            className="w-[280px] sm:w-[320px] p-0 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800"
+            className="w-[280px] sm:w-[320px] p-0 bg-sidebar border-r border-sidebar-border"
           >
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
@@ -441,7 +448,7 @@ export const Sidebar = memo(function Sidebar({
       <aside
         className={`${
           isOpen ? "w-64" : "w-0"
-        } transition-all duration-300 border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden`}
+        } transition-all duration-300 flex flex-col overflow-hidden bg-sidebar`}
       >
         <SidebarContent
           currentConversationId={currentConversationId}

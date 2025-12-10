@@ -113,8 +113,8 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                               className={cn(
                                 "size-2 rounded-full",
                                 isStreaming
-                                  ? "bg-blue-500 animate-pulse"
-                                  : "bg-gray-400"
+                                  ? "bg-info animate-pulse"
+                                  : "bg-muted-foreground"
                               )}
                             /> */}
                               <BrainIcon className="size-4" />
@@ -132,7 +132,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                             </CollapsibleTrigger>
                             <CollapsibleContent>
                               <div className="relative max-h-[400px] overflow-y-auto">
-                                <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-2">
+                                <div className="text-sm text-foreground whitespace-pre-wrap pr-2">
                                   {part.text}
                                 </div>
                                 {/* Fade gradient at bottom */}
@@ -201,7 +201,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                             href={result.url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="flex items-start gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-4 py-2 rounded transition-colors"
+                                            className="flex items-start gap-2 hover:bg-accent -mx-2 px-4 py-2 rounded transition-colors"
                                           >
                                             <div className="flex flex-row items-center gap-1 flex-1 min-w-0">
                                               <img
@@ -209,10 +209,10 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                                 alt={`${domain} logo`}
                                                 className="size-4 rounded-sm shrink-0 bg-white"
                                               />
-                                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                              <div className="text-sm font-medium text-foreground truncate">
                                                 {result.title || result.url}
                                               </div>
-                                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                              <div className="text-xs text-muted-foreground">
                                                 {domain}
                                               </div>
                                             </div>
@@ -290,7 +290,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                           href={result.url}
                                           target="_blank"
                                           rel="noreferrer"
-                                          className="flex items-start gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-4 py-2 rounded transition-colors"
+                                          className="flex items-start gap-2 hover:bg-accent -mx-2 px-4 py-2 rounded transition-colors"
                                         >
                                           <div className="flex flex-row items-center gap-1 flex-1 min-w-0">
                                             <img
@@ -298,7 +298,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                               alt={`${domain} logo`}
                                               className="size-4 rounded-sm shrink-0 bg-white"
                                             />
-                                            <div className="text-sm text-gray-900 dark:text-gray-100 truncate max-w-lg">
+                                            <div className="text-sm text-foreground truncate max-w-lg">
                                               {result.url}
                                             </div>
                                           </div>
@@ -312,22 +312,22 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                     (failed: any, i: number) => (
                                       <div
                                         key={`${message.id}-extract-fail-${i}`}
-                                        className="flex items-start gap-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 -mx-2 px-2 py-2 rounded"
+                                        className="flex items-start gap-2 text-sm hover:bg-accent -mx-2 px-2 py-2 rounded"
                                       >
                                         <XIcon
                                           size={16}
-                                          className="text-red-400 mt-0.5 shrink-0"
+                                          className="text-destructive mt-0.5 shrink-0"
                                         />
                                         <div className="flex-1 min-w-0">
                                           <a
                                             href={failed.url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="text-sm text-gray-900 dark:text-gray-100 truncate block max-w-lg"
+                                            className="text-sm text-foreground truncate block max-w-lg"
                                           >
                                             {failed.url}
                                           </a>
-                                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                          <p className="text-xs text-muted-foreground mt-1">
                                             {failed.error}
                                           </p>
                                         </div>
@@ -379,7 +379,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
             {/* Reminder note - only show on last message */}
             {isLastMessage && (
               <div className="ml-auto">
-                <p className="text-xs text-center text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-xs text-center text-muted-foreground mt-1">
                   Nira can make mistakes. Check important info.
                 </p>
               </div>
@@ -395,12 +395,12 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
           {/* loading */}
           {isLoadingMessages && !messages.length && (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
-              <Loader2 className="h-12 w-12 text-gray-300 dark:text-gray-700 animate-spin" />
+              <Loader2 className="h-12 w-12 text-muted-foreground animate-spin" />
               <div>
-                <h2 className="text-xl font-medium mb-2 text-gray-900 dark:text-gray-100">
+                <h2 className="text-xl font-medium mb-2 text-foreground">
                   Loading messages...
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                   Please wait
                 </p>
               </div>
@@ -641,12 +641,12 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
                                       />
                                       <XIcon
                                         size={16}
-                                        className="text-red-400 mt-0.5 shrink-0"
+                                        className="text-destructive mt-0.5 shrink-0"
                                       />
                                       <span className="block font-medium">
                                         {failedResult.url}
                                       </span>
-                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                      <p className="text-xs text-muted-foreground mt-1">
                                         {failedResult.error}
                                       </p>
                                     </>
