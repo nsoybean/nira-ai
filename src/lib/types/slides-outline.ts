@@ -49,7 +49,7 @@ export const presentationOutlineSchema = z.object({
 	/** Title of the entire presentation */
 	pptTitle: z.string().min(1),
 	/** Total number of slides in the presentation */
-	slidesCount: z.number().int().positive(),
+	slidesCount: z.number().int().positive().max(10, { error: 'Exceeded max slide count' }),
 	/** Optional special requirements or notes for the presentation */
 	overallRequirements: z.string().nullable(),
 });
@@ -64,7 +64,7 @@ export const slidesOutlineArtifactSchema = z.object({
 	/** High-level presentation metadata */
 	outline: presentationOutlineSchema,
 	/** Array of chapters, each containing slides */
-	chapters: z.array(chapterSchema).min(1),
+	chapters: z.array(chapterSchema).min(1).max(10, { error: 'Exceeded max chapter count' }),
 });
 
 /**

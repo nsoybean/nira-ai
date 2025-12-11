@@ -22,5 +22,5 @@ export const tavilyExtractTool = tavilyExtract({
 	extractDepth: "basic",
 });
 
-// Slides outline tool
-export { slidesOutlineTool } from "./slides-outline";
+// Slides outline tool factory
+export { createSlidesOutlineToolFactory } from "./slides-outline";

@@ -13,14 +13,15 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
 import {
-	tavilyExtractTool,
-	tavilySearchTool,
-	slidesOutlineTool,
+  tavilyExtractTool,
+  tavilySearchTool,
+  createSlidesOutlineToolFactory,
 } from "@/lib/tools";
 import { mergeConversationSettings } from "@/lib/conversation-settings";
 import { MyUIMessage } from "@/lib/types";
 import { withAuth } from "@/lib/auth-server";
 import { Logger } from "@/lib/logger";
+import { hydrateArtifactsInMessages } from "@/lib/artifacts";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -161,6 +162,11 @@ export const POST = withAuth(async (req, { userId }) => {
       },
     });
 
+    // Hydrate artifacts with latest versions from database
+    // This replaces outdated artifact content in message history with current versions
+    // so the LLM always sees the most recent state when user has edited artifacts
+    // const hydratedMessages = await hydrateArtifactsInMessages(allMessages, prisma);
+
     // Convert UIMessage[] to ModelMessage[] format for the AI model
     // useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
     const modelMessages = convertToModelMessages(allMessages);
@@ -175,6 +181,17 @@ export const POST = withAuth(async (req, { userId }) => {
           id: conversationId,
           data: { value: generatedTitle || "New Chat" },
           transient: true, // This part won't be added to message history
+        });
+
+        // Generate a temporary message ID for the assistant response
+        // This will be used to link artifacts to the message
+        const assistantMessageId = createIdGenerator({ prefix: "msg", size: 16 })();
+
+        // Create slides outline tool with context
+        const slidesOutlineTool = createSlidesOutlineToolFactory({
+          conversationId,
+          messageId: assistantMessageId,
+          userId,
         });
 
         // Stream the chat completion

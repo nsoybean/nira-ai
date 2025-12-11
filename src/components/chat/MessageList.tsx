@@ -50,6 +50,8 @@ import {
 	imageGenerationToolUIPart,
 } from "@/types/tools";
 import { Image } from "../ai-elements/image";
+import { isSlidesOutlineToolPart, extractArtifactFromPart } from "@/lib/artifacts";
+import { SlidesOutlineArtifact } from "../artifacts/SlidesOutlineArtifact";
 
 interface MessageListProps {
 	messages: UIMessage[];
@@ -688,6 +690,25 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 												/>
 											)
 										);
+
+									case "tool-createSlidesOutline":
+										if (isSlidesOutlineToolPart(part)) {
+											const artifact = extractArtifactFromPart(part);
+											if (artifact) {
+												return (
+													<div className="mt-2 mb-10">
+													<SlidesOutlineArtifact
+														key={`artifact-${artifact.artifactId}`}
+														artifactId={artifact.artifactId}
+														initialContent={artifact.content}
+														version={artifact.version}
+													/>
+													</div>
+												);
+											}
+										}
+										return null;
+
 									default:
 										console.log("part", part);
 										return null;
