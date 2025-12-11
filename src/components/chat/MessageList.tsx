@@ -54,11 +54,11 @@ import { Image } from "../ai-elements/image";
 interface MessageListProps {
 	messages: UIMessage[];
 	status: ChatStatus;
-	isLoadingMessages?: boolean;
+	isLoadingChatMessage?: boolean;
 }
 
 export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
-	({ messages, status, isLoadingMessages = false }, ref) => {
+	({ messages, status, isLoadingChatMessage: isLoadingMessages = false }, ref) => {
 		const isLoading = status === "submitted" || status === "streaming";
 		const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
@@ -70,6 +70,13 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 			}, 2000);
 		};
 
+		/**
+		 * @deprecated
+		 * @param message
+		 * @param isLastMessage 
+		 * @param isLoading 
+		 * @returns 
+		 */
 		function renderMessageContent(
 			message: UIMessage,
 			isLastMessage: boolean,
@@ -689,8 +696,10 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 						</div>
 					))}
 
-					{/* submitted */}
-					{status === "submitted" && <Loader />}
+
+
+					{/* streaming loader, animate */}
+					{status === "submitted"  || status==='streaming' && <Loader className="h-6 w-6 text-muted-foreground animate-spin" />}
 				</ConversationContent>
 				<ConversationScrollButton />
 			</Conversation>

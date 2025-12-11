@@ -317,7 +317,7 @@ export default function ChatPage() {
 										ref={scrollAreaRef}
 										messages={messages}
 										status={status}
-										isLoadingMessages={isLoadingMessages}
+										isLoadingChatMessage={isLoadingMessages}
 									/>
 									<ChatInput
 										input={input}
