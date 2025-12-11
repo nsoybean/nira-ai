@@ -47,7 +47,7 @@ import { BetaAuthDialog } from "@/components/BetaAuthDialog";
 import { useBetaAuth } from "@/contexts/BetaAuthContext";
 import { toast } from "sonner";
 import { AuthButton } from "@/components/auth/AuthButton";
-import { cn, isDevelopment } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { KbdKeyboard } from "@/components/kbdKeyboard";
 
@@ -177,8 +177,7 @@ const SidebarContent = ({
 			{/* Chat List */}
 			<ScrollArea
 				className={cn(
-					"flex-1 overflow-hidden",
-					isDevelopment() && "border-2 border-blue-400"
+					"flex-1 overflow-hidden"
 				)}
 			>
 				<div className={cn("space-y-1 p-3")}>
@@ -201,13 +200,11 @@ const SidebarContent = ({
 											? "text-sidebar-accent-foreground bg-sidebar-accent"
 											: "text-muted-foreground"
 									}`,
-									isDevelopment() && "border-2 border-green-400"
 								)}
 							>
 								<div
 									className={cn(
 										"truncate flex-1 min-w-0 max-w-42",
-										isDevelopment() && "border-2 border-red-400"
 									)}
 								>
 									{conv.title}
