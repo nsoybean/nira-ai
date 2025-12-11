@@ -21,3 +21,6 @@ export const tavilyExtractTool = tavilyExtract({
 	apiKey: process.env.TAVILY_API_KEY,
 	extractDepth: "basic",
 });
+
+// Slides outline tool
+export { slidesOutlineTool } from "./slides-outline";

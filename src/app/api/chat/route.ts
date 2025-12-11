@@ -12,7 +12,11 @@ import {
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
-import { tavilyExtractTool, tavilySearchTool } from "@/lib/tools";
+import {
+	tavilyExtractTool,
+	tavilySearchTool,
+	slidesOutlineTool,
+} from "@/lib/tools";
 import { mergeConversationSettings } from "@/lib/conversation-settings";
 import { MyUIMessage } from "@/lib/types";
 import { withAuth } from "@/lib/auth-server";
@@ -198,10 +202,15 @@ export const POST = withAuth(async (req, { userId }) => {
               webExtract: tavilyExtractTool,
             }),
 
+            // slides outline tool
+            createSlidesOutline: slidesOutlineTool,
+
             // ...(modelConfig.provider === 'openai' && { image_generation: openai.tools.imageGeneration({ outputFormat: 'png' }), })
           },
           messages: modelMessages,
-          system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
+          system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.
+
+When users request presentations or slide decks, use the 'createSlidesOutline' tool to generate a structured outline with chapters and slides. Keep content concise and organized.`,
           temperature: 0.7,
           maxOutputTokens: 4000,
           onFinish: async (event) => {

@@ -9,3 +9,16 @@ export type MyUIMessage = UIMessage<
 		};
 	}
 >;
+
+// Export slides outline types
+export type {
+	SlidesOutlineArtifact,
+	PresentationOutline,
+	Chapter,
+	Slide,
+	SlideType,
+} from "./types/slides-outline";
+export {
+	isSlidesOutlineArtifact,
+	parseSlidesOutlineArtifact,
+} from "./types/slides-outline";
