@@ -5,11 +5,13 @@ Better Auth has been successfully integrated into your Next.js app with email/pa
 ## What's Been Implemented
 
 ### 1. **Database Schema** (`prisma/schema.prisma`)
+
 - ✅ Added Better Auth tables: `User`, `Session`, `Account`, `Verification`
 - ✅ Updated User model with `emailVerified`, `image` fields
 - ✅ Configured relationships for Better Auth
 
 ### 2. **Auth Configuration** (`src/lib/auth.ts`)
+
 - ✅ Configured Better Auth with Prisma adapter
 - ✅ Enabled email/password authentication
 - ✅ Set up Google OAuth provider
@@ -18,10 +20,12 @@ Better Auth has been successfully integrated into your Next.js app with email/pa
 - ✅ Next.js cookies plugin for server actions
 
 ### 3. **API Routes**
+
 - ✅ Created `/api/auth/[...all]/route.ts` - Handles all Better Auth endpoints
 - ✅ Updated `/api/chat/route.ts` - Now extracts userId from session
 
 ### 4. **Client-Side**
+
 - ✅ Created `src/lib/auth-client.ts` - Client auth instance
 - ✅ Created `src/contexts/AuthContext.tsx` - Auth context with `useSession` hook
 - ✅ Created `src/components/auth/AuthButton.tsx` - Login/profile button
@@ -29,6 +33,7 @@ Better Auth has been successfully integrated into your Next.js app with email/pa
 - ✅ Updated Sidebar - Replaced hardcoded avatar with AuthButton
 
 ### 5. **Server Utilities** (`src/lib/auth-server.ts`)
+
 - ✅ `getSession()` - Get current session
 - ✅ `getUserId()` - Get current userId
 - ✅ `requireAuth()` - Require authentication in API routes
@@ -54,6 +59,7 @@ npx prisma generate
 ### 2. **Set Up OAuth Credentials**
 
 #### Google OAuth:
+
 1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Create OAuth 2.0 Client ID
 3. Add authorized redirect URIs:
@@ -67,6 +73,7 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
 #### GitHub OAuth:
+
 1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
 2. Create New OAuth App
 3. Set Authorization callback URL:
@@ -88,6 +95,7 @@ openssl rand -base64 32
 ```
 
 Update in `.env`:
+
 ```env
 BETTER_AUTH_SECRET=your-generated-secret-key
 ```
@@ -116,13 +124,13 @@ npm run dev
 import { useSession } from "@/contexts/AuthContext";
 
 function MyComponent() {
-  const { data: session, isPending } = useSession();
+	const { data: session, isPending } = useSession();
 
-  if (isPending) return <div>Loading...</div>;
+	if (isPending) return <div>Loading...</div>;
 
-  if (!session) return <div>Not signed in</div>;
+	if (!session) return <div>Not signed in</div>;
 
-  return <div>Welcome, {session.user.name}!</div>;
+	return <div>Welcome, {session.user.name}!</div>;
 }
 ```
 
@@ -133,21 +141,21 @@ import { getUserId, requireAuth } from "@/lib/auth-server";
 
 // Optional auth (allows anonymous)
 export async function GET() {
-  const userId = await getUserId();
+	const userId = await getUserId();
 
-  if (userId) {
-    // User is authenticated
-  } else {
-    // Anonymous user
-  }
+	if (userId) {
+		// User is authenticated
+	} else {
+		// Anonymous user
+	}
 }
 
 // Required auth (throws error if not authenticated)
 export async function POST() {
-  const { userId, user } = await requireAuth();
+	const { userId, user } = await requireAuth();
 
-  // User is guaranteed to be authenticated here
-  // Do something with userId
+	// User is guaranteed to be authenticated here
+	// Do something with userId
 }
 ```
 
@@ -157,13 +165,13 @@ export async function POST() {
 import { getSession } from "@/lib/auth-server";
 
 export default async function MyServerComponent() {
-  const session = await getSession();
+	const session = await getSession();
 
-  if (!session) {
-    return <div>Please sign in</div>;
-  }
+	if (!session) {
+		return <div>Please sign in</div>;
+	}
 
-  return <div>Welcome, {session.user.name}!</div>;
+	return <div>Welcome, {session.user.name}!</div>;
 }
 ```
 
@@ -183,16 +191,17 @@ Better Auth provides these endpoints:
 The userId is now automatically available in your API routes through session cookies. No need for manual token injection - Better Auth handles this automatically!
 
 Example in your chat API:
+
 ```tsx
 // In src/app/api/chat/route.ts
 const userId = await getUserId(); // Returns userId from session cookie
 
 // Use userId to associate conversations with users
 if (userId) {
-  await prisma.conversation.update({
-    where: { id: conversationId },
-    data: { userId }, // Link conversation to user
-  });
+	await prisma.conversation.update({
+		where: { id: conversationId },
+		data: { userId }, // Link conversation to user
+	});
 }
 ```
 
@@ -206,14 +215,17 @@ if (userId) {
 ## Troubleshooting
 
 ### "Can't reach database server"
+
 - Make sure Docker is running: `docker ps`
 - Or start CockroachDB: `cockroach start-single-node`
 
 ### OAuth redirect errors
+
 - Check callback URLs match exactly in OAuth provider settings
 - Ensure `NEXT_PUBLIC_APP_URL` is set correctly
 
 ### Session not persisting
+
 - Check that cookies are enabled in browser
 - Verify `BETTER_AUTH_SECRET` is set
 

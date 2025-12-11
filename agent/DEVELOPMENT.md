@@ -75,6 +75,7 @@ npx prisma studio
 ### 3. Making Changes
 
 **File Structure:**
+
 - Frontend: `src/app/**/*.tsx`
 - API: `src/app/api/**/*.ts`
 - Database: `prisma/schema.prisma`
@@ -82,6 +83,7 @@ npx prisma studio
 - Docs: `llm/**/*.md`
 
 **Hot Reload:**
+
 - Next.js Turbopack provides fast refresh
 - Changes to frontend code reload instantly
 - Changes to API routes require manual refresh
@@ -101,6 +103,7 @@ supabase stop
 ### Required Files
 
 #### .env.local
+
 ```env
 # AI Provider
 ANTHROPIC_API_KEY=sk-ant-xxx
@@ -117,6 +120,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 #### .nvmrc
+
 ```
 20.18.2
 ```
@@ -157,14 +161,15 @@ Components are installed to `src/components/ui/`
 
 1. Create file: `src/app/api/your-route/route.ts`
 2. Export HTTP method handlers:
+
    ```typescript
    export async function GET(req: Request) {
-     return Response.json({ message: 'Hello' });
+   	return Response.json({ message: "Hello" });
    }
 
    export async function POST(req: Request) {
-     const body = await req.json();
-     return Response.json({ received: body });
+   	const body = await req.json();
+   	return Response.json({ received: body });
    }
    ```
 
@@ -187,17 +192,17 @@ Visit: http://localhost:3000/your-page
 ### useChat Hook
 
 ```typescript
-import { useChat } from '@ai-sdk/react';
+import { useChat } from "@ai-sdk/react";
 
 const {
-  messages,      // UIMessage[]
-  status,        // 'idle' | 'submitted' | 'streaming' | 'error'
-  error,         // Error | undefined
-  sendMessage,   // Send a message
-  stop,          // Stop streaming
-  regenerate,    // Regenerate last response
+	messages, // UIMessage[]
+	status, // 'idle' | 'submitted' | 'streaming' | 'error'
+	error, // Error | undefined
+	sendMessage, // Send a message
+	stop, // Stop streaming
+	regenerate, // Regenerate last response
 } = useChat({
-  api: '/api/chat',
+	api: "/api/chat",
 });
 ```
 
@@ -206,12 +211,12 @@ const {
 ```typescript
 // CORRECT (v5)
 sendMessage({
-  role: "user",
-  parts: [{ type: "text", text: input }],
+	role: "user",
+	parts: [{ type: "text", text: input }],
 });
 
 // WRONG (v4 - don't use!)
-sendMessage("Hello");  // This won't work!
+sendMessage("Hello"); // This won't work!
 ```
 
 ### Rendering Messages (v5 Format)
@@ -270,6 +275,7 @@ supabase status
 **Issue:** `Module not found: Can't resolve '@ai-sdk/react'`
 
 **Solution:**
+
 ```bash
 npm install @ai-sdk/react
 ```
@@ -279,6 +285,7 @@ npm install @ai-sdk/react
 **Issue:** `Prisma only supports Node.js versions 20.19+`
 
 **Solution:**
+
 ```bash
 nvm use 20
 # or
@@ -290,6 +297,7 @@ nvm use  # if .nvmrc is present
 **Issue:** `Cannot connect to the Docker daemon`
 
 **Solution:**
+
 ```bash
 open -a Docker
 # Wait for Docker to start, then retry
@@ -300,6 +308,7 @@ open -a Docker
 **Issue:** `supabase_analytics_lume container is not ready: unhealthy`
 
 **Solution:**
+
 ```bash
 supabase stop
 supabase start --ignore-health-check
@@ -310,6 +319,7 @@ supabase start --ignore-health-check
 **Issue:** `Can't reach database server`
 
 **Solution:**
+
 ```bash
 # Check Supabase is running
 supabase status
@@ -326,6 +336,7 @@ cat .env.local | grep DATABASE_URL
 **Issue:** `Cannot find module '@prisma/client'`
 
 **Solution:**
+
 ```bash
 npx prisma generate
 ```
@@ -409,21 +420,22 @@ npm test
 ### Integration Tests
 
 Test API routes with mock data:
+
 ```typescript
-import { POST } from '@/app/api/chat/route';
+import { POST } from "@/app/api/chat/route";
 
-test('chat API returns streaming response', async () => {
-  const req = new Request('http://localhost/api/chat', {
-    method: 'POST',
-    body: JSON.stringify({
-      messages: [
-        { id: '1', role: 'user', parts: [{ type: 'text', text: 'Hello' }] }
-      ],
-    }),
-  });
+test("chat API returns streaming response", async () => {
+	const req = new Request("http://localhost/api/chat", {
+		method: "POST",
+		body: JSON.stringify({
+			messages: [
+				{ id: "1", role: "user", parts: [{ type: "text", text: "Hello" }] },
+			],
+		}),
+	});
 
-  const response = await POST(req);
-  expect(response.status).toBe(200);
+	const response = await POST(req);
+	expect(response.status).toBe(200);
 });
 ```
 
@@ -494,11 +506,12 @@ npm test
    - Other secrets
 
 3. Configure build settings:
+
    ```json
    {
-     "buildCommand": "npm run build",
-     "outputDirectory": ".next",
-     "installCommand": "npm install"
+   	"buildCommand": "npm run build",
+   	"outputDirectory": ".next",
+   	"installCommand": "npm install"
    }
    ```
 
@@ -583,6 +596,7 @@ docker logs [container]           # View container logs
 ## Resources
 
 ### Documentation
+
 - [Next.js Docs](https://nextjs.org/docs)
 - [Vercel AI SDK](https://ai-sdk.dev/docs)
 - [Prisma Docs](https://www.prisma.io/docs)
@@ -591,11 +605,13 @@ docker logs [container]           # View container logs
 - [Tailwind CSS](https://tailwindcss.com/docs)
 
 ### Internal Docs
+
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System design
 - [DATABASE.md](./DATABASE.md) - Schema documentation
 - [API.md](./API.md) - API reference
 
 ### Learning Resources
+
 - [AI SDK Examples](https://github.com/vercel/ai/tree/main/examples)
 - [Next.js App Router Tutorial](https://nextjs.org/learn)
 - [Prisma Tutorial](https://www.prisma.io/docs/getting-started)
@@ -605,9 +621,11 @@ docker logs [container]           # View container logs
 ## Getting Help
 
 ### Local Documentation
+
 All architecture decisions and technical details are documented in `/llm/*.md` files.
 
 ### Community Resources
+
 - Next.js Discord
 - Vercel AI SDK GitHub Discussions
 - Prisma Community Discord

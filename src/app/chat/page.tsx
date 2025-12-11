@@ -10,11 +10,11 @@ import { useEffect } from "react";
  * Conversation is only created when user sends first message.
  */
 export default function ChatRootPage() {
-  const router = useRouter();
+	const router = useRouter();
 
-  useEffect(() => {
-    router.replace('/new');
-  }, [router]);
+	useEffect(() => {
+		router.replace("/new");
+	}, [router]);
 
-  return null;
+	return null;
 }

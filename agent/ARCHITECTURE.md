@@ -7,6 +7,7 @@ Nira is a modern, multi-model AI chatbot built with Next.js 16, featuring Claude
 ## Tech Stack
 
 ### Frontend
+
 - **Next.js 16.0.5** - React framework with App Router and Turbopack
 - **React 19.2.0** - UI library with React Compiler
 - **TypeScript 5** - Type safety
@@ -14,6 +15,7 @@ Nira is a modern, multi-model AI chatbot built with Next.js 16, featuring Claude
 - **shadcn/ui** - Component library built on Radix UI primitives
 
 ### Backend
+
 - **Next.js API Routes** - Server-side API endpoints
 - **Vercel AI SDK v5** - Streaming chat interface
   - `ai@5.0.104` - Core AI SDK
@@ -22,6 +24,7 @@ Nira is a modern, multi-model AI chatbot built with Next.js 16, featuring Claude
 - **Mastra Framework** (@mastra/core v0.24.6) - AI agents orchestration
 
 ### Database
+
 - **PostgreSQL** - Primary database
 - **Prisma ORM v6.19.0** - Type-safe database client
 - **Supabase CLI** - Local development environment
@@ -70,6 +73,7 @@ lume/
 The chat interface is a client component built with AI SDK v5's new transport-based architecture.
 
 **Key Features:**
+
 - Real-time streaming responses
 - Message history display
 - Auto-scrolling to latest message
@@ -77,34 +81,36 @@ The chat interface is a client component built with AI SDK v5's new transport-ba
 - Error handling
 
 **AI SDK v5 Integration:**
+
 ```typescript
-import { useChat } from '@ai-sdk/react';
+import { useChat } from "@ai-sdk/react";
 
 const {
-  messages,      // UIMessage[] with parts structure
-  status,        // 'idle' | 'submitted' | 'streaming' | 'error'
-  error,         // Error object if any
-  sendMessage,   // (message: CreateUIMessage) => void
-  stop,          // Stop streaming
-  regenerate,    // Regenerate last response
+	messages, // UIMessage[] with parts structure
+	status, // 'idle' | 'submitted' | 'streaming' | 'error'
+	error, // Error object if any
+	sendMessage, // (message: CreateUIMessage) => void
+	stop, // Stop streaming
+	regenerate, // Regenerate last response
 } = useChat();
 ```
 
 **Message Structure (AI SDK v5):**
+
 ```typescript
 interface UIMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system' | 'tool';
-  parts: MessagePart[];  // NOT 'content' anymore!
+	id: string;
+	role: "user" | "assistant" | "system" | "tool";
+	parts: MessagePart[]; // NOT 'content' anymore!
 }
 
 interface MessagePart {
-  type: 'text' | 'tool-call' | 'tool-result';
-  text?: string;
-  toolCallId?: string;
-  toolName?: string;
-  args?: any;
-  result?: any;
+	type: "text" | "tool-call" | "tool-result";
+	text?: string;
+	toolCallId?: string;
+	toolName?: string;
+	args?: any;
+	result?: any;
 }
 ```
 
@@ -115,28 +121,30 @@ interface MessagePart {
 Next.js API Route that handles streaming chat completions.
 
 **Key Features:**
+
 - Streaming text responses
 - Anthropic Claude 3.5 Sonnet integration
 - System prompt configuration
 - Temperature and token control
 
 **Implementation:**
+
 ```typescript
-import { anthropic } from '@ai-sdk/anthropic';
-import { streamText } from 'ai';
+import { anthropic } from "@ai-sdk/anthropic";
+import { streamText } from "ai";
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+	const { messages } = await req.json();
 
-  const result = await streamText({
-    model: anthropic('claude-3-5-sonnet-20241022'),
-    messages,
-    system: 'You are Nira...',
-    temperature: 0.7,
-    maxTokens: 4000,
-  });
+	const result = await streamText({
+		model: anthropic("claude-3-5-sonnet-20241022"),
+		messages,
+		system: "You are Nira...",
+		temperature: 0.7,
+		maxTokens: 4000,
+	});
 
-  return result.toDataStreamResponse();
+	return result.toDataStreamResponse();
 }
 ```
 
@@ -147,6 +155,7 @@ export async function POST(req: Request) {
 PostgreSQL database with Prisma ORM, integrating Mastra's persistence requirements with custom business logic.
 
 **Schema Categories:**
+
 1. **Mastra Tables** - Framework requirements
    - `mastra_threads` - Conversation threads
    - `mastra_messages` - Message history in V2 JSON format
@@ -163,6 +172,7 @@ PostgreSQL database with Prisma ORM, integrating Mastra's persistence requiremen
 **Framework:** Mastra (@mastra/core v0.24.6)
 
 **Planned Features:**
+
 - Multi-step reasoning agents
 - Tool calling and function execution
 - Memory layers (conversation, semantic, working)
@@ -216,12 +226,14 @@ Store in:
 **Decision:** Use AI SDK v5's new transport architecture with `@ai-sdk/react`
 
 **Rationale:**
+
 - Modern streaming architecture
 - Better separation of concerns
 - More flexible message structure with `parts` array
 - Support for multi-modal content (future)
 
 **Impact:**
+
 - No built-in input state management (manual useState required)
 - Messages use `parts` array instead of `content` string
 - `sendMessage()` instead of `handleSubmit()`
@@ -232,12 +244,14 @@ Store in:
 **Decision:** Use Mastra framework for agent orchestration
 
 **Rationale:**
+
 - Built-in persistence layer
 - Advanced memory management
 - Multi-step reasoning capabilities
 - Standardized message format (V2)
 
 **Schema Integration:**
+
 - Mastra tables follow framework conventions
 - Custom tables extend functionality
 - JSON storage for flexible message content
@@ -247,6 +261,7 @@ Store in:
 **Decision:** PostgreSQL with Prisma ORM
 
 **Rationale:**
+
 - Type-safe database queries
 - Easy migrations
 - Support for JSON columns (Mastra messages)
@@ -258,6 +273,7 @@ Store in:
 **Decision:** Use Supabase CLI for local PostgreSQL
 
 **Rationale:**
+
 - Full local database stack
 - Studio UI for data inspection
 - Easy migration to Supabase Cloud
@@ -266,6 +282,7 @@ Store in:
 ## Environment Configuration
 
 **Required Variables:**
+
 ```env
 # AI Provider
 ANTHROPIC_API_KEY=sk-ant-xxx
@@ -291,11 +308,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## Deployment Considerations
 
 ### Frontend
+
 - Deploy to Vercel (optimized for Next.js 16)
 - Edge runtime for API routes
 - Streaming responses supported
 
 ### Database
+
 - Migration options:
   - Supabase Cloud (easy migration path)
   - Neon (serverless Postgres)
@@ -303,6 +322,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - Prisma migrations work across all PostgreSQL providers
 
 ### Environment Variables
+
 - Add all vars to deployment platform
 - Use secrets management for API keys
 - Configure database connection pooling for production
@@ -310,18 +330,21 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## Future Roadmap
 
 ### Phase 1 (Current)
+
 ✅ Basic chat interface with Claude 3.5 Sonnet
 ✅ Streaming responses
 ✅ Database schema design
 ⏳ Mastra integration with PostgreSQL persistence
 
 ### Phase 2 (Next)
+
 - [ ] User authentication
 - [ ] Conversation persistence
 - [ ] Token usage tracking
 - [ ] Model selection UI
 
 ### Phase 3 (Future)
+
 - [ ] Multi-model support (GPT-4, Gemini)
 - [ ] AI Agents with Mastra
 - [ ] Tool calling / function execution
@@ -348,6 +371,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 **Current:** Development logs only
 
 **Future:**
+
 - Application logging (Winston, Pino)
 - Error tracking (Sentry)
 - Performance monitoring (Vercel Analytics)

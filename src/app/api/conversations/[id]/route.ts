@@ -9,38 +9,38 @@ import { withAuth } from "@/lib/auth-server";
  * Fetches conversation details by ID
  */
 export const GET = withAuth(
-  async (req, { userId }, context: { params: Promise<{ id: string }> }) => {
-    try {
-      const { id } = await context.params;
+	async (req, { userId }, context: { params: Promise<{ id: string }> }) => {
+		try {
+			const { id } = await context.params;
 
-      const conversation = await prisma.conversation.findUnique({
-        where: { id, userId },
-        select: {
-          id: true,
-          title: true,
-          modelId: true,
-          settings: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
+			const conversation = await prisma.conversation.findUnique({
+				where: { id, userId },
+				select: {
+					id: true,
+					title: true,
+					modelId: true,
+					settings: true,
+					createdAt: true,
+					updatedAt: true,
+				},
+			});
 
-      if (!conversation) {
-        return NextResponse.json(
-          { error: "Conversation not found" },
-          { status: 404 }
-        );
-      }
+			if (!conversation) {
+				return NextResponse.json(
+					{ error: "Conversation not found" },
+					{ status: 404 }
+				);
+			}
 
-      return NextResponse.json(conversation);
-    } catch (error) {
-      console.error("[Get Conversation API] Error:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch conversation" },
-        { status: 500 }
-      );
-    }
-  }
+			return NextResponse.json(conversation);
+		} catch (error) {
+			console.error("[Get Conversation API] Error:", error);
+			return NextResponse.json(
+				{ error: "Failed to fetch conversation" },
+				{ status: 500 }
+			);
+		}
+	}
 );
 
 /**
@@ -63,82 +63,82 @@ export const GET = withAuth(
  * }
  */
 export const PATCH = withAuth(
-  async (req, { userId }, context: { params: Promise<{ id: string }> }) => {
-    try {
-      const { id } = await context.params;
-      const body: {
-        title?: string;
-        webSearch?: boolean; // Deprecated, kept for backwards compatibility
-        settings?: Partial<ConversationSettings>;
-      } = await req.json();
+	async (req, { userId }, context: { params: Promise<{ id: string }> }) => {
+		try {
+			const { id } = await context.params;
+			const body: {
+				title?: string;
+				webSearch?: boolean; // Deprecated, kept for backwards compatibility
+				settings?: Partial<ConversationSettings>;
+			} = await req.json();
 
-      if (!id) {
-        return NextResponse.json(
-          { error: "Conversation ID is required" },
-          { status: 400 }
-        );
-      }
+			if (!id) {
+				return NextResponse.json(
+					{ error: "Conversation ID is required" },
+					{ status: 400 }
+				);
+			}
 
-      // Check if conversation exists
-      const conversation = await prisma.conversation.findUnique({
-        where: { id, userId },
-      });
+			// Check if conversation exists
+			const conversation = await prisma.conversation.findUnique({
+				where: { id, userId },
+			});
 
-      if (!conversation) {
-        return NextResponse.json(
-          { error: "Conversation not found" },
-          { status: 404 }
-        );
-      }
+			if (!conversation) {
+				return NextResponse.json(
+					{ error: "Conversation not found" },
+					{ status: 404 }
+				);
+			}
 
-      // Merge settings if provided
-      let updatedSettings = conversation.settings;
-      if (body.settings !== undefined) {
-        updatedSettings = {
-          ...(conversation.settings as any),
-          ...body.settings,
-        };
-      }
+			// Merge settings if provided
+			let updatedSettings = conversation.settings;
+			if (body.settings !== undefined) {
+				updatedSettings = {
+					...(conversation.settings as any),
+					...body.settings,
+				};
+			}
 
-      // Handle legacy webSearch field: if provided, merge into settings
-      if (body.webSearch !== undefined) {
-        updatedSettings = {
-          ...(updatedSettings as any),
-          websearch: body.webSearch,
-        };
-      }
+			// Handle legacy webSearch field: if provided, merge into settings
+			if (body.webSearch !== undefined) {
+				updatedSettings = {
+					...(updatedSettings as any),
+					websearch: body.webSearch,
+				};
+			}
 
-      // Update the conversation
-      const updatedConversation = await prisma.conversation.update({
-        where: { id, userId },
-        data: {
-          ...(body.title !== undefined && { title: body.title }),
-          settings: updatedSettings as any,
-        },
-        select: {
-          id: true,
-          title: true,
-          modelId: true,
-          websearch: true,
-          settings: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
+			// Update the conversation
+			const updatedConversation = await prisma.conversation.update({
+				where: { id, userId },
+				data: {
+					...(body.title !== undefined && { title: body.title }),
+					settings: updatedSettings as any,
+				},
+				select: {
+					id: true,
+					title: true,
+					modelId: true,
+					websearch: true,
+					settings: true,
+					createdAt: true,
+					updatedAt: true,
+				},
+			});
 
-      return NextResponse.json({
-        success: true,
-        conversation: updatedConversation,
-      });
-    } catch (error) {
-      console.error("[Conversation API] Error updating conversation:", error);
+			return NextResponse.json({
+				success: true,
+				conversation: updatedConversation,
+			});
+		} catch (error) {
+			console.error("[Conversation API] Error updating conversation:", error);
 
-      return NextResponse.json(
-        { error: "Failed to update conversation" },
-        { status: 500 }
-      );
-    }
-  }
+			return NextResponse.json(
+				{ error: "Failed to update conversation" },
+				{ status: 500 }
+			);
+		}
+	}
 );
 
 /**
@@ -154,45 +154,45 @@ export const PATCH = withAuth(
  * }
  */
 export const DELETE = withAuth(
-  async (req, { userId }, context: { params: Promise<{ id: string }> }) => {
-    try {
-      const { id } = await context.params;
+	async (req, { userId }, context: { params: Promise<{ id: string }> }) => {
+		try {
+			const { id } = await context.params;
 
-      if (!id) {
-        return NextResponse.json(
-          { error: "Conversation ID is required" },
-          { status: 400 }
-        );
-      }
+			if (!id) {
+				return NextResponse.json(
+					{ error: "Conversation ID is required" },
+					{ status: 400 }
+				);
+			}
 
-      // Check if conversation exists
-      const conversation = await prisma.conversation.findUnique({
-        where: { id, userId },
-      });
+			// Check if conversation exists
+			const conversation = await prisma.conversation.findUnique({
+				where: { id, userId },
+			});
 
-      if (!conversation) {
-        return NextResponse.json(
-          { error: "Conversation not found" },
-          { status: 404 }
-        );
-      }
+			if (!conversation) {
+				return NextResponse.json(
+					{ error: "Conversation not found" },
+					{ status: 404 }
+				);
+			}
 
-      // Delete the conversation (messages will be cascade deleted)
-      await prisma.conversation.delete({
-        where: { id, userId },
-      });
+			// Delete the conversation (messages will be cascade deleted)
+			await prisma.conversation.delete({
+				where: { id, userId },
+			});
 
-      return NextResponse.json({
-        success: true,
-        message: "Conversation deleted successfully",
-      });
-    } catch (error) {
-      console.error("[Conversation API] Error deleting conversation:", error);
+			return NextResponse.json({
+				success: true,
+				message: "Conversation deleted successfully",
+			});
+		} catch (error) {
+			console.error("[Conversation API] Error deleting conversation:", error);
 
-      return NextResponse.json(
-        { error: "Failed to delete conversation" },
-        { status: 500 }
-      );
-    }
-  }
+			return NextResponse.json(
+				{ error: "Failed to delete conversation" },
+				{ status: 500 }
+			);
+		}
+	}
 );

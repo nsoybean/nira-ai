@@ -16,6 +16,7 @@ import { tavilyExtractTool, tavilySearchTool } from "@/lib/tools";
 import { mergeConversationSettings } from "@/lib/conversation-settings";
 import { MyUIMessage } from "@/lib/types";
 import { withAuth } from "@/lib/auth-server";
+import { Logger } from "@/lib/logger";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -62,6 +63,8 @@ export const POST = withAuth(async (req, { userId }) => {
       return new Response("Conversation not found", { status: 404 });
     }
 
+    const logger = new Logger({ prefix: 'Chat API' }).addMetadata("conversationId", conversation.id);
+
     // Get conversation settings with defaults
     const settings = mergeConversationSettings(conversation?.settings as any);
 
@@ -75,6 +78,11 @@ export const POST = withAuth(async (req, { userId }) => {
         status: 400,
       });
     }
+
+    logger.log("using model", {
+      model: selectedModelId,
+      provider: modelConfig.provider,
+    });
 
     // Fetch all existing messages for conversation
     const existingMessages = await prisma.message.findMany({
@@ -119,12 +127,12 @@ export const POST = withAuth(async (req, { userId }) => {
             });
 
             if (process.env.NODE_ENV === "development") {
-              console.log("[Chat API] Generated title:", generatedTitle);
+              logger.log("generated title", { title: generatedTitle });
             }
           }
         } catch (error) {
-          console.error("[Chat API] Error generating title:", error);
           // Continue with the chat even if title generation fails
+          logger.log("error generating title", { error });
         }
       }
     }
@@ -227,7 +235,7 @@ export const POST = withAuth(async (req, { userId }) => {
 
               // Log metrics (development only)
               if (process.env.NODE_ENV === "development") {
-                console.log("[Chat API] Completion metrics:", {
+                logger.log("Completion metrics:", {
                   conversationId,
                   model: selectedModelId,
                   provider: modelConfig.provider,
@@ -239,7 +247,7 @@ export const POST = withAuth(async (req, { userId }) => {
                 });
               }
             } catch (error) {
-              console.error("[Chat API] Error tracking usage:", error);
+              logger.error("error tracking usage:", error);
             }
           },
         });
@@ -275,14 +283,14 @@ export const POST = withAuth(async (req, { userId }) => {
                 });
 
                 if (process.env.NODE_ENV === "development") {
-                  console.log("[Chat API] Messages saved:", {
+                  logger.log("messages saved:", {
                     conversationId,
                     messagesSaved: allMessages.length,
                   });
                 }
               } catch (error) {
-                console.error("[Chat API] Error saving messages:", error);
                 // Don't throw - we still want to return the response to the user
+                logger.error("error saving messages:", error);
               }
             },
           })

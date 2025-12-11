@@ -14,9 +14,11 @@ The `/llm` directory is specifically designed for:
 ## Documentation Files
 
 ### [ARCHITECTURE.md](./ARCHITECTURE.md)
+
 **System Design & Technical Architecture**
 
 Complete overview of Nira's architecture, including:
+
 - Tech stack breakdown (Next.js 16, AI SDK v5, Mastra, Prisma)
 - Project structure and file organization
 - Architecture layers (Presentation, API, Data, Agent)
@@ -32,9 +34,11 @@ Complete overview of Nira's architecture, including:
 ---
 
 ### [DATABASE.md](./DATABASE.md)
+
 **Database Schema & Persistence**
 
 Complete database documentation:
+
 - PostgreSQL + Prisma ORM setup
 - Full schema with all tables (Mastra + custom)
 - Detailed column descriptions
@@ -50,9 +54,11 @@ Complete database documentation:
 ---
 
 ### [API.md](./API.md)
+
 **API Routes & Integration**
 
 API reference and integration guide:
+
 - Complete API endpoint documentation
 - Request/response formats
 - AI SDK v5 streaming protocol
@@ -68,9 +74,11 @@ API reference and integration guide:
 ---
 
 ### [DEVELOPMENT.md](./DEVELOPMENT.md)
+
 **Developer Guide & Workflows**
 
 Practical development guide:
+
 - Quick start instructions
 - Development workflow
 - Environment setup (.env.local, .nvmrc)
@@ -116,17 +124,17 @@ Visit: http://localhost:3000/chat
 
 ### Core Technologies
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Next.js | 16.0.5 | React framework |
-| React | 19.2.0 | UI library |
-| AI SDK | v5 (5.0.104) | Streaming chat |
-| Mastra | 0.24.6 | AI agents |
-| Prisma | 6.19.0 | ORM |
-| PostgreSQL | Latest | Database |
-| TypeScript | 5 | Type safety |
-| Tailwind CSS | v4 | Styling |
-| shadcn/ui | Latest | Components |
+| Technology   | Version      | Purpose         |
+| ------------ | ------------ | --------------- |
+| Next.js      | 16.0.5       | React framework |
+| React        | 19.2.0       | UI library      |
+| AI SDK       | v5 (5.0.104) | Streaming chat  |
+| Mastra       | 0.24.6       | AI agents       |
+| Prisma       | 6.19.0       | ORM             |
+| PostgreSQL   | Latest       | Database        |
+| TypeScript   | 5            | Type safety     |
+| Tailwind CSS | v4           | Styling         |
+| shadcn/ui    | Latest       | Components      |
 
 ---
 
@@ -135,6 +143,7 @@ Visit: http://localhost:3000/chat
 **Current Phase:** Phase 1 - Basic Chat Interface
 
 ✅ **Completed:**
+
 - Next.js 16 + TypeScript setup
 - Database schema design (Prisma + PostgreSQL)
 - Chat API with Anthropic streaming
@@ -143,10 +152,12 @@ Visit: http://localhost:3000/chat
 - shadcn/ui component library
 
 ⏳ **In Progress:**
+
 - Documentation (this directory)
 - Mastra integration with PostgreSQL
 
 🔜 **Next:**
+
 - User authentication
 - Conversation persistence
 - Token usage tracking
@@ -159,37 +170,40 @@ Visit: http://localhost:3000/chat
 **Important:** Nira uses AI SDK v5, which has significant API changes from v4:
 
 ### Import Path
+
 ```typescript
 // ✅ Correct (v5)
-import { useChat } from '@ai-sdk/react';
+import { useChat } from "@ai-sdk/react";
 
 // ❌ Wrong (v4)
-import { useChat } from 'ai/react';
+import { useChat } from "ai/react";
 ```
 
 ### Message Structure
+
 ```typescript
 // ✅ Correct (v5) - parts-based
 {
-  id: string;
-  role: 'user' | 'assistant';
-  parts: [{ type: 'text', text: string }];
+	id: string;
+	role: "user" | "assistant";
+	parts: [{ type: "text", text: string }];
 }
 
 // ❌ Wrong (v4) - simple content
 {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
+	id: string;
+	role: "user" | "assistant";
+	content: string;
 }
 ```
 
 ### Sending Messages
+
 ```typescript
 // ✅ Correct (v5)
 sendMessage({
-  role: "user",
-  parts: [{ type: "text", text: input }],
+	role: "user",
+	parts: [{ type: "text", text: input }],
 });
 
 // ❌ Wrong (v4)
@@ -197,6 +211,7 @@ sendMessage("Hello");
 ```
 
 ### Input State
+
 ```typescript
 // ✅ Correct (v5) - manual state management
 const [input, setInput] = useState("");
@@ -267,40 +282,45 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ## Key Files Reference
 
-| File | Purpose |
-|------|---------|
-| `src/app/chat/page.tsx` | Chat interface (useChat v5) |
-| `src/app/api/chat/route.ts` | Streaming API endpoint |
-| `prisma/schema.prisma` | Database schema |
-| `.env.local` | Environment variables |
-| `.nvmrc` | Node.js version (20.18.2) |
-| `package.json` | Dependencies |
+| File                        | Purpose                     |
+| --------------------------- | --------------------------- |
+| `src/app/chat/page.tsx`     | Chat interface (useChat v5) |
+| `src/app/api/chat/route.ts` | Streaming API endpoint      |
+| `prisma/schema.prisma`      | Database schema             |
+| `.env.local`                | Environment variables       |
+| `.nvmrc`                    | Node.js version (20.18.2)   |
+| `package.json`              | Dependencies                |
 
 ---
 
 ## Common Debugging
 
 ### Issue: Module not found '@ai-sdk/react'
+
 ```bash
 npm install @ai-sdk/react
 ```
 
 ### Issue: Node.js version error
+
 ```bash
 nvm use 20
 ```
 
 ### Issue: Docker not running
+
 ```bash
 open -a Docker
 ```
 
 ### Issue: Supabase unhealthy
+
 ```bash
 supabase start --ignore-health-check
 ```
 
 ### Issue: Prisma client missing
+
 ```bash
 npx prisma generate
 ```
@@ -311,12 +331,12 @@ npx prisma generate
 
 ## Development Ports
 
-| Service | Port | URL |
-|---------|------|-----|
-| Next.js | 3000 | http://localhost:3000 |
-| Supabase API | 54321 | http://127.0.0.1:54321 |
-| PostgreSQL | 54322 | postgresql://postgres:postgres@127.0.0.1:54322/postgres |
-| Supabase Studio | 54323 | http://127.0.0.1:54323 |
+| Service         | Port  | URL                                                     |
+| --------------- | ----- | ------------------------------------------------------- |
+| Next.js         | 3000  | http://localhost:3000                                   |
+| Supabase API    | 54321 | http://127.0.0.1:54321                                  |
+| PostgreSQL      | 54322 | postgresql://postgres:postgres@127.0.0.1:54322/postgres |
+| Supabase Studio | 54323 | http://127.0.0.1:54323                                  |
 
 ---
 
@@ -349,6 +369,7 @@ npx shadcn@latest add [component]  # Add UI component
 ### When to Update Documentation
 
 **ARCHITECTURE.md:** When you:
+
 - Add new technologies or dependencies
 - Change system design or data flow
 - Make architectural decisions
@@ -356,6 +377,7 @@ npx shadcn@latest add [component]  # Add UI component
 - Update deployment strategy
 
 **DATABASE.md:** When you:
+
 - Modify Prisma schema
 - Add/remove tables or columns
 - Change relationships
@@ -363,6 +385,7 @@ npx shadcn@latest add [component]  # Add UI component
 - Update query patterns
 
 **API.md:** When you:
+
 - Add/modify API endpoints
 - Change request/response formats
 - Add new AI providers
@@ -370,6 +393,7 @@ npx shadcn@latest add [component]  # Add UI component
 - Update streaming protocol
 
 **DEVELOPMENT.md:** When you:
+
 - Add development tools
 - Change workflow processes
 - Update environment variables

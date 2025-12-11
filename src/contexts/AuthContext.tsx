@@ -5,14 +5,14 @@ import { authClient } from "@/lib/auth-client";
 
 // Export auth hooks for convenience
 export const useSession = () => {
-  return authClient.useSession();
+	return authClient.useSession();
 };
 
 // Placeholder context for future extension
 const AuthContext = createContext<{}>({});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  return <AuthContext.Provider value={{}}>{children}</AuthContext.Provider>;
+	return <AuthContext.Provider value={{}}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => useContext(AuthContext);
