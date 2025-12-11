@@ -50,9 +50,10 @@ interface SortableSlideProps {
 	onUpdate: (updates: Partial<Slide>) => void;
 	onAdd: () => void;
 	onDelete: () => void;
+	isEdited?: boolean;
 }
 
-function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDelete }: SortableSlideProps) {
+function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDelete, isEdited = false }: SortableSlideProps) {
 	const {
 		attributes,
 		listeners,
@@ -82,6 +83,11 @@ function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDel
 			)}
 		>
 			<div className="flex items-start gap-2 py-2 px-2 hover:bg-muted/90 rounded-md transition-colors">
+				{/* Edited Indicator Dot */}
+				{isEdited && (
+					<div className="absolute -left-1 top-3 size-1.5 rounded-full bg-amber-500 animate-pulse" />
+				)}
+
 				{/* Drag Handle */}
 				<div
 					{...attributes}
@@ -102,7 +108,7 @@ function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDel
 					<Input
 						value={slide.slideTitle}
 						onChange={(e) => onUpdate({ slideTitle: e.target.value })}
-						className="font-medium text-sm h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent mb-1"
+						className="font-medium text-sm h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2"
 						placeholder="Slide title..."
 					/>
 
@@ -110,7 +116,7 @@ function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDel
 					<Textarea
 						value={slide.slideContent}
 						onChange={(e) => onUpdate({ slideContent: e.target.value })}
-						className="text-xs text-muted-foreground resize-none border-0 focus-visible:ring-0 bg-transparent p-1 leading-relaxed"
+						className="text-xs text-muted-foreground resize-none border-0 focus-visible:ring-0 bg-transparent p-1 leading-relaxed p-2"
 						placeholder="Slide content..."
 						rows={2}
 					/>
@@ -150,6 +156,7 @@ interface SortableChapterProps {
 	onUpdateSlide: (slideIndex: number, updates: Partial<Slide>) => void;
 	onAddSlide: (afterIndex?: number) => void;
 	onDeleteSlide: (slideIndex: number) => void;
+	editedSlides: Set<string>;
 }
 
 function SortableChapter({
@@ -159,6 +166,7 @@ function SortableChapter({
 	onUpdateSlide,
 	onAddSlide,
 	onDeleteSlide,
+	editedSlides,
 }: SortableChapterProps) {
 	const {
 		attributes,
@@ -200,7 +208,7 @@ function SortableChapter({
 				<Input
 					value={chapter.chapterTitle}
 					onChange={(e) => onUpdateTitle(e.target.value)}
-					className="flex-1 font-semibold text-base h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent"
+					className="flex-1 font-semibold text-base h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent p-2"
 					placeholder="Chapter title..."
 				/>
 			</div>
@@ -208,17 +216,21 @@ function SortableChapter({
 			{/* Chapter Slides - Tighter spacing */}
 			<div className="pl-1">
 				<SortableContext items={slideIds} strategy={verticalListSortingStrategy}>
-					{chapter.slides.map((slide, slideIndex) => (
-						<SortableSlide
-							key={`slide-${chapterIndex}-${slideIndex}`}
-							slide={slide}
-							chapterIndex={chapterIndex}
-							slideIndex={slideIndex}
-							onUpdate={(updates) => onUpdateSlide(slideIndex, updates)}
-							onAdd={() => onAddSlide(slideIndex)}
-							onDelete={() => onDeleteSlide(slideIndex)}
-						/>
-					))}
+					{chapter.slides.map((slide, slideIndex) => {
+						const slideKey = `slide-${chapterIndex}-${slideIndex}`;
+						return (
+							<SortableSlide
+								key={slideKey}
+								slide={slide}
+								chapterIndex={chapterIndex}
+								slideIndex={slideIndex}
+								onUpdate={(updates) => onUpdateSlide(slideIndex, updates)}
+								onAdd={() => onAddSlide(slideIndex)}
+								onDelete={() => onDeleteSlide(slideIndex)}
+								isEdited={editedSlides.has(slideKey)}
+							/>
+						);
+					})}
 				</SortableContext>
 			</div>
 		</div>
@@ -234,6 +246,7 @@ export function SlidesOutlineArtifact({
 	const [isSaving, setIsSaving] = useState(false);
 	const [hasChanges, setHasChanges] = useState(false);
 	const [activeId, setActiveId] = useState<string | null>(null);
+	const [editedSlides, setEditedSlides] = useState<Set<string>>(new Set());
 
 	// Set up sensors for drag and drop
 	const sensors = useSensors(
@@ -275,6 +288,7 @@ export function SlidesOutlineArtifact({
 				const updated = await res.json();
 				setContent(updated.content);
 				setHasChanges(false);
+				setEditedSlides(new Set()); // Clear edited indicators
 			}
 		} catch (error) {
 			console.error("Failed to save artifact:", error);
@@ -308,6 +322,10 @@ export function SlidesOutlineArtifact({
 
 	// Update slide
 	const updateSlide = (chapterIndex: number, slideIndex: number, updates: Partial<Slide>) => {
+		// Mark this slide as edited
+		const slideKey = `slide-${chapterIndex}-${slideIndex}`;
+		setEditedSlides(prev => new Set(prev).add(slideKey));
+
 		updateContent((prev) => ({
 			...prev,
 			chapters: prev.chapters.map((chapter, cIdx) =>
@@ -485,7 +503,7 @@ export function SlidesOutlineArtifact({
 						<Input
 							value={content.outline.pptTitle}
 							onChange={(e) => updateTitle(e.target.value)}
-							className="font-semibold text-base h-auto px-0 py-0 border-0 focus-visible:ring-0 bg-transparent mb-1"
+							className="font-semibold text-base h-auto px-0 py-0 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2 w-[90%]"
 						/>
 						<ArtifactDescription>
 							{content.outline.slidesCount} slide{content.outline.slidesCount > 1 ? "s" : ""} •{" "}
@@ -496,11 +514,15 @@ export function SlidesOutlineArtifact({
 				<ArtifactActions>
 					{hasChanges && (
 						<ArtifactAction
-							tooltip="Save changes"
+							tooltip={`Save changes${editedSlides.size > 0 ? ` (${editedSlides.size} edited)` : ''}`}
 							icon={SaveIcon}
 							onClick={handleSave}
 							disabled={isSaving}
-							className={cn(isSaving && "opacity-50")}
+							className={cn(
+								"text-amber-600",
+								!isSaving && "animate-pulse",
+								isSaving && "opacity-50"
+							)}
 						/>
 					)}
 					<ArtifactAction
@@ -535,6 +557,7 @@ export function SlidesOutlineArtifact({
 									}
 									onAddSlide={(afterIndex) => addSlide(chapterIndex, afterIndex)}
 									onDeleteSlide={(slideIndex) => deleteSlide(chapterIndex, slideIndex)}
+									editedSlides={editedSlides}
 								/>
 							))}
 						</div>
@@ -562,6 +585,27 @@ export function SlidesOutlineArtifact({
 						))}
 					</div>
 				</div> */}
+
+				{/* Status Bar - Shows when there are unsaved changes */}
+				{hasChanges && (
+					<div className="sticky bottom-0 border-t pt-4 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 px-4 text-xs text-muted-foreground flex items-center justify-between">
+						<div className="flex items-center gap-2">
+							<div className="size-1.5 rounded-full dark:bg-amber-500 animate-pulse" />
+							<span>
+								Unsaved changes
+								{editedSlides.size > 0 && ` • ${editedSlides.size} slide${editedSlides.size > 1 ? 's' : ''} edited`}
+							</span>
+						</div>
+						<Button
+							size="sm"
+							onClick={handleSave}
+							disabled={isSaving}
+							className="h-7 text-xs"
+						>
+							{isSaving ? "Saving..." : "Save"}
+						</Button>
+					</div>
+				)}
 			</ArtifactContent>
 		</Artifact>
 	);
