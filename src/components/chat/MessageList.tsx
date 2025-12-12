@@ -694,9 +694,9 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
 											if (artifact) {
 												return (
-													<div className="mt-2 mb-10">
+													<div key={`artifact-${artifact.artifactId}-${msgIndex}`} className="mt-2 mb-10">
 														<SlidesOutlineArtifact
-															key={`artifact-${artifact.artifactId}`}
+															key={`artifact-${artifact.artifactId}-${msgIndex}`}
 															artifactId={artifact.artifactId}
 															initialContent={artifact.content}
 															version={artifact.version}
