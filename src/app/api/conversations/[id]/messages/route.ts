@@ -18,43 +18,43 @@ import { withAuth } from "@/lib/auth-server";
  * ]
  */
 export const GET = withAuth(
-  async (req, { userId }, { params }: { params: Promise<{ id: string }> }) => {
-    try {
-      const { id: conversationId } = await params;
+	async (req, { userId }, { params }: { params: Promise<{ id: string }> }) => {
+		try {
+			const { id: conversationId } = await params;
 
-      // Verify conversation exists
-      const conversation = await prisma.conversation.findUnique({
-        where: { id: conversationId, userId },
-      });
+			// Verify conversation exists
+			const conversation = await prisma.conversation.findUnique({
+				where: { id: conversationId, userId },
+			});
 
-      if (!conversation) {
-        return NextResponse.json(
-          { error: "Conversation not found" },
-          { status: 404 }
-        );
-      }
+			if (!conversation) {
+				return NextResponse.json(
+					{ error: "Conversation not found" },
+					{ status: 404 }
+				);
+			}
 
-      // Get all messages for this conversation
-      const messages = await prisma.message.findMany({
-        where: { conversationId },
-        orderBy: { createdAt: "asc" },
-      });
+			// Get all messages for this conversation
+			const messages = await prisma.message.findMany({
+				where: { conversationId },
+				orderBy: { createdAt: "asc" },
+			});
 
-      // Transform to UIMessage format (already in the correct format from DB)
-      const uiMessages = messages.map((msg) => ({
-        id: msg.id,
-        role: msg.role,
-        parts: msg.parts, // Already stored as UIMessagePart[]
-      }));
+			// Transform to UIMessage format (already in the correct format from DB)
+			const uiMessages = messages.map((msg) => ({
+				id: msg.id,
+				role: msg.role,
+				parts: msg.parts, // Already stored as UIMessagePart[]
+			}));
 
-      return NextResponse.json(uiMessages);
-    } catch (error) {
-      console.error("[Messages API] Error loading messages:", error);
+			return NextResponse.json(uiMessages);
+		} catch (error) {
+			console.error("[Messages API] Error loading messages:", error);
 
-      return NextResponse.json(
-        { error: "Failed to load messages" },
-        { status: 500 }
-      );
-    }
-  }
+			return NextResponse.json(
+				{ error: "Failed to load messages" },
+				{ status: 500 }
+			);
+		}
+	}
 );

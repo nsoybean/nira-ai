@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_MODEL_ID } from "@/lib/models";
 import {
-  ConversationSettings,
-  DEFAULT_CONVERSATION_SETTINGS,
-} from "@/lib/conversation-settings";
+	ConversationSettings,
+	DEFAULT_CONVERSATION_SETTINGS,
+} from "@/lib/conversationSettings";
 import { withAuth } from "@/lib/auth-server";
 
 /**
@@ -30,52 +30,52 @@ import { withAuth } from "@/lib/auth-server";
  * }
  */
 export const POST = withAuth(async (req, { userId }) => {
-  try {
-    // Parse request body to get optional modelId
-    let modelId = DEFAULT_MODEL_ID;
-    let settings: ConversationSettings = DEFAULT_CONVERSATION_SETTINGS;
+	try {
+		// Parse request body to get optional modelId
+		let modelId = DEFAULT_MODEL_ID;
+		let settings: ConversationSettings = DEFAULT_CONVERSATION_SETTINGS;
 
-    try {
-      const body = await req.json();
-      if (body.modelId) {
-        modelId = body.modelId;
-      }
+		try {
+			const body = await req.json();
+			if (body.modelId) {
+				modelId = body.modelId;
+			}
 
-      if (body.settings) {
-        // Merge settings
-        settings = {
-          ...DEFAULT_CONVERSATION_SETTINGS,
-          ...body.settings,
-        };
-      }
-    } catch {
-      // If no body or invalid JSON, use default model
-    }
+			if (body.settings) {
+				// Merge settings
+				settings = {
+					...DEFAULT_CONVERSATION_SETTINGS,
+					...body.settings,
+				};
+			}
+		} catch {
+			// If no body or invalid JSON, use default model
+		}
 
-    // Create a new conversation
-    const conversation = await prisma.conversation.create({
-      data: {
-        userId,
-        title: "New Chat",
-        modelId,
-        settings: settings as any, // Prisma Json type
-      },
-    });
+		// Create a new conversation
+		const conversation = await prisma.conversation.create({
+			data: {
+				userId,
+				title: "New Chat",
+				modelId,
+				settings: settings as any, // Prisma Json type
+			},
+		});
 
-    return NextResponse.json({
-      id: conversation.id,
-      createdAt: conversation.createdAt,
-    });
-  } catch (error) {
-    // Handle other errors
-    console.error(
-      "[Create Conversation API] Error creating conversation:",
-      error
-    );
+		return NextResponse.json({
+			id: conversation.id,
+			createdAt: conversation.createdAt,
+		});
+	} catch (error) {
+		// Handle other errors
+		console.error(
+			"[Create Conversation API] Error creating conversation:",
+			error
+		);
 
-    return NextResponse.json(
-      { error: "Failed to create conversation" },
-      { status: 500 }
-    );
-  }
+		return NextResponse.json(
+			{ error: "Failed to create conversation" },
+			{ status: 500 }
+		);
+	}
 });

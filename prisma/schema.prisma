@@ -17,16 +17,16 @@ datasource db {
 model Message {
   id             String   @id // UUID from AI SDK
   conversationId String   @map("conversation_id")
-  role           String   // 'user' | 'assistant' | 'system'
-  parts          Json     // Array of message parts (UIMessagePart[])
+  role           String // 'user' | 'assistant' | 'system'
+  parts          Json // Array of message parts (UIMessagePart[])
   createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  @@map("messages")
   @@index([conversationId])
   @@index([createdAt])
+  @@map("messages")
 }
 
 // ============================================================================
@@ -35,13 +35,13 @@ model Message {
 
 // Better Auth tables
 model User {
-  id            String    @id
-  email         String    @unique
-  emailVerified Boolean   @default(false) @map("email_verified")
+  id            String   @id
+  email         String   @unique
+  emailVerified Boolean  @default(false) @map("email_verified")
   name          String?
   image         String?
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   // Relations
   sessions      Session[]
@@ -49,6 +49,7 @@ model User {
   preferences   UserPreference?
   modelUsage    ModelUsage[]
   conversations Conversation[]
+  artifacts     Artifact[]
 
   @@map("users")
 }
@@ -69,19 +70,19 @@ model Session {
 }
 
 model Account {
-  id                String   @id
-  accountId         String   @map("account_id")
-  providerId        String   @map("provider_id")
-  userId            String   @map("user_id")
-  accessToken       String?  @map("access_token")
-  refreshToken      String?  @map("refresh_token")
-  idToken           String?  @map("id_token")
-  accessTokenExpiresAt DateTime? @map("access_token_expires_at")
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
   refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
-  scope             String?
-  password          String?
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -100,11 +101,11 @@ model Verification {
 }
 
 model UserPreference {
-  id           String  @id @default(uuid())
-  userId       String  @unique @map("user_id")
-  defaultModel String  @default("claude-3-5-sonnet-20241022") @map("default_model")
-  theme        String  @default("light") // 'light' | 'dark'
-  settings     Json?   // Additional user settings
+  id           String @id @default(uuid())
+  userId       String @unique @map("user_id")
+  defaultModel String @default("claude-3-5-sonnet-20241022") @map("default_model")
+  theme        String @default("light") // 'light' | 'dark'
+  settings     Json? // Additional user settings
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -118,44 +119,72 @@ model Conversation {
   title         String   @default("New Chat")
   modelId       String   @default("claude-3-7-sonnet-20250219") @map("model_id") // Selected AI model
   websearch     Boolean  @default(false) // Kept for backwards compatibility
-  settings      Json?    // Additional conversation settings (extendedThinking, etc.)
+  settings      Json? // Additional conversation settings (extendedThinking, etc.)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   lastMessageAt DateTime @default(now()) @map("last_message_at") // Last time a message was added
 
   // Relations
-  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user       User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   messages   Message[]
   modelUsage ModelUsage[]
+  artifacts  Artifact[]
 
-  @@map("conversations")
   @@index([userId])
   @@index([createdAt])
   @@index([lastMessageAt])
+  @@map("conversations")
 }
 
 model ModelUsage {
-  id               String   @id @default(uuid())
-  conversationId   String   @map("conversation_id")
-  userId           String?  @map("user_id") // Nullable for anonymous users
-  modelId          String   @map("model_id") // e.g., 'claude-3-5-sonnet-20241022'
-  modelProvider    String   @map("model_provider") // 'openai' | 'anthropic' | 'google'
-  inputTokens      Int      @default(0) @map("input_tokens")
-  outputTokens     Int      @default(0) @map("output_tokens")
-  totalTokens      Int      @default(0) @map("total_tokens")
-  estimatedCost    Float    @default(0) @map("estimated_cost") // In USD
-  responseTimeMs   Int?     @map("response_time_ms") // Response time in milliseconds
-  success          Boolean  @default(true)
-  errorMessage     String?  @map("error_message")
-  createdAt        DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  userId         String?  @map("user_id") // Nullable for anonymous users
+  modelId        String   @map("model_id") // e.g., 'claude-3-5-sonnet-20241022'
+  modelProvider  String   @map("model_provider") // 'openai' | 'anthropic' | 'google'
+  inputTokens    Int      @default(0) @map("input_tokens")
+  outputTokens   Int      @default(0) @map("output_tokens")
+  totalTokens    Int      @default(0) @map("total_tokens")
+  estimatedCost  Float    @default(0) @map("estimated_cost") // In USD
+  responseTimeMs Int?     @map("response_time_ms") // Response time in milliseconds
+  success        Boolean  @default(true)
+  errorMessage   String?  @map("error_message")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  @@map("model_usage")
   @@index([conversationId])
   @@index([userId])
   @@index([modelId])
   @@index([createdAt])
+  @@map("model_usage")
+}
+
+// ============================================================================
+// ARTIFACTS - Editable AI-generated content
+// ============================================================================
+
+model Artifact {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  messageId      String   @map("message_id") // Links to specific message
+  userId         String?  @map("user_id")
+  type           String // 'artifact_type_slides_outline', 'artifact_type_document', etc.
+  content        Json // The actual artifact data (SlidesOutlineArtifact, etc.)
+  version        String   @default("1") // Version identifier for tracking edits
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId])
+  @@index([messageId])
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("artifacts")
 }

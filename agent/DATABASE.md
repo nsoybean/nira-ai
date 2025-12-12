@@ -45,6 +45,7 @@ model MastraThread {
 ```
 
 **Columns:**
+
 - `id` (UUID): Primary key
 - `title` (String, optional): Thread title/summary
 - `metadata` (JSON, optional): Flexible storage for thread context
@@ -52,9 +53,11 @@ model MastraThread {
 - `updatedAt` (DateTime): Last update timestamp
 
 **Relations:**
+
 - One-to-Many with `mastra_messages`
 
 **Indexes:**
+
 - Primary: `id`
 - Auto: `createdAt` for sorting
 
@@ -83,6 +86,7 @@ model MastraMessage {
 ```
 
 **Columns:**
+
 - `id` (UUID): Primary key
 - `threadId` (UUID): Foreign key to thread
 - `resourceId` (UUID, optional): Link to resources
@@ -92,23 +96,26 @@ model MastraMessage {
 - `createdAt` (DateTime): Message timestamp
 
 **V2 Message Format (JSON):**
+
 ```json
 {
-  "id": "msg_xxx",
-  "role": "user",
-  "parts": [
-    {
-      "type": "text",
-      "text": "Hello, Nira!"
-    }
-  ]
+	"id": "msg_xxx",
+	"role": "user",
+	"parts": [
+		{
+			"type": "text",
+			"text": "Hello, Nira!"
+		}
+	]
 }
 ```
 
 **Relations:**
+
 - Many-to-One with `mastra_threads` (CASCADE delete)
 
 **Indexes:**
+
 - Primary: `id`
 - Foreign: `threadId`
 - Query: `createdAt` (for message history)
@@ -135,6 +142,7 @@ model MastraResource {
 ```
 
 **Columns:**
+
 - `id` (UUID): Primary key
 - `name` (String): Resource name
 - `type` (String): Resource type
@@ -146,6 +154,7 @@ model MastraResource {
 **Relations:** None (standalone resources)
 
 **Indexes:**
+
 - Primary: `id`
 - Query: `type` (for filtering by resource type)
 
@@ -178,6 +187,7 @@ model User {
 ```
 
 **Columns:**
+
 - `id` (UUID): Primary key
 - `email` (String): Unique email address
 - `name` (String, optional): Display name
@@ -186,11 +196,13 @@ model User {
 - `updatedAt` (DateTime): Last profile update
 
 **Relations:**
+
 - One-to-Many with `conversations`
 - One-to-One with `user_preferences`
 - One-to-Many with `model_usage`
 
 **Indexes:**
+
 - Primary: `id`
 - Unique: `email`
 
@@ -219,6 +231,7 @@ model UserPreference {
 ```
 
 **Columns:**
+
 - `id` (UUID): Primary key
 - `userId` (UUID): Foreign key to user (unique)
 - `defaultModel` (String, optional): Preferred AI model
@@ -230,9 +243,11 @@ model UserPreference {
 - `updatedAt` (DateTime): Last update
 
 **Relations:**
+
 - One-to-One with `users` (CASCADE delete)
 
 **Indexes:**
+
 - Primary: `id`
 - Unique: `userId`
 
@@ -265,6 +280,7 @@ model Conversation {
 ```
 
 **Columns:**
+
 - `id` (UUID): Primary key
 - `userId` (UUID, optional): Owner of conversation
 - `threadId` (UUID, optional): Link to Mastra thread
@@ -276,10 +292,12 @@ model Conversation {
 - `updatedAt` (DateTime): Last activity
 
 **Relations:**
+
 - Many-to-One with `users` (SETNULL on delete)
 - One-to-Many with `model_usage`
 
 **Indexes:**
+
 - Primary: `id`
 - Unique: `threadId`
 - Query: `userId`, `createdAt`, `modelProvider`
@@ -318,6 +336,7 @@ model ModelUsage {
 ```
 
 **Columns:**
+
 - `id` (UUID): Primary key
 - `conversationId` (UUID): Foreign key to conversation
 - `userId` (UUID, optional): User who made request
@@ -333,10 +352,12 @@ model ModelUsage {
 - `createdAt` (DateTime): Usage timestamp
 
 **Relations:**
+
 - Many-to-One with `conversations` (CASCADE delete)
 - Many-to-One with `users` (SETNULL on delete)
 
 **Indexes:**
+
 - Primary: `id`
 - Query: `conversationId`, `userId`, `createdAt`, `modelProvider`
 
@@ -366,16 +387,16 @@ mastra_resources (standalone)
 
 ```typescript
 const conversations = await prisma.conversation.findMany({
-  where: { userId: 'user-id' },
-  orderBy: { updatedAt: 'desc' },
-  include: {
-    modelUsage: {
-      select: {
-        totalTokens: true,
-        estimatedCost: true,
-      },
-    },
-  },
+	where: { userId: "user-id" },
+	orderBy: { updatedAt: "desc" },
+	include: {
+		modelUsage: {
+			select: {
+				totalTokens: true,
+				estimatedCost: true,
+			},
+		},
+	},
 });
 ```
 
@@ -383,19 +404,19 @@ const conversations = await prisma.conversation.findMany({
 
 ```typescript
 const conversation = await prisma.conversation.findUnique({
-  where: { id: 'conv-id' },
-  include: {
-    user: true,
-    modelUsage: true,
-  },
+	where: { id: "conv-id" },
+	include: {
+		user: true,
+		modelUsage: true,
+	},
 });
 
 // Get linked Mastra messages if threadId exists
 if (conversation.threadId) {
-  const messages = await prisma.mastraMessage.findMany({
-    where: { threadId: conversation.threadId },
-    orderBy: { createdAt: 'asc' },
-  });
+	const messages = await prisma.mastraMessage.findMany({
+		where: { threadId: conversation.threadId },
+		orderBy: { createdAt: "asc" },
+	});
 }
 ```
 
@@ -403,18 +424,18 @@ if (conversation.threadId) {
 
 ```typescript
 await prisma.modelUsage.create({
-  data: {
-    conversationId: 'conv-id',
-    userId: 'user-id',
-    modelId: 'claude-3-5-sonnet-20241022',
-    modelProvider: 'anthropic',
-    inputTokens: 1500,
-    outputTokens: 800,
-    totalTokens: 2300,
-    estimatedCost: 0.0115, // $0.0115 USD
-    responseTimeMs: 2340,
-    success: true,
-  },
+	data: {
+		conversationId: "conv-id",
+		userId: "user-id",
+		modelId: "claude-3-5-sonnet-20241022",
+		modelProvider: "anthropic",
+		inputTokens: 1500,
+		outputTokens: 800,
+		totalTokens: 2300,
+		estimatedCost: 0.0115, // $0.0115 USD
+		responseTimeMs: 2340,
+		success: true,
+	},
 });
 ```
 
@@ -422,12 +443,12 @@ await prisma.modelUsage.create({
 
 ```typescript
 const usage = await prisma.modelUsage.aggregate({
-  where: { userId: 'user-id' },
-  _sum: {
-    totalTokens: true,
-    estimatedCost: true,
-  },
-  _count: true,
+	where: { userId: "user-id" },
+	_sum: {
+		totalTokens: true,
+		estimatedCost: true,
+	},
+	_count: true,
 });
 ```
 
@@ -453,12 +474,14 @@ npx prisma generate
 ## Future Enhancements
 
 ### Phase 1 (Planned)
+
 - [ ] Add `pgvector` extension for semantic search
 - [ ] Add embeddings column to `mastra_messages`
 - [ ] Implement full-text search on messages
 - [ ] Add conversation sharing tables
 
 ### Phase 2 (Future)
+
 - [ ] Add rate limiting tables
 - [ ] Implement audit logs
 - [ ] Add webhook event tables
@@ -467,10 +490,12 @@ npx prisma generate
 ## Pricing Reference (for cost tracking)
 
 ### Claude 3.5 Sonnet (20241022)
+
 - Input: $0.003 per 1K tokens
 - Output: $0.015 per 1K tokens
 
 ### Calculation Example
+
 ```typescript
 const inputCost = (inputTokens / 1000) * 0.003;
 const outputCost = (outputTokens / 1000) * 0.015;
@@ -482,6 +507,7 @@ const totalCost = inputCost + outputCost;
 **Current:** All data persisted indefinitely
 
 **Future Policies:**
+
 - Anonymous users: 30 days
 - Authenticated users: Configurable (default: 1 year)
 - Deleted conversations: Soft delete with 30-day recovery
@@ -492,6 +518,7 @@ const totalCost = inputCost + outputCost;
 **Development:** Supabase CLI backups
 
 **Production Recommendations:**
+
 - Daily automated backups
 - Point-in-time recovery (PITR)
 - Cross-region replication
@@ -516,6 +543,7 @@ const totalCost = inputCost + outputCost;
 ## Monitoring
 
 **Recommended Tools:**
+
 - Prisma Studio (development)
 - Supabase Dashboard (production)
 - Custom analytics dashboard (future)

@@ -12,9 +12,9 @@
  * storage adapter that works with our Prisma schema.
  */
 
-import { Mastra } from '@mastra/core';
-import { Agent } from '@mastra/core/agent';
-import { anthropic } from '@ai-sdk/anthropic';
+import { Mastra } from "@mastra/core";
+import { Agent } from "@mastra/core/agent";
+import { anthropic } from "@ai-sdk/anthropic";
 
 /**
  * Main Mastra instance
@@ -25,18 +25,18 @@ import { anthropic } from '@ai-sdk/anthropic';
  * - Multi-agent orchestration
  */
 export const mastra = new Mastra({
-  // Agents configuration
-  agents: {
-    /**
-     * Lume Assistant - Primary chat agent
-     *
-     * This agent powers the main chat interface with Claude 3.5 Sonnet.
-     * It provides intelligent, context-aware responses with access to
-     * conversation history through Mastra's memory system.
-     */
-    lumeAssistant: new Agent({
-      name: 'lume-assistant',
-      instructions: `You are Lume, an intelligent AI assistant that illuminates complex topics with clarity and insight.
+	// Agents configuration
+	agents: {
+		/**
+		 * Lume Assistant - Primary chat agent
+		 *
+		 * This agent powers the main chat interface with Claude 3.5 Sonnet.
+		 * It provides intelligent, context-aware responses with access to
+		 * conversation history through Mastra's memory system.
+		 */
+		lumeAssistant: new Agent({
+			name: "lume-assistant",
+			instructions: `You are Lume, an intelligent AI assistant that illuminates complex topics with clarity and insight.
 
 Your role:
 - Provide clear, accurate, and helpful responses
@@ -50,22 +50,22 @@ Tone:
 - Patient and encouraging
 - Honest about limitations
 - Thoughtful and insightful`,
-      model: anthropic('claude-3-5-sonnet-20241022'),
-    }),
-  },
+			model: anthropic("claude-3-5-sonnet-20241022"),
+		}),
+	},
 
-  // Logger configuration
-  logger: false, // Disable Mastra's internal logging (we'll use Next.js logs)
+	// Logger configuration
+	logger: false, // Disable Mastra's internal logging (we'll use Next.js logs)
 
-  // Storage will be added in Phase 2
-  // storage: new PrismaStorage({
-  //   prismaClient: prisma,
-  //   tables: {
-  //     threads: 'mastra_threads',
-  //     messages: 'mastra_messages',
-  //     resources: 'mastra_resources',
-  //   },
-  // }),
+	// Storage will be added in Phase 2
+	// storage: new PrismaStorage({
+	//   prismaClient: prisma,
+	//   tables: {
+	//     threads: 'mastra_threads',
+	//     messages: 'mastra_messages',
+	//     resources: 'mastra_resources',
+	//   },
+	// }),
 });
 
 /**
@@ -84,7 +84,7 @@ Tone:
  * ```
  */
 export function getLumeAssistant() {
-  return mastra.getAgent('lumeAssistant');
+	return mastra.getAgent("lumeAssistant");
 }
 
 /**
@@ -94,7 +94,7 @@ export function getLumeAssistant() {
  * These IDs are used to link conversations across messages.
  */
 export function generateThreadId() {
-  return mastra.generateId();
+	return mastra.generateId();
 }
 
 /**
@@ -103,5 +103,5 @@ export function generateThreadId() {
  * Used for tracking agent resources and working memory.
  */
 export function generateResourceId() {
-  return mastra.generateId();
+	return mastra.generateId();
 }

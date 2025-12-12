@@ -1,21 +1,26 @@
 import { AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import {
-  streamText,
-  convertToModelMessages,
-  UIMessage,
-  createIdGenerator,
-  stepCountIs,
-  generateText,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
+	streamText,
+	convertToModelMessages,
+	createIdGenerator,
+	stepCountIs,
+	generateText,
+	createUIMessageStream,
+	createUIMessageStreamResponse,
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { getModelById, calculateCost } from "@/lib/models";
-import { tavilyExtractTool, tavilySearchTool } from "@/lib/tools";
-import { mergeConversationSettings } from "@/lib/conversation-settings";
-import { MyUIMessage } from "@/lib/types";
+import {
+	tavilyExtractTool,
+	tavilySearchTool,
+	createSlidesOutlineToolFactory,
+} from "@/lib/llmTools";
+import { mergeConversationSettings } from "@/lib/conversationSettings";
+import { MyUIMessage } from "@/lib/UIMessage";
 import { withAuth } from "@/lib/auth-server";
+import { Logger } from "@/lib/logger";
+import { hydrateArtifactsInMessages } from "@/lib/artifacts";
 
 // Allow streaming responses up to X seconds
 export const maxDuration = 60;
@@ -35,273 +40,315 @@ export const maxDuration = 60;
  * - Server-Sent Events stream with chat completion
  */
 export const POST = withAuth(async (req, { userId }) => {
-  try {
-    const {
-      conversationId,
-      message,
-      modelId,
-    }: { message: UIMessage; conversationId: string; modelId?: string } =
-      await req.json();
+	try {
+		const {
+			conversationId,
+			message,
+			modelId,
+		}: { message: MyUIMessage; conversationId: string; modelId?: string } =
+			await req.json();
 
-    // Validate messages
-    if (!message || !message?.parts.length) {
-      return new Response("Missing messages", { status: 400 });
-    }
+		// Validate messages
+		if (!message || !message?.parts.length) {
+			return new Response("Missing messages", { status: 400 });
+		}
 
-    // Validate conversation ID
-    if (!conversationId) {
-      return new Response("Conversation ID is required", { status: 400 });
-    }
+		// Validate conversation ID
+		if (!conversationId) {
+			return new Response("Conversation ID is required", { status: 400 });
+		}
 
-    // Verify conversation exists
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId, userId },
-    });
+		// Verify conversation exists
+		const conversation = await prisma.conversation.findUnique({
+			where: { id: conversationId, userId },
+		});
 
-    if (!conversation) {
-      return new Response("Conversation not found", { status: 404 });
-    }
+		if (!conversation) {
+			return new Response("Conversation not found", { status: 404 });
+		}
 
-    // Get conversation settings with defaults
-    const settings = mergeConversationSettings(conversation?.settings as any);
+		const logger = new Logger({ prefix: "Chat API" }).addMetadata(
+			"conversationId",
+			conversation.id
+		);
 
-    // Determine which model to use: provided modelId, conversation's model, or default
-    const selectedModelId =
-      modelId || conversation.modelId || "claude-3-7-sonnet-20250219";
-    const modelConfig = getModelById(selectedModelId);
+		// Get conversation settings with defaults
+		const settings = mergeConversationSettings(conversation?.settings as any);
 
-    if (!modelConfig) {
-      return new Response(`Invalid model ID: ${selectedModelId}`, {
-        status: 400,
-      });
-    }
+		// Determine which model to use: provided modelId, conversation's model, or default
+		const selectedModelId =
+			modelId || conversation.modelId || "claude-3-7-sonnet-20250219";
+		const modelConfig = getModelById(selectedModelId);
 
-    // Fetch all existing messages for conversation
-    const existingMessages = await prisma.message.findMany({
-      where: { conversationId },
-      orderBy: { createdAt: "asc" },
-    });
+		if (!modelConfig) {
+			return new Response(`Invalid model ID: ${selectedModelId}`, {
+				status: 400,
+			});
+		}
 
-    // if no previous message, generate a short title for the new conversation
-    let generatedTitle: string | null = null;
-    if (existingMessages.length === 0) {
-      // Extract text from the user message
-      const userMessageText =
-        message.parts
-          ?.filter((part: any) => part.type === "text")
-          .map((part: any) => part.text)
-          .join(" ") || "";
+		logger.log("using model", {
+			model: selectedModelId,
+			provider: modelConfig.provider,
+		});
 
-      if (userMessageText.trim()) {
-        try {
-          // Generate title using a fast model
-          const { text } = await generateText({
-            model: `google/gemini-2.5-flash-lite`,
-            messages: [
-              {
-                role: "user",
-                content: `Generate a concise 3-5 word title for this message. Return only the title, no quotes or punctuation at the end: "${userMessageText.slice(
-                  0,
-                  200
-                )}"`,
-              },
-            ],
-            maxOutputTokens: 20,
-          });
+		// Fetch all existing messages for conversation
+		const existingMessages = await prisma.message.findMany({
+			where: { conversationId },
+			orderBy: { createdAt: "asc" },
+		});
 
-          generatedTitle = text.trim();
+		// if no previous message, generate a short title for the new conversation
+		let generatedTitle: string | null = null;
+		let isFirstMessage = false;
+		if (existingMessages.length === 0) {
+			isFirstMessage = true;
+			// Extract text from the user message
+			const userMessageText =
+				message.parts
+					?.filter((part: any) => part.type === "text")
+					.map((part: any) => part.text)
+					.join(" ") || "";
 
-          // Update conversation title in database
-          if (generatedTitle) {
-            await prisma.conversation.update({
-              where: { id: conversationId, userId },
-              data: { title: generatedTitle },
-            });
+			if (userMessageText.trim()) {
+				try {
+					// Generate title using a fast model
+					const { text } = await generateText({
+						model: `google/gemini-2.5-flash-lite`,
+						messages: [
+							{
+								role: "user",
+								content: `Generate a concise 3-5 word title for this message. Return only the title, no quotes or punctuation at the end: "${userMessageText.slice(
+									0,
+									200
+								)}"`,
+							},
+						],
+						maxOutputTokens: 20,
+					});
 
-            if (process.env.NODE_ENV === "development") {
-              console.log("[Chat API] Generated title:", generatedTitle);
-            }
-          }
-        } catch (error) {
-          console.error("[Chat API] Error generating title:", error);
-          // Continue with the chat even if title generation fails
-        }
-      }
-    }
+					generatedTitle = text.trim();
 
-    // Combine existing messages with the new message
-    const allMessages: UIMessage[] = [
-      ...existingMessages.map((msg) => ({
-        id: msg.id,
-        role: msg.role as any,
-        parts: msg.parts as any, // Cast to satisfy UIMessage format
-      })),
-      message,
-    ];
+					// Update conversation title in database
+					if (generatedTitle) {
+						await prisma.conversation.update({
+							where: { id: conversationId, userId },
+							data: { title: generatedTitle },
+						});
 
-    // Save user message immediately to ensure correct ordering
-    await prisma.message.create({
-      data: {
-        id: message.id,
-        conversationId,
-        role: message.role,
-        parts: message.parts as any,
-      },
-    });
+						if (process.env.NODE_ENV === "development") {
+							logger.log("generated title", { title: generatedTitle });
+						}
+					}
+				} catch (error) {
+					// Continue with the chat even if title generation fails
+					logger.log("error generating title", { error });
+				}
+			}
+		}
 
-    // Convert UIMessage[] to ModelMessage[] format for the AI model
-    // useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
-    const modelMessages = convertToModelMessages(allMessages);
+		// Combine existing messages with the new message
+		const allMessages: MyUIMessage[] = [
+			...existingMessages.map((msg) => ({
+				id: msg.id,
+				role: msg.role as any,
+				parts: msg.parts as any, // Cast to satisfy UIMessage format
+			})),
+			message,
+		];
 
-    // Track request start time for metrics
-    const startTime = Date.now();
+		// Save user message immediately to ensure correct ordering
+		await prisma.message.create({
+			data: {
+				id: message.id,
+				conversationId,
+				role: message.role,
+				parts: message.parts as any,
+			},
+		});
 
-    const stream = createUIMessageStream<MyUIMessage>({
-      execute: ({ writer }) => {
-        writer.write({
-          type: "data-title",
-          id: conversationId,
-          data: { value: generatedTitle || "New Chat" },
-          transient: true, // This part won't be added to message history
-        });
+		// Hydrate artifacts with latest versions from database
+		// This replaces outdated artifact content in message history with current versions
+		// so the LLM always sees the most recent state when user has edited artifacts
+		const hydratedMessages = await hydrateArtifactsInMessages(
+			allMessages,
+			prisma
+		);
+		logger.debug("Hydrated messages with artifacts", hydratedMessages);
 
-        // Stream the chat completion
-        const result = streamText({
-          model: `${modelConfig.provider}/${selectedModelId}`,
-          stopWhen: stepCountIs(5),
-          providerOptions: {
-            // anthropic
-            anthropic: {
-              ...(settings.extendedThinking && {
-                thinking: { type: "enabled", budgetTokens: 2000 },
-              }),
-            } satisfies AnthropicProviderOptions,
-            // openai
-            openai: {
-              ...(settings.extendedThinking && {
-                reasoningSummary: "auto",
-              }),
-            } satisfies OpenAIResponsesProviderOptions,
-          },
-          tools: {
-            // web search
-            ...(settings.websearch && {
-              webSearch: tavilySearchTool,
-              webExtract: tavilyExtractTool,
-            }),
+		// Convert UIMessage[] to ModelMessage[] format for the AI model
+		// useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
+		const modelMessages = convertToModelMessages(allMessages);
 
-            // ...(modelConfig.provider === 'openai' && { image_generation: openai.tools.imageGeneration({ outputFormat: 'png' }), })
-          },
-          messages: modelMessages,
-          system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.`,
-          temperature: 0.7,
-          maxOutputTokens: 4000,
-          onFinish: async (event) => {
-            // Calculate token costs using model-specific pricing
-            const inputTokens = event.usage.inputTokens || 0;
-            const outputTokens = event.usage.outputTokens || 0;
-            const estimatedCost = calculateCost(
-              selectedModelId,
-              inputTokens,
-              outputTokens
-            );
-            const responseTimeMs = Date.now() - startTime;
+		// Track request start time for metrics
+		const startTime = Date.now();
 
-            try {
-              // Track model usage for analytics
-              await prisma.modelUsage.create({
-                data: {
-                  userId,
-                  conversationId,
-                  modelId: selectedModelId,
-                  modelProvider: modelConfig.provider,
-                  inputTokens,
-                  outputTokens,
-                  totalTokens:
-                    event.usage.totalTokens || inputTokens + outputTokens,
-                  estimatedCost,
-                  responseTimeMs,
-                  success: true,
-                },
-              });
+		const stream = createUIMessageStream<MyUIMessage>({
+			execute: ({ writer }) => {
+				if (isFirstMessage) {
+					writer.write({
+						type: "data-title",
+						id: conversationId,
+						data: { value: generatedTitle || "New Chat" },
+						transient: true, // This part won't be added to message history
+					});
+				}
 
-              // Log metrics (development only)
-              if (process.env.NODE_ENV === "development") {
-                console.log("[Chat API] Completion metrics:", {
-                  conversationId,
-                  model: selectedModelId,
-                  provider: modelConfig.provider,
-                  inputTokens,
-                  outputTokens,
-                  totalTokens: event.usage.totalTokens,
-                  cost: `$${estimatedCost.toFixed(4)}`,
-                  responseTime: `${responseTimeMs}ms`,
-                });
-              }
-            } catch (error) {
-              console.error("[Chat API] Error tracking usage:", error);
-            }
-          },
-        });
+				// Generate a temporary message ID for the assistant response
+				// This will be used to link artifacts to the message
+				const assistantMessageId = createIdGenerator({
+					prefix: "msg",
+					size: 16,
+				})();
 
-        writer.merge(
-          result.toUIMessageStream({
-            sendReasoning: true,
-            sendSources: true,
-            generateMessageId: createIdGenerator({
-              prefix: "msg",
-              size: 16,
-            }),
-            async onFinish({ messages }) {
-              try {
-                // Save only assistant messages (user message already saved above)
-                await prisma.message.createMany({
-                  data: messages.map((msg) => ({
-                    id: msg.id,
-                    conversationId,
-                    role: msg.role,
-                    parts: msg.parts as any,
-                  })),
-                  skipDuplicates: true,
-                });
+				// Create slides outline tool with context
+				const slidesOutlineTool = createSlidesOutlineToolFactory({
+					conversationId,
+					messageId: assistantMessageId,
+					userId,
+				});
 
-                // Update conversation's updatedAt and lastMessageAt timestamps
-                await prisma.conversation.update({
-                  where: { id: conversationId, userId },
-                  data: {
-                    updatedAt: new Date(),
-                    lastMessageAt: new Date(),
-                  },
-                });
+				// Stream the chat completion
+				const result = streamText({
+					model: `${modelConfig.provider}/${selectedModelId}`,
+					stopWhen: stepCountIs(5),
+					providerOptions: {
+						// anthropic
+						anthropic: {
+							...(settings.extendedThinking && {
+								thinking: { type: "enabled", budgetTokens: 2000 },
+							}),
+						} satisfies AnthropicProviderOptions,
+						// openai
+						openai: {
+							...(settings.extendedThinking && {
+								reasoningSummary: "auto",
+							}),
+						} satisfies OpenAIResponsesProviderOptions,
+					},
+					tools: {
+						// web search
+						...(settings.websearch && {
+							webSearch: tavilySearchTool,
+							webExtract: tavilyExtractTool,
+						}),
 
-                if (process.env.NODE_ENV === "development") {
-                  console.log("[Chat API] Messages saved:", {
-                    conversationId,
-                    messagesSaved: allMessages.length,
-                  });
-                }
-              } catch (error) {
-                console.error("[Chat API] Error saving messages:", error);
-                // Don't throw - we still want to return the response to the user
-              }
-            },
-          })
-        );
-      },
-    });
+						// slides outline tool
+						createSlidesOutline: slidesOutlineTool,
 
-    return createUIMessageStreamResponse({ stream });
-  } catch (error) {
-    console.error("[Chat API] Error:", error);
+						// ...(modelConfig.provider === 'openai' && { image_generation: openai.tools.imageGeneration({ outputFormat: 'png' }), })
+					},
+					messages: modelMessages,
+					system: `You are Nira, an intelligent AI assistant that provides thoughtful, accurate, and helpful responses.
 
-    // Return appropriate error response
-    if (error instanceof Error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+When users request presentations or slide decks, use the 'createSlidesOutline' tool to generate a structured outline with chapters and slides. Keep content concise and organized.`,
+					temperature: 0.7,
+					maxOutputTokens: 4000,
+					onFinish: async (event) => {
+						// Calculate token costs using model-specific pricing
+						const inputTokens = event.usage.inputTokens || 0;
+						const outputTokens = event.usage.outputTokens || 0;
+						const estimatedCost = calculateCost(
+							selectedModelId,
+							inputTokens,
+							outputTokens
+						);
+						const responseTimeMs = Date.now() - startTime;
 
-    return new Response("Internal server error", { status: 500 });
-  }
+						try {
+							// Track model usage for analytics
+							await prisma.modelUsage.create({
+								data: {
+									userId,
+									conversationId,
+									modelId: selectedModelId,
+									modelProvider: modelConfig.provider,
+									inputTokens,
+									outputTokens,
+									totalTokens:
+										event.usage.totalTokens || inputTokens + outputTokens,
+									estimatedCost,
+									responseTimeMs,
+									success: true,
+								},
+							});
+
+							// Log metrics (development only)
+							if (process.env.NODE_ENV === "development") {
+								logger.log("Completion metrics:", {
+									conversationId,
+									model: selectedModelId,
+									provider: modelConfig.provider,
+									inputTokens,
+									outputTokens,
+									totalTokens: event.usage.totalTokens,
+									cost: `$${estimatedCost.toFixed(4)}`,
+									responseTime: `${responseTimeMs}ms`,
+								});
+							}
+						} catch (error) {
+							logger.error("error tracking usage:", error);
+						}
+					},
+				});
+
+				writer.merge(
+					result.toUIMessageStream({
+						sendReasoning: true,
+						sendSources: true,
+						generateMessageId: createIdGenerator({
+							prefix: "msg",
+							size: 16,
+						}),
+						async onFinish({ messages }) {
+							try {
+								// Save only assistant messages (user message already saved above)
+								await prisma.message.createMany({
+									data: messages.map((msg) => ({
+										id: msg.id,
+										conversationId,
+										role: msg.role,
+										parts: msg.parts as any,
+									})),
+									skipDuplicates: true,
+								});
+
+								// Update conversation's updatedAt and lastMessageAt timestamps
+								await prisma.conversation.update({
+									where: { id: conversationId, userId },
+									data: {
+										updatedAt: new Date(),
+										lastMessageAt: new Date(),
+									},
+								});
+
+								if (process.env.NODE_ENV === "development") {
+									logger.log("messages saved:", {
+										conversationId,
+										messagesSaved: allMessages.length,
+									});
+								}
+							} catch (error) {
+								// Don't throw - we still want to return the response to the user
+								logger.error("error saving messages:", error);
+							}
+						},
+					})
+				);
+			},
+		});
+
+		return createUIMessageStreamResponse({ stream });
+	} catch (error) {
+		console.error("[Chat API] Error:", error);
+
+		// Return appropriate error response
+		if (error instanceof Error) {
+			return new Response(JSON.stringify({ error: error.message }), {
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+			});
+		}
+
+		return new Response("Internal server error", { status: 500 });
+	}
 });
