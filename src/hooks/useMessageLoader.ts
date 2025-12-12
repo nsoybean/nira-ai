@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MyUIMessage } from "@/lib/types";
+import { MyUIMessage } from "@/lib/UIMessage";
 
 // load messages for a conversation
 export function useMessageLoader(conversationId: string, isNewChat: boolean) {

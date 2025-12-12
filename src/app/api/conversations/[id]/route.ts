@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ConversationSettings } from "@/lib/conversation-settings";
+import { ConversationSettings } from "@/lib/conversationSettings";
 import { withAuth } from "@/lib/auth-server";
 
 /**

@@ -1,17 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SlidesOutlineArtifact as SlidesOutlineArtifactType, Slide, Chapter } from "@/lib/types/slides-outline";
 import {
 	Artifact,
 	ArtifactHeader,
-	ArtifactTitle,
 	ArtifactDescription,
 	ArtifactContent,
 	ArtifactActions,
 	ArtifactAction,
 } from "@/components/ai-elements/artifact";
-import { PresentationIcon, GripVerticalIcon, PlusIcon, TrashIcon, CopyIcon, SaveIcon, NotepadText } from "lucide-react";
+import {
+	GripVerticalIcon,
+	PlusIcon,
+	TrashIcon,
+	CopyIcon,
+	SaveIcon,
+	NotepadText,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,7 +30,6 @@ import {
 	useSensors,
 	DragEndEvent,
 	DragStartEvent,
-	DragOverlay,
 } from "@dnd-kit/core";
 import {
 	arrayMove,
@@ -35,10 +39,15 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import {
+	Chapter,
+	Slide,
+	SlidesOutlineArtifactOutput,
+} from "@/lib/llmTools/slidesOutline";
 
 interface SlidesOutlineArtifactProps {
 	artifactId: string;
-	initialContent: SlidesOutlineArtifactType;
+	initialContent: SlidesOutlineArtifactOutput["content"];
 	version: string;
 }
 
@@ -53,7 +62,15 @@ interface SortableSlideProps {
 	isEdited?: boolean;
 }
 
-function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDelete, isEdited = false }: SortableSlideProps) {
+function SortableSlide({
+	slide,
+	chapterIndex,
+	slideIndex,
+	onUpdate,
+	onAdd,
+	onDelete,
+	isEdited = false,
+}: SortableSlideProps) {
 	const {
 		attributes,
 		listeners,
@@ -68,8 +85,8 @@ function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDel
 		transition,
 		...(isDragging && {
 			// Prevent text distortion during drag
-			WebkitFontSmoothing: 'subpixel-antialiased' as const,
-			textRendering: 'optimizeLegibility' as const,
+			WebkitFontSmoothing: "subpixel-antialiased" as const,
+			textRendering: "optimizeLegibility" as const,
 		}),
 	};
 
@@ -77,10 +94,7 @@ function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDel
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={cn(
-				"group relative",
-				isDragging && "opacity-40"
-			)}
+			className={cn("group relative", isDragging && "opacity-40")}
 		>
 			<div className="flex items-start gap-2 py-2 px-2 hover:bg-muted/90 rounded-md transition-colors">
 				{/* Edited Indicator Dot */}
@@ -99,7 +113,9 @@ function SortableSlide({ slide, chapterIndex, slideIndex, onUpdate, onAdd, onDel
 
 				{/* Slide Number - Subtle square badge */}
 				<div className="shrink-0 w-5 h-5 rounded bg-accent flex items-center justify-center mt-0.5">
-					<span className="text-[10px] font-medium text-muted-foreground">{slide.slideNumber}</span>
+					<span className="text-[10px] font-medium text-muted-foreground">
+						{slide.slideNumber}
+					</span>
 				</div>
 
 				{/* Slide Content */}
@@ -183,19 +199,17 @@ function SortableChapter({
 		opacity: isDragging ? 0.4 : 1,
 		...(isDragging && {
 			// Prevent text distortion during drag
-			WebkitFontSmoothing: 'subpixel-antialiased' as const,
-			textRendering: 'optimizeLegibility' as const,
+			WebkitFontSmoothing: "subpixel-antialiased" as const,
+			textRendering: "optimizeLegibility" as const,
 		}),
 	};
 
-	const slideIds = chapter.slides.map((_, idx) => `slide-${chapterIndex}-${idx}`);
+	const slideIds = chapter.slides.map(
+		(_, idx) => `slide-${chapterIndex}-${idx}`
+	);
 
 	return (
-		<div
-			ref={setNodeRef}
-			style={style}
-			className="mb-3"
-		>
+		<div ref={setNodeRef} style={style} className="mb-3">
 			{/* Chapter Header - More compact */}
 			<div className="flex items-center gap-2 py-1.5 px-2 mb-1">
 				<div
@@ -215,7 +229,10 @@ function SortableChapter({
 
 			{/* Chapter Slides - Tighter spacing */}
 			<div className="pl-1">
-				<SortableContext items={slideIds} strategy={verticalListSortingStrategy}>
+				<SortableContext
+					items={slideIds}
+					strategy={verticalListSortingStrategy}
+				>
 					{chapter.slides.map((slide, slideIndex) => {
 						const slideKey = `slide-${chapterIndex}-${slideIndex}`;
 						return (
@@ -297,7 +314,11 @@ export function SlidesOutlineArtifact({
 		}
 	};
 
-	const updateContent = (updater: (prev: SlidesOutlineArtifactType) => SlidesOutlineArtifactType) => {
+	const updateContent = (
+		updater: (
+			prev: SlidesOutlineArtifactOutput["content"]
+		) => SlidesOutlineArtifactOutput["content"]
+	) => {
 		setContent(updater);
 		setHasChanges(true);
 	};
@@ -321,21 +342,25 @@ export function SlidesOutlineArtifact({
 	};
 
 	// Update slide
-	const updateSlide = (chapterIndex: number, slideIndex: number, updates: Partial<Slide>) => {
+	const updateSlide = (
+		chapterIndex: number,
+		slideIndex: number,
+		updates: Partial<Slide>
+	) => {
 		// Mark this slide as edited
 		const slideKey = `slide-${chapterIndex}-${slideIndex}`;
-		setEditedSlides(prev => new Set(prev).add(slideKey));
+		setEditedSlides((prev) => new Set(prev).add(slideKey));
 
 		updateContent((prev) => ({
 			...prev,
 			chapters: prev.chapters.map((chapter, cIdx) =>
 				cIdx === chapterIndex
 					? {
-							...chapter,
-							slides: chapter.slides.map((slide, sIdx) =>
-								sIdx === slideIndex ? { ...slide, ...updates } : slide
-							),
-					  }
+						...chapter,
+						slides: chapter.slides.map((slide, sIdx) =>
+							sIdx === slideIndex ? { ...slide, ...updates } : slide
+						),
+					}
 					: chapter
 			),
 		}));
@@ -355,7 +380,8 @@ export function SlidesOutlineArtifact({
 			const chapters = prev.chapters.map((chapter, cIdx) => {
 				if (cIdx === chapterIndex) {
 					const slides = [...chapter.slides];
-					const insertIndex = afterIndex !== undefined ? afterIndex + 1 : slides.length;
+					const insertIndex =
+						afterIndex !== undefined ? afterIndex + 1 : slides.length;
 					slides.splice(insertIndex, 0, newSlide);
 					return { ...chapter, slides };
 				}
@@ -381,15 +407,17 @@ export function SlidesOutlineArtifact({
 	// Delete slide
 	const deleteSlide = (chapterIndex: number, slideIndex: number) => {
 		updateContent((prev) => {
-			const chapters = prev.chapters.map((chapter, cIdx) => {
-				if (cIdx === chapterIndex) {
-					return {
-						...chapter,
-						slides: chapter.slides.filter((_, sIdx) => sIdx !== slideIndex),
-					};
-				}
-				return chapter;
-			}).filter(chapter => chapter.slides.length > 0); // Remove empty chapters
+			const chapters = prev.chapters
+				.map((chapter, cIdx) => {
+					if (cIdx === chapterIndex) {
+						return {
+							...chapter,
+							slides: chapter.slides.filter((_, sIdx) => sIdx !== slideIndex),
+						};
+					}
+					return chapter;
+				})
+				.filter((chapter) => chapter.slides.length > 0); // Remove empty chapters
 
 			// Renumber all slides
 			let counter = 1;
@@ -410,17 +438,17 @@ export function SlidesOutlineArtifact({
 	// Handle drag start
 	const handleDragStart = (event: DragStartEvent) => {
 		setActiveId(event.active.id as string);
-		console.log('[DnD] Drag started:', event.active.id);
+		console.log("[DnD] Drag started:", event.active.id);
 	};
 
 	// Handle drag end
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 
-		console.log('[DnD] Drag ended:', {
+		console.log("[DnD] Drag ended:", {
 			active: active.id,
 			over: over?.id,
-			isSame: active.id === over?.id
+			isSame: active.id === over?.id,
 		});
 
 		setActiveId(null);
@@ -435,7 +463,7 @@ export function SlidesOutlineArtifact({
 			const oldIndex = parseInt(activeId.split("-")[1]);
 			const newIndex = parseInt(overId.split("-")[1]);
 
-			console.log('[DnD] Reordering chapters:', { oldIndex, newIndex });
+			console.log("[DnD] Reordering chapters:", { oldIndex, newIndex });
 
 			updateContent((prev) => {
 				const chapters = arrayMove([...prev.chapters], oldIndex, newIndex);
@@ -448,12 +476,15 @@ export function SlidesOutlineArtifact({
 					});
 				});
 
-				console.log('[DnD] Chapters reordered, new order:', chapters.map(c => c.chapterTitle));
+				console.log(
+					"[DnD] Chapters reordered, new order:",
+					chapters.map((c) => c.chapterTitle)
+				);
 
 				return {
 					...prev,
 					chapters,
-					outline: { ...prev.outline, slidesCount: counter - 1 }
+					outline: { ...prev.outline, slidesCount: counter - 1 },
 				};
 			});
 		}
@@ -463,7 +494,12 @@ export function SlidesOutlineArtifact({
 			const [, activeChapter, activeSlide] = activeId.split("-").map(Number);
 			const [, overChapter, overSlide] = overId.split("-").map(Number);
 
-			console.log('[DnD] Reordering slides:', { activeChapter, activeSlide, overChapter, overSlide });
+			console.log("[DnD] Reordering slides:", {
+				activeChapter,
+				activeSlide,
+				overChapter,
+				overSlide,
+			});
 
 			if (activeChapter === overChapter) {
 				// Same chapter - use arrayMove
@@ -471,7 +507,11 @@ export function SlidesOutlineArtifact({
 					const chapters = [...prev.chapters];
 					chapters[activeChapter] = {
 						...chapters[activeChapter],
-						slides: arrayMove([...chapters[activeChapter].slides], activeSlide, overSlide)
+						slides: arrayMove(
+							[...chapters[activeChapter].slides],
+							activeSlide,
+							overSlide
+						),
 					};
 
 					// Renumber all slides
@@ -482,12 +522,15 @@ export function SlidesOutlineArtifact({
 						});
 					});
 
-					console.log('[DnD] Slides reordered, new slide order:', chapters[activeChapter].slides.map(s => s.slideTitle));
+					console.log(
+						"[DnD] Slides reordered, new slide order:",
+						chapters[activeChapter].slides.map((s) => s.slideTitle)
+					);
 
 					return {
 						...prev,
 						chapters,
-						outline: { ...prev.outline, slidesCount: counter - 1 }
+						outline: { ...prev.outline, slidesCount: counter - 1 },
 					};
 				});
 			}
@@ -503,18 +546,20 @@ export function SlidesOutlineArtifact({
 						<Input
 							value={content.outline.pptTitle}
 							onChange={(e) => updateTitle(e.target.value)}
-							className="font-semibold text-base h-auto px-0 py-0 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2 w-[90%]"
+							className="font-semibold text-base h-auto px-0 py-0 border-0 focus-visible:ring-0 bg-transparent mb-1 w-[90%]"
 						/>
 						<ArtifactDescription>
-							{content.outline.slidesCount} slide{content.outline.slidesCount > 1 ? "s" : ""} •{" "}
-							{content.chapters.length} chapter{content.chapters.length > 1 ? "s" : ""}
+							{content.outline.slidesCount} slide
+							{content.outline.slidesCount > 1 ? "s" : ""} •{" "}
+							{content.chapters.length} chapter
+							{content.chapters.length > 1 ? "s" : ""}
 						</ArtifactDescription>
 					</div>
 				</div>
 				<ArtifactActions>
 					{hasChanges && (
 						<ArtifactAction
-							tooltip={`Save changes${editedSlides.size > 0 ? ` (${editedSlides.size} edited)` : ''}`}
+							tooltip={`Save changes${editedSlides.size > 0 ? ` (${editedSlides.size} edited)` : ""}`}
 							icon={SaveIcon}
 							onClick={handleSave}
 							disabled={isSaving}
@@ -528,7 +573,9 @@ export function SlidesOutlineArtifact({
 					<ArtifactAction
 						tooltip="Copy outline"
 						icon={CopyIcon}
-						onClick={() => navigator.clipboard.writeText(JSON.stringify(content, null, 2))}
+						onClick={() =>
+							navigator.clipboard.writeText(JSON.stringify(content, null, 2))
+						}
 					/>
 				</ArtifactActions>
 			</ArtifactHeader>
@@ -551,12 +598,18 @@ export function SlidesOutlineArtifact({
 									key={`chapter-${chapterIndex}`}
 									chapter={chapter}
 									chapterIndex={chapterIndex}
-									onUpdateTitle={(title) => updateChapterTitle(chapterIndex, title)}
+									onUpdateTitle={(title) =>
+										updateChapterTitle(chapterIndex, title)
+									}
 									onUpdateSlide={(slideIndex, updates) =>
 										updateSlide(chapterIndex, slideIndex, updates)
 									}
-									onAddSlide={(afterIndex) => addSlide(chapterIndex, afterIndex)}
-									onDeleteSlide={(slideIndex) => deleteSlide(chapterIndex, slideIndex)}
+									onAddSlide={(afterIndex) =>
+										addSlide(chapterIndex, afterIndex)
+									}
+									onDeleteSlide={(slideIndex) =>
+										deleteSlide(chapterIndex, slideIndex)
+									}
 									editedSlides={editedSlides}
 								/>
 							))}
@@ -593,7 +646,8 @@ export function SlidesOutlineArtifact({
 							<div className="size-1.5 rounded-full dark:bg-amber-500 animate-pulse" />
 							<span>
 								Unsaved changes
-								{editedSlides.size > 0 && ` • ${editedSlides.size} slide${editedSlides.size > 1 ? 's' : ''} edited`}
+								{editedSlides.size > 0 &&
+									` • ${editedSlides.size} slide${editedSlides.size > 1 ? "s" : ""} edited`}
 							</span>
 						</div>
 						<Button

@@ -10,7 +10,7 @@ import React, {
 	ReactNode,
 	useRef,
 } from "react";
-import { ConversationSettings } from "@/lib/conversation-settings";
+import { ConversationSettings } from "@/lib/conversationSettings";
 import { useSession } from "@/contexts/AuthContext";
 
 interface Conversation {

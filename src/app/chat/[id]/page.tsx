@@ -12,7 +12,7 @@ import { useMessageLoader } from "@/hooks/useMessageLoader";
 import { useChatSubmit } from "@/hooks/useChatSubmit";
 import { useChatSidebar } from "@/hooks/useChatSidebar";
 import { DEFAULT_MODEL_ID } from "@/lib/models";
-import { MyUIMessage } from "@/lib/types";
+import { MyUIMessage } from "@/lib/UIMessage";
 import { useConversations } from "@/contexts/ConversationsContext";
 
 export default function ChatPage() {

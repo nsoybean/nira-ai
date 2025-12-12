@@ -175,11 +175,7 @@ const SidebarContent = ({
 			</div>
 
 			{/* Chat List */}
-			<ScrollArea
-				className={cn(
-					"flex-1 overflow-hidden"
-				)}
-			>
+			<ScrollArea className={cn("flex-1 overflow-hidden")}>
 				<div className={cn("space-y-1 p-3")}>
 					{isLoadingConversations ? (
 						<div className="flex items-center justify-center py-8">
@@ -199,14 +195,10 @@ const SidebarContent = ({
 										conv.id === currentConversationId
 											? "text-sidebar-accent-foreground bg-sidebar-accent"
 											: "text-muted-foreground"
-									}`,
+									}`
 								)}
 							>
-								<div
-									className={cn(
-										"truncate flex-1 min-w-0 max-w-42",
-									)}
-								>
+								<div className={cn("truncate flex-1 min-w-0 max-w-42")}>
 									{conv.title}
 								</div>
 								<DropdownMenu>

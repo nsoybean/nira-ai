@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { initializeFetchInterceptor } from "@/lib/fetch-interceptor";
+import { initializeFetchInterceptor } from "@/lib/fetchInterceptor";
 
 /**
  * ClientInit component

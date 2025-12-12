@@ -44,23 +44,21 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import {
-	webSearchToolUIPart,
-	webExtractToolUIPart,
-	imageGenerationToolUIPart,
-} from "@/types/tools";
 import { Image } from "../ai-elements/image";
-import { isSlidesOutlineToolPart, extractArtifactFromPart } from "@/lib/artifacts";
 import { SlidesOutlineArtifact } from "../artifacts/SlidesOutlineArtifact";
+import { MyUIMessage } from "@/lib/UIMessage";
 
 interface MessageListProps {
-	messages: UIMessage[];
+	messages: MyUIMessage[];
 	status: ChatStatus;
 	isLoadingChatMessage?: boolean;
 }
 
 export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
-	({ messages, status, isLoadingChatMessage: isLoadingMessages = false }, ref) => {
+	(
+		{ messages, status, isLoadingChatMessage: isLoadingMessages = false },
+		ref
+	) => {
 		const isLoading = status === "submitted" || status === "streaming";
 		const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
@@ -75,9 +73,9 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 		/**
 		 * @deprecated
 		 * @param message
-		 * @param isLastMessage 
-		 * @param isLoading 
-		 * @returns 
+		 * @param isLastMessage
+		 * @param isLoading
+		 * @returns
 		 */
 		function renderMessageContent(
 			message: UIMessage,
@@ -525,7 +523,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 										);
 
 									case "tool-webSearch":
-										const webSearchPart = part as webSearchToolUIPart;
+										const webSearchPart = part;
 
 										return (
 											<Sources>
@@ -587,7 +585,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 										);
 
 									case "tool-webExtract":
-										const webExtractPart = part as webExtractToolUIPart;
+										const webExtractPart = part;
 
 										return (
 											<Sources>
@@ -673,8 +671,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 										);
 
 									case "tool-image_generation":
-										const imageGenerationPart =
-											part as imageGenerationToolUIPart;
+										const imageGenerationPart = part;
 										const image = {
 											base64: imageGenerationPart.output?.result || "",
 											mediaType: "image/jpeg",
@@ -692,17 +689,17 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 										);
 
 									case "tool-createSlidesOutline":
-										if (isSlidesOutlineToolPart(part)) {
-											const artifact = extractArtifactFromPart(part);
+										if (part.type === "tool-createSlidesOutline") {
+											const artifact = part.output;
 											if (artifact) {
 												return (
 													<div className="mt-2 mb-10">
-													<SlidesOutlineArtifact
-														key={`artifact-${artifact.artifactId}`}
-														artifactId={artifact.artifactId}
-														initialContent={artifact.content}
-														version={artifact.version}
-													/>
+														<SlidesOutlineArtifact
+															key={`artifact-${artifact.artifactId}`}
+															artifactId={artifact.artifactId}
+															initialContent={artifact.content}
+															version={artifact.version}
+														/>
 													</div>
 												);
 											}
@@ -717,10 +714,11 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 						</div>
 					))}
 
-
-
 					{/* streaming loader, animate */}
-					{status === "submitted"  || status==='streaming' && <Loader className="h-6 w-6 text-muted-foreground animate-spin" />}
+					{status === "submitted" ||
+						(status === "streaming" && (
+							<Loader className="h-6 w-6 text-muted-foreground animate-spin" />
+						))}
 				</ConversationContent>
 				<ConversationScrollButton />
 			</Conversation>

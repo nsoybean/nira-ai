@@ -1,7 +1,7 @@
-import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/auth-server";
-import { parseSlidesOutlineArtifact } from "@/lib/types";
+import z from "zod";
+import { slidesOutlineArtifactSchema } from "@/lib/llmTools/slidesOutline";
 
 /**
  * GET /api/artifacts/[id]
@@ -9,7 +9,7 @@ import { parseSlidesOutlineArtifact } from "@/lib/types";
  * Fetch a specific artifact by ID
  */
 export const GET = withAuth(
-	async (req: NextRequest, { userId, params }: any) => {
+	async (req, { userId, params }: any) => {
 		try {
 			const { id } = params;
 
@@ -43,7 +43,7 @@ export const GET = withAuth(
  * - content: The updated artifact content (must match artifact type schema)
  */
 export const PATCH = withAuth(
-	async (req: NextRequest, { userId, params }: any) => {
+	async (req, { userId, params }: any) => {
 		try {
 			const { id } = params;
 			const { content } = await req.json();
@@ -68,7 +68,11 @@ export const PATCH = withAuth(
 
 			// Validate content based on artifact type
 			if (existingArtifact.type === "artifact_type_slides_outline") {
-				const validated = parseSlidesOutlineArtifact(content);
+				const parsed = z.safeParse(slidesOutlineArtifactSchema, content)
+				const validated = parsed.success
+					? parsed.data
+					: null;
+
 				if (!validated) {
 					return new Response("Invalid slides outline content", {
 						status: 400,
@@ -104,7 +108,7 @@ export const PATCH = withAuth(
  * Delete an artifact
  */
 export const DELETE = withAuth(
-	async (req: NextRequest, { userId, params }: any) => {
+	async (req, { userId, params }: any) => {
 		try {
 			const { id } = params;
 

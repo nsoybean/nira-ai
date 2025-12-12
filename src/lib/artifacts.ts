@@ -1,44 +1,6 @@
-import { UIMessage } from "ai";
 import { PrismaClient } from "@prisma/client";
-import { SlidesOutlineArtifact } from "@/lib/types/slides-outline";
-import { createSlidesOutlineToolUIPart } from "@/types/tools";
-
-/**
- * Artifact result type for type safety
- */
-interface ArtifactResult {
-	artifactId: string;
-	type: string;
-	version: string;
-	content: SlidesOutlineArtifact;
-}
-
-/**
- * Type guard to check if a part is a slides outline tool part
- */
-export function isSlidesOutlineToolPart(
-	part: any
-): part is Extract<createSlidesOutlineToolUIPart, { type: "tool-createSlidesOutline" }> {
-	return (
-		part.type === "tool-createSlidesOutline" &&
-		part.state === "output-available" &&
-		typeof part.output === "object" &&
-		part.output !== null &&
-		"artifactId" in part.output
-	);
-}
-
-/**
- * Extract artifact data from a tool part
- */
-export function extractArtifactFromPart(
-	part: Extract<createSlidesOutlineToolUIPart, { type: "tool-createSlidesOutline" }>
-): ArtifactResult | null {
-	if (part.state === "output-available" && part.output) {
-		return part.output;
-	}
-	return null;
-}
+import { SlidesOutlineArtifact } from "./llmTools/slidesOutline";
+import { MyUIMessage } from "./UIMessage";
 
 /**
  * Hydrate Artifacts in Messages
@@ -51,16 +13,16 @@ export function extractArtifactFromPart(
  * @returns Messages with updated artifact content
  */
 export async function hydrateArtifactsInMessages(
-	messages: UIMessage[],
+	messages: MyUIMessage[],
 	prisma: PrismaClient
-): Promise<UIMessage[]> {
+): Promise<MyUIMessage[]> {
 	// Collect all artifact IDs from tool results
 	const artifactIds = new Set<string>();
 
 	for (const message of messages) {
 		for (const part of message.parts) {
-			if (isSlidesOutlineToolPart(part)) {
-				const artifact = extractArtifactFromPart(part);
+			if (part.type === "tool-createSlidesOutline") {
+				const artifact = part.output;
 				if (artifact) {
 					artifactIds.add(artifact.artifactId);
 				}
@@ -97,8 +59,8 @@ export async function hydrateArtifactsInMessages(
 	const hydratedMessages = messages.map((message) => ({
 		...message,
 		parts: message.parts.map((part) => {
-			if (isSlidesOutlineToolPart(part)) {
-				const artifact = extractArtifactFromPart(part);
+			if (part.type === "tool-createSlidesOutline") {
+				const artifact = part.output;
 				if (artifact) {
 					const latestArtifact = artifactMap.get(artifact.artifactId);
 

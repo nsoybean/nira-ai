@@ -4,7 +4,7 @@ import { DEFAULT_MODEL_ID } from "@/lib/models";
 import {
 	ConversationSettings,
 	DEFAULT_CONVERSATION_SETTINGS,
-} from "@/lib/conversation-settings";
+} from "@/lib/conversationSettings";
 import { withAuth } from "@/lib/auth-server";
 
 /**

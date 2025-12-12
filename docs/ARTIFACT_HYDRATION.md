@@ -46,50 +46,48 @@ Before sending messages to the LLM, we **replace outdated artifact content** wit
 
 ```typescript
 export async function hydrateArtifactsInMessages(
-  messages: UIMessage[],
-  prisma: PrismaClient
+	messages: UIMessage[],
+	prisma: PrismaClient
 ): Promise<UIMessage[]> {
-  // 1. Collect all artifact IDs from tool results
-  const artifactIds = new Set<string>();
-  for (const message of messages) {
-    for (const part of message.parts) {
-      if (part.type === 'tool-result' && part.result?.artifactId) {
-        artifactIds.add(part.result.artifactId);
-      }
-    }
-  }
+	// 1. Collect all artifact IDs from tool results
+	const artifactIds = new Set<string>();
+	for (const message of messages) {
+		for (const part of message.parts) {
+			if (part.type === "tool-result" && part.result?.artifactId) {
+				artifactIds.add(part.result.artifactId);
+			}
+		}
+	}
 
-  // 2. Fetch latest versions from database
-  const latestArtifacts = await prisma.artifact.findMany({
-    where: { id: { in: Array.from(artifactIds) } },
-  });
+	// 2. Fetch latest versions from database
+	const latestArtifacts = await prisma.artifact.findMany({
+		where: { id: { in: Array.from(artifactIds) } },
+	});
 
-  // 3. Create lookup map
-  const artifactMap = new Map(
-    latestArtifacts.map(a => [a.id, a])
-  );
+	// 3. Create lookup map
+	const artifactMap = new Map(latestArtifacts.map((a) => [a.id, a]));
 
-  // 4. Replace outdated content
-  return messages.map(message => ({
-    ...message,
-    parts: message.parts.map(part => {
-      if (part.type === 'tool-result' && part.result?.artifactId) {
-        const latest = artifactMap.get(part.result.artifactId);
-        if (latest) {
-          return {
-            ...part,
-            result: {
-              artifactId: latest.id,
-              type: latest.type,
-              version: latest.version,
-              content: latest.content, // ← LATEST!
-            }
-          };
-        }
-      }
-      return part;
-    })
-  }));
+	// 4. Replace outdated content
+	return messages.map((message) => ({
+		...message,
+		parts: message.parts.map((part) => {
+			if (part.type === "tool-result" && part.result?.artifactId) {
+				const latest = artifactMap.get(part.result.artifactId);
+				if (latest) {
+					return {
+						...part,
+						result: {
+							artifactId: latest.id,
+							type: latest.type,
+							version: latest.version,
+							content: latest.content, // ← LATEST!
+						},
+					};
+				}
+			}
+			return part;
+		}),
+	}));
 }
 ```
 
@@ -122,6 +120,7 @@ const result = streamText({ messages: modelMessages, ... });
 ### Scenario: User Edits Slides and Asks Follow-up Question
 
 **Turn 1: Create Outline**
+
 ```
 User: "Create a presentation about AI"
 AI: [Calls createSlidesOutline tool]
@@ -130,6 +129,7 @@ Message saved with version 1 content
 ```
 
 **User Action: Edits Artifact**
+
 ```
 User clicks "Edit" → Changes title and adds slides → Clicks "Save"
 PATCH /api/artifacts/art_123
@@ -141,6 +141,7 @@ Message history unchanged (still has version 1)
 ```
 
 **Turn 2: Follow-up Question**
+
 ```
 User: "Add a slide about machine learning"
 
@@ -170,8 +171,8 @@ Backend:
 
 ```typescript
 // LLM sees old outline with 5 slides
-User: "Add a slide about X"
-AI: "I'll add it as slide 6"
+User: "Add a slide about X";
+AI: "I'll add it as slide 6";
 // But user already edited to have 8 slides!
 // Suggestion is wrong/confusing
 ```
@@ -180,8 +181,8 @@ AI: "I'll add it as slide 6"
 
 ```typescript
 // LLM sees latest outline with 8 slides
-User: "Add a slide about X"
-AI: "I'll add it as slide 9"
+User: "Add a slide about X";
+AI: "I'll add it as slide 9";
 // Correct! Based on current state
 ```
 
@@ -194,13 +195,13 @@ AI: "I'll add it as slide 9"
 ```typescript
 // Check if conversation has any artifacts first
 const hasArtifacts = await prisma.artifact.count({
-  where: { conversationId }
+	where: { conversationId },
 });
 
 if (hasArtifacts > 0) {
-  hydratedMessages = await hydrateArtifactsInMessages(allMessages, prisma);
+	hydratedMessages = await hydrateArtifactsInMessages(allMessages, prisma);
 } else {
-  hydratedMessages = allMessages;
+	hydratedMessages = allMessages;
 }
 ```
 
@@ -224,7 +225,7 @@ Already implemented! The function fetches all artifacts in **one query**, not pe
 ```typescript
 // ONE query for all artifacts
 const latestArtifacts = await prisma.artifact.findMany({
-  where: { id: { in: Array.from(artifactIds) } }
+	where: { id: { in: Array.from(artifactIds) } },
 });
 ```
 
@@ -233,29 +234,32 @@ const latestArtifacts = await prisma.artifact.findMany({
 ## Edge Cases Handled
 
 ### 1. Artifact Deleted
+
 ```typescript
 if (latest) {
-  // Replace with latest
+	// Replace with latest
 } else {
-  // Keep original (artifact deleted, show last known state)
+	// Keep original (artifact deleted, show last known state)
 }
 ```
 
 ### 2. Multiple Artifacts in Same Message
+
 ```typescript
 // Function handles multiple artifacts per message
 for (const part of message.parts) {
-  if (part.result?.artifactId) {
-    // Hydrate each one
-  }
+	if (part.result?.artifactId) {
+		// Hydrate each one
+	}
 }
 ```
 
 ### 3. Mixed Artifact Types
+
 ```typescript
 // Works for any artifact type
-if (part.type === 'tool-result' && part.result?.artifactId) {
-  // Doesn't matter if it's slides, documents, charts, etc.
+if (part.type === "tool-result" && part.result?.artifactId) {
+	// Doesn't matter if it's slides, documents, charts, etc.
 }
 ```
 
@@ -278,11 +282,13 @@ if (part.type === 'tool-result' && part.result?.artifactId) {
 ## When to Hydrate
 
 **Always hydrate** before sending to LLM:
+
 - ✅ New user message in existing conversation
 - ✅ Regenerate response
 - ✅ Edit and retry
 
 **Don't need to hydrate** when:
+
 - ❌ First message (no history)
 - ❌ Loading messages for UI display (use versioned fetch)
 - ❌ Exporting conversation (may want historical versions)
@@ -298,14 +304,17 @@ if (part.type === 'tool-result' && part.result?.artifactId) {
 ```typescript
 // Update message.parts when artifact edited
 await prisma.message.update({
-  where: { id: messageId },
-  data: {
-    parts: { /* updated with new artifact content */ }
-  }
+	where: { id: messageId },
+	data: {
+		parts: {
+			/* updated with new artifact content */
+		},
+	},
 });
 ```
 
 **Why not:**
+
 - ❌ Loses history of what AI originally created
 - ❌ Can't rollback to previous versions
 - ❌ Audit trail is lost
@@ -324,6 +333,7 @@ await prisma.message.update({
 ```
 
 **Why not:**
+
 - ❌ Frontend must fetch every time
 - ❌ Slower UI rendering
 - ❌ No offline/cached view
@@ -333,6 +343,7 @@ await prisma.message.update({
 ## Best of Both Worlds ✅
 
 Current implementation:
+
 1. **Message parts store snapshot** (fast rendering, offline support)
 2. **Hydration updates for LLM** (always sees latest)
 3. **Frontend can fetch latest** (for live edits)
@@ -343,6 +354,7 @@ Current implementation:
 ## Summary
 
 🎯 **Key Points:**
+
 - Message history stores **snapshots** of artifact content
 - **Hydration** replaces snapshots with latest versions before sending to LLM
 - LLM always sees **current state** of artifacts
@@ -350,6 +362,7 @@ Current implementation:
 - Implementation is **efficient** (single batch query)
 
 🔧 **Files Modified:**
+
 - [`src/lib/artifacts.ts`](../src/lib/artifacts.ts) - Hydration utility
 - [`src/app/api/chat/route.ts`](../src/app/api/chat/route.ts) - Use hydration before LLM
 

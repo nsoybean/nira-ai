@@ -31,6 +31,7 @@ model Artifact {
 ```
 
 **Key Fields:**
+
 - `id`: Unique artifact ID (UUID)
 - `messageId`: Links artifact to specific assistant message
 - `type`: Identifies artifact type for rendering
@@ -48,10 +49,10 @@ The tool is created dynamically with context:
 ```typescript
 // In chat API route
 const slidesOutlineTool = createSlidesOutlineToolFactory({
-  conversationId,
-  messageId: assistantMessageId,
-  userId,
-  prisma,
+	conversationId,
+	messageId: assistantMessageId,
+	userId,
+	prisma,
 });
 ```
 
@@ -59,27 +60,27 @@ const slidesOutlineTool = createSlidesOutlineToolFactory({
 
 ```typescript
 execute: async (input) => {
-  // 1. Validate input
-  // 2. Save to database
-  const artifact = await prisma.artifact.create({
-    data: {
-      conversationId,
-      messageId,
-      userId,
-      type: "artifact_type_slides_outline",
-      content: validatedContent,
-      version: "1",
-    },
-  });
+	// 1. Validate input
+	// 2. Save to database
+	const artifact = await prisma.artifact.create({
+		data: {
+			conversationId,
+			messageId,
+			userId,
+			type: "artifact_type_slides_outline",
+			content: validatedContent,
+			version: "1",
+		},
+	});
 
-  // 3. Return artifact reference (not just content!)
-  return {
-    artifactId: artifact.id,
-    type: "artifact_type_slides_outline",
-    version: artifact.version,
-    content: validatedContent,
-  };
-}
+	// 3. Return artifact reference (not just content!)
+	return {
+		artifactId: artifact.id,
+		type: "artifact_type_slides_outline",
+		version: artifact.version,
+		content: validatedContent,
+	};
+};
 ```
 
 **Important**: The tool returns an object with `artifactId`, not just the content!
@@ -272,6 +273,7 @@ const updatedArtifact = await response.json();
 ### The Problem
 
 When user refreshes the page:
+
 - Message parts are loaded from database
 - Tool result still has `artifactId`
 - But we want to show **latest version** (not cached in message)
@@ -282,18 +284,19 @@ When user refreshes the page:
 
 ```typescript
 useEffect(() => {
-  async function fetchLatestVersion() {
-    const res = await fetch(`/api/artifacts/${artifactId}`);
-    if (res.ok) {
-      const artifact = await res.json();
-      setContent(artifact.content); // Override initial content
-    }
-  }
-  fetchLatestVersion();
+	async function fetchLatestVersion() {
+		const res = await fetch(`/api/artifacts/${artifactId}`);
+		if (res.ok) {
+			const artifact = await res.json();
+			setContent(artifact.content); // Override initial content
+		}
+	}
+	fetchLatestVersion();
 }, [artifactId]);
 ```
 
 This ensures:
+
 - Initial render shows cached content (fast)
 - Latest version loads within ~100ms
 - User always sees most recent edits
@@ -364,6 +367,7 @@ This ensures:
 Fetch a specific artifact
 
 **Response:**
+
 ```json
 {
   "id": "uuid",
@@ -382,6 +386,7 @@ Fetch a specific artifact
 Update artifact content
 
 **Request:**
+
 ```json
 {
   "content": {
@@ -392,6 +397,7 @@ Update artifact content
 ```
 
 **Response:**
+
 ```json
 {
   "id": "uuid",
@@ -427,6 +433,7 @@ npx prisma db push
 ## 10. Example: Complete Slides Outline Component
 
 See implementation example in:
+
 - Frontend: `src/components/artifacts/SlidesOutlineArtifact.tsx` (to be created)
 - API: `src/app/api/artifacts/[id]/route.ts` (already created)
 - Tool: `src/lib/tools/slides-outline.ts` (updated with persistence)
