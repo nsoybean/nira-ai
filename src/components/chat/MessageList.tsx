@@ -272,9 +272,8 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 															</span>
 															{(successCount > 0 || failCount > 0) && (
 																<span className="text-xs text-muted-foreground">
-																	{`${successCount} success ${
-																		failCount ? `, ${failCount} failed` : ""
-																	}`.trim()}
+																	{`${successCount} success ${failCount ? `, ${failCount} failed` : ""
+																		}`.trim()}
 																</span>
 															)}
 															<ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
@@ -424,7 +423,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 							{message.role === "assistant" &&
 								message.parts.filter((part) => part.type === "source-url")
 									.length > 0 && (
-									<Sources>
+									<Sources key={`sources-${message.id}-${msgIndex}`}>
 										<SourcesTrigger
 											count={
 												message.parts.filter(
@@ -469,7 +468,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 													<MessageActions>
 														{isLastMessage &&
 															i === message.parts.length - 1 && (
-																<MessageAction onClick={() => {}} label="Retry">
+																<MessageAction onClick={() => { }} label="Retry">
 																	<RefreshCcwIcon className="size-3" />
 																</MessageAction>
 															)}
@@ -528,27 +527,26 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 										const webSearchPart = part;
 
 										return (
-											<Sources>
+											<Sources key={`webSearch-${message.id}-${i}`}>
 												<SourcesTrigger
 													count={webSearchPart?.output?.results?.length || 0}
 													label={
 														webSearchPart?.input?.query
 															? // capitalize first letter
-																webSearchPart?.input?.query
-																	.charAt(0)
-																	.toUpperCase() +
-																webSearchPart?.input?.query.slice(1)
+															webSearchPart?.input?.query
+																.charAt(0)
+																.toUpperCase() +
+															webSearchPart?.input?.query.slice(1)
 															: "Web search"
 													}
 													isLoading={!webSearchPart?.output?.results?.length}
 													resultLabel={
 														webSearchPart?.output?.results != undefined &&
-														webSearchPart?.output?.results?.length > 0
-															? `result${
-																	webSearchPart?.output?.results.length > 1
-																		? "s"
-																		: ""
-																}`
+															webSearchPart?.output?.results?.length > 0
+															? `result${webSearchPart?.output?.results.length > 1
+																? "s"
+																: ""
+															}`
 															: ""
 													}
 												/>
@@ -590,7 +588,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 										const webExtractPart = part;
 
 										return (
-											<Sources>
+											<Sources key={`webExtract-${message.id}-${i}`}>
 												<SourcesTrigger
 													count={undefined}
 													resultLabel={""}
