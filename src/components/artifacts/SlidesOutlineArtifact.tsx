@@ -282,6 +282,10 @@ export function SlidesOutlineArtifact({
 	useEffect(() => {
 		async function fetchLatest() {
 			try {
+				if (!artifactId) {
+					console.log("skipping");
+					return;
+				}
 				const res = await fetch(`/api/artifacts/${artifactId}`);
 				if (res.ok) {
 					const artifact = await res.json();

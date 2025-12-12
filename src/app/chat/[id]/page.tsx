@@ -320,25 +320,25 @@ export default function ChatPage() {
 										isLoadingChatMessage={isLoadingMessages}
 									/>
 									<div className="flex flex-col gap-1">
-									<ChatInput
-										input={input}
-										onInputChange={setInput}
-										onSubmit={(message, event, options) => {
-											handleSubmit(message, options);
-										}}
-										status={status}
-										isCreatingConversation={isCreatingConversation}
-										selectedModel={selectedModel}
-										onModelChange={setSelectedModel}
-										conversationId={conversationId}
-										isNewChat={false}
-										initialWebSearch={initialWebSearch}
-										initialExtendedThinking={initialExtendedThinking}
-									/>
+										<ChatInput
+											input={input}
+											onInputChange={setInput}
+											onSubmit={(message, event, options) => {
+												handleSubmit(message, options);
+											}}
+											status={status}
+											isCreatingConversation={isCreatingConversation}
+											selectedModel={selectedModel}
+											onModelChange={setSelectedModel}
+											conversationId={conversationId}
+											isNewChat={false}
+											initialWebSearch={initialWebSearch}
+											initialExtendedThinking={initialExtendedThinking}
+										/>
 
-									<p className="text-xs text-center text-muted-foreground">
-										Nira can make mistakes. Check important info.
-									</p>
+										<p className="text-xs text-center text-muted-foreground">
+											Nira can make mistakes. Check important info.
+										</p>
 									</div>
 								</div>
 							</div>

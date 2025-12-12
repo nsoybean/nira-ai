@@ -272,8 +272,9 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 															</span>
 															{(successCount > 0 || failCount > 0) && (
 																<span className="text-xs text-muted-foreground">
-																	{`${successCount} success ${failCount ? `, ${failCount} failed` : ""
-																		}`.trim()}
+																	{`${successCount} success ${
+																		failCount ? `, ${failCount} failed` : ""
+																	}`.trim()}
 																</span>
 															)}
 															<ChevronDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
@@ -468,7 +469,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 													<MessageActions>
 														{isLastMessage &&
 															i === message.parts.length - 1 && (
-																<MessageAction onClick={() => { }} label="Retry">
+																<MessageAction onClick={() => {}} label="Retry">
 																	<RefreshCcwIcon className="size-3" />
 																</MessageAction>
 															)}
@@ -508,7 +509,9 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 												}
 											>
 												<ReasoningTrigger />
-												<ReasoningContent>{part.text}</ReasoningContent>
+												<ReasoningContent className="pl-4">
+													{part.text}
+												</ReasoningContent>
 											</Reasoning>
 										);
 
@@ -531,20 +534,21 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 													label={
 														webSearchPart?.input?.query
 															? // capitalize first letter
-															webSearchPart?.input?.query
-																.charAt(0)
-																.toUpperCase() +
-															webSearchPart?.input?.query.slice(1)
+																webSearchPart?.input?.query
+																	.charAt(0)
+																	.toUpperCase() +
+																webSearchPart?.input?.query.slice(1)
 															: "Web search"
 													}
 													isLoading={!webSearchPart?.output?.results?.length}
 													resultLabel={
 														webSearchPart?.output?.results != undefined &&
-															webSearchPart?.output?.results?.length > 0
-															? `result${webSearchPart?.output?.results.length > 1
-																? "s"
-																: ""
-															}`
+														webSearchPart?.output?.results?.length > 0
+															? `result${
+																	webSearchPart?.output?.results.length > 1
+																		? "s"
+																		: ""
+																}`
 															: ""
 													}
 												/>
@@ -689,6 +693,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 									case "tool-createSlidesOutline":
 										if (part.type === "tool-createSlidesOutline") {
 											const artifact = part.output;
+
 											if (artifact) {
 												return (
 													<div className="mt-2 mb-10">
@@ -705,7 +710,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 										return null;
 
 									default:
-										console.log("part", part);
 										return null;
 								}
 							})}
