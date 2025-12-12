@@ -100,7 +100,9 @@ export const POST = withAuth(async (req, { userId }) => {
 
 		// if no previous message, generate a short title for the new conversation
 		let generatedTitle: string | null = null;
+		let isFirstMessage = false;
 		if (existingMessages.length === 0) {
+			isFirstMessage = true;
 			// Extract text from the user message
 			const userMessageText =
 				message.parts
@@ -179,12 +181,14 @@ export const POST = withAuth(async (req, { userId }) => {
 
 		const stream = createUIMessageStream<MyUIMessage>({
 			execute: ({ writer }) => {
-				writer.write({
-					type: "data-title",
-					id: conversationId,
-					data: { value: generatedTitle || "New Chat" },
-					transient: true, // This part won't be added to message history
-				});
+				if (isFirstMessage) {
+					writer.write({
+						type: "data-title",
+						id: conversationId,
+						data: { value: generatedTitle || "New Chat" },
+						transient: true, // This part won't be added to message history
+					});
+				}
 
 				// Generate a temporary message ID for the assistant response
 				// This will be used to link artifacts to the message

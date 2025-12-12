@@ -357,11 +357,11 @@ export function SlidesOutlineArtifact({
 			chapters: prev.chapters.map((chapter, cIdx) =>
 				cIdx === chapterIndex
 					? {
-						...chapter,
-						slides: chapter.slides.map((slide, sIdx) =>
-							sIdx === slideIndex ? { ...slide, ...updates } : slide
-						),
-					}
+							...chapter,
+							slides: chapter.slides.map((slide, sIdx) =>
+								sIdx === slideIndex ? { ...slide, ...updates } : slide
+							),
+						}
 					: chapter
 			),
 		}));
