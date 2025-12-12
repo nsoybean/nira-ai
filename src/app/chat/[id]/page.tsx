@@ -312,13 +312,14 @@ export default function ChatPage() {
 						/* Standard layout with messages */
 						<div className="flex-1 overflow-hidden">
 							<div className="mx-auto p-2 relative h-full">
-								<div className="flex flex-col h-full">
+								<div className="flex flex-col h-full gap-2">
 									<MessageList
 										ref={scrollAreaRef}
 										messages={messages}
 										status={status}
 										isLoadingChatMessage={isLoadingMessages}
 									/>
+									<div className="flex flex-col gap-1">
 									<ChatInput
 										input={input}
 										onInputChange={setInput}
@@ -335,9 +336,10 @@ export default function ChatPage() {
 										initialExtendedThinking={initialExtendedThinking}
 									/>
 
-									<p className="text-xs text-center text-muted-foreground mt-2">
+									<p className="text-xs text-center text-muted-foreground">
 										Nira can make mistakes. Check important info.
 									</p>
+									</div>
 								</div>
 							</div>
 						</div>

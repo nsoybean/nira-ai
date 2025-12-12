@@ -1,9 +1,8 @@
 import { AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import { openai, OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
 import {
 	streamText,
 	convertToModelMessages,
-	UIMessage,
 	createIdGenerator,
 	stepCountIs,
 	generateText,
@@ -46,7 +45,7 @@ export const POST = withAuth(async (req, { userId }) => {
 			conversationId,
 			message,
 			modelId,
-		}: { message: UIMessage; conversationId: string; modelId?: string } =
+		}: { message: MyUIMessage; conversationId: string; modelId?: string } =
 			await req.json();
 
 		// Validate messages
@@ -148,7 +147,7 @@ export const POST = withAuth(async (req, { userId }) => {
 		}
 
 		// Combine existing messages with the new message
-		const allMessages: UIMessage[] = [
+		const allMessages: MyUIMessage[] = [
 			...existingMessages.map((msg) => ({
 				id: msg.id,
 				role: msg.role as any,
@@ -170,7 +169,11 @@ export const POST = withAuth(async (req, { userId }) => {
 		// Hydrate artifacts with latest versions from database
 		// This replaces outdated artifact content in message history with current versions
 		// so the LLM always sees the most recent state when user has edited artifacts
-		// const hydratedMessages = await hydrateArtifactsInMessages(allMessages, prisma);
+		const hydratedMessages = await hydrateArtifactsInMessages(
+			allMessages,
+			prisma
+		);
+		logger.debug("Hydrated messages with artifacts", hydratedMessages);
 
 		// Convert UIMessage[] to ModelMessage[] format for the AI model
 		// useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)

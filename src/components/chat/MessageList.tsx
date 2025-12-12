@@ -403,7 +403,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 
 		return (
 			<Conversation>
-				<ConversationContent className="max-w-4xl mx-auto">
+				<ConversationContent className="max-w-4xl mx-auto overflow-y-auto max-h-[100%]">
 					{/* loading */}
 					{isLoadingMessages && !messages.length && (
 						<div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-20">
