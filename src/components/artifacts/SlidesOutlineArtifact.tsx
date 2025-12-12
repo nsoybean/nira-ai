@@ -130,6 +130,7 @@ function SortableSlide({
 
 					{/* Slide Content */}
 					<Textarea
+						maxLength={2000}
 						value={slide.slideContent}
 						onChange={(e) => onUpdate({ slideContent: e.target.value })}
 						className="text-xs text-muted-foreground resize-none border-0 focus-visible:ring-0 bg-transparent p-1 leading-relaxed p-2"
