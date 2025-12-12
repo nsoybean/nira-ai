@@ -1,4 +1,4 @@
-import { UIMessage } from "ai";
+import { DeepPartial, UIMessage } from "ai";
 import {
 	SlidesOutlineArtifact,
 	SlidesOutlineArtifactOutput,
@@ -13,6 +13,10 @@ export type MyUIMessage = UIMessage<
 		// title streaming
 		title: {
 			value: string;
+		};
+		slidesOutline: {
+			status: "started" | "in_progress" | "completed" | "error";
+			content: DeepPartial<SlidesOutlineArtifact> | undefined;
 		};
 	},
 	// UI tools

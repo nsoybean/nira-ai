@@ -1,4 +1,12 @@
-import { tool } from "ai";
+import {
+	createIdGenerator,
+	DeepPartial,
+	generateId,
+	stepCountIs,
+	streamObject,
+	tool,
+	UIMessageStreamWriter,
+} from "ai";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -9,6 +17,7 @@ import { prisma } from "@/lib/prisma";
  */
 
 import { z } from "zod";
+import { MyUIMessage } from "../UIMessage";
 
 /**
  * Zod schema for slide type validation
@@ -134,16 +143,31 @@ export function parseSlidesOutlineArtifact(
  * - Frontend renders the outline with chapter/slide navigation
  * - User can edit, and edits are saved with new version
  */
-export const createSlidesOutlineToolFactory = (options: {
+export const createSlidesOutlineTool = (options: {
 	conversationId: string;
 	messageId: string;
 	userId?: string;
+	writer: UIMessageStreamWriter<MyUIMessage>;
 }) =>
 	tool({
-		description: `Create a structured presentation outline with chapters and slides. Use this when the user requests a PowerPoint presentation or slide deck.
+		description: `Create a structured presentation outline with chapters and slides. Use this when the user requests a PowerPoint presentation or slide deck.`,
+		inputSchema: z.object({}),
+		outputSchema: z.string(),
+		execute: async (_, { messages }) => {
+			const { conversationId, messageId, userId, writer } = options;
+			const outlineId = createIdGenerator({
+				prefix: "artifact",
+				size: 16,
+			})();
 
-The outline will be displayed to the user for review before generating the actual PowerPoint file. Structure the content into logical chapters/sections, with each slide having clear titles and content.
-
+			// stream object
+			const { partialObjectStream } = streamObject({
+				schema: slidesOutlineArtifactSchema,
+				model: `anthropic/claude-haiku-4-5`,
+				messages: [
+					{
+						role: "system",
+						content: `Create a structured presentation outline. Structure the outline into logical chapters/sections, with each slide having clear titles and content. The outline will be displayed to the user for review.
 Slide types:
 - "title": Title/intro slides with minimal text (for opening or section dividers)
 - "text": Standard content slides with paragraph text
@@ -156,91 +180,74 @@ Requirements:
 - slidesCount must match the total number of slides
 - Each slide should have concise, focused content (1-3 key points)
 - Organize slides into logical chapters/sections`,
+					},
+					...messages,
+				],
+			});
 
-		inputSchema: slidesOutlineArtifactSchema,
-		outputSchema: slidesOutlineArtifactOutputSchema,
+			try {
+				let finalObject: DeepPartial<SlidesOutlineArtifact> | undefined;
 
-		execute: async (input) => {
-			const { conversationId, messageId, userId } = options;
+				for await (const partialObject of partialObjectStream) {
+					writer.write({
+						type: "data-slidesOutline",
+						id: outlineId,
+						data: {
+							status: "in_progress",
+							content: partialObject,
+						},
+					});
 
-			// Validate that slidesCount matches actual slide count
-			const totalSlides = input.chapters.reduce(
-				(sum: number, chapter: Chapter) => sum + chapter.slides.length,
-				0
-			);
-
-			if (totalSlides !== input.outline.slidesCount) {
-				console.warn(
-					`[slidesOutlineTool] Slide count mismatch: declared ${input.outline.slidesCount}, actual ${totalSlides}. Auto-correcting...`
-				);
-				input.outline.slidesCount = totalSlides;
-			}
-
-			// Validate slide numbering is sequential
-			const allSlides = input.chapters.flatMap(
-				(chapter: Chapter) => chapter.slides
-			);
-			const expectedNumbers = Array.from(
-				{ length: totalSlides },
-				(_, i) => i + 1
-			);
-			const actualNumbers = allSlides
-				.map((slide: Slide) => slide.slideNumber)
-				.sort((a: number, b: number) => a - b);
-
-			const isSequential = expectedNumbers.every(
-				(num, idx) => num === actualNumbers[idx]
-			);
-
-			if (!isSequential) {
-				console.warn(
-					"[slidesOutlineTool] Slide numbers are not sequential. Re-numbering slides..."
-				);
-				let counter = 1;
-				for (const chapter of input.chapters) {
-					for (const slide of chapter.slides) {
-						slide.slideNumber = counter++;
-					}
+					console.log(partialObject);
+					finalObject = partialObject; // Capture the last/complete object
 				}
+
+				if (!finalObject) {
+					throw new Error("No outline object was generated");
+				}
+
+				// Save artifact to database
+				const artifact = await prisma.artifact.create({
+					data: {
+						id: outlineId,
+						conversationId,
+						messageId,
+						userId: userId || null,
+						type: "artifact_type_slides_outline",
+						content: finalObject as any,
+						version: "1",
+					},
+				});
+
+				writer.write({
+					type: "data-slidesOutline",
+					id: outlineId,
+					data: {
+						status: "completed",
+						content: finalObject,
+					},
+				});
+
+				console.log(
+					`[slidesOutlineTool] Created artifact ${artifact.id} for message ${messageId}`
+				);
+
+				// Return artifact with ID for frontend reference
+				return `<created_slides_outline id="${artifact.id}" version="1"/>`;
+			} catch (error) {
+				console.error("[slidesOutlineTool] Error:", error);
+
+				writer.write({
+					type: "data-slidesOutline",
+					id: outlineId,
+					data: {
+						status: "error",
+						content: undefined, // or include error details if needed
+					},
+				});
+
+				// Return error message or throw
+				throw new Error(`Failed to create slides outline: ${error}`);
 			}
-
-			// Build the validated artifact
-			const artifactContent: SlidesOutlineArtifact = {
-				outline: {
-					pptTitle: input.outline.pptTitle,
-					slidesCount: input.outline.slidesCount,
-					overallRequirements: input.outline.overallRequirements,
-				},
-				chapters: input.chapters,
-			};
-
-			const test = await prisma.conversation.findUnique({
-				where: { id: conversationId },
-			});
-
-			// Save artifact to database
-			const artifact = await prisma.artifact.create({
-				data: {
-					conversationId,
-					messageId,
-					userId: userId || null,
-					type: "artifact_type_slides_outline",
-					content: artifactContent as any,
-					version: "1",
-				},
-			});
-			// const test2 = await prisma.artifact.findFirst({ where: { id: '123' } })
-
-			console.log(
-				`[slidesOutlineTool] Created artifact ${artifact.id} for message ${messageId}`
-			);
-
-			// Return artifact with ID for frontend reference
-			return {
-				artifactId: artifact.id,
-				type: "artifact_type_slides_outline",
-				version: artifact.version,
-				content: artifactContent,
-			};
 		},
 	});

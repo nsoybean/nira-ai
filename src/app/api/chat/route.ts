@@ -169,11 +169,11 @@ export const POST = withAuth(async (req, { userId }) => {
 		// Hydrate artifacts with latest versions from database
 		// This replaces outdated artifact content in message history with current versions
 		// so the LLM always sees the most recent state when user has edited artifacts
-		const hydratedMessages = await hydrateArtifactsInMessages(
-			allMessages,
-			prisma
-		);
-		logger.debug("Hydrated messages with artifacts", hydratedMessages);
+		// const hydratedMessages = await hydrateArtifactsInMessages(
+		// 	allMessages,
+		// 	prisma
+		// );
+		// logger.debug("Hydrated messages with artifacts", hydratedMessages);
 
 		// Convert UIMessage[] to ModelMessage[] format for the AI model
 		// useChat sends UIMessage format (with parts), but streamText expects ModelMessage format (with content)
@@ -182,6 +182,7 @@ export const POST = withAuth(async (req, { userId }) => {
 		// Track request start time for metrics
 		const startTime = Date.now();
 
+		// allow us to stream custom data to the client
 		const stream = createUIMessageStream<MyUIMessage>({
 			execute: ({ writer }) => {
 				if (isFirstMessage) {
@@ -203,12 +204,19 @@ export const POST = withAuth(async (req, { userId }) => {
 				// Create slides outline tool with context
 				const slidesOutlineTool = createSlidesOutlineToolFactory({
 					conversationId,
-					messageId: assistantMessageId,
 					userId,
+					messageId: assistantMessageId,
+					writer,
 				});
 
 				// Stream the chat completion
 				const result = streamText({
+					// to be implemented
+					experimental_context: {
+						conversationId,
+						userId,
+						messageId: assistantMessageId,
+					},
 					model: `${modelConfig.provider}/${selectedModelId}`,
 					stopWhen: stepCountIs(5),
 					providerOptions: {

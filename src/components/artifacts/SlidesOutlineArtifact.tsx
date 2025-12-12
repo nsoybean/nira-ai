@@ -361,11 +361,11 @@ export function SlidesOutlineArtifact({
 			chapters: prev.chapters.map((chapter, cIdx) =>
 				cIdx === chapterIndex
 					? {
-							...chapter,
-							slides: chapter.slides.map((slide, sIdx) =>
-								sIdx === slideIndex ? { ...slide, ...updates } : slide
-							),
-						}
+						...chapter,
+						slides: chapter.slides.map((slide, sIdx) =>
+							sIdx === slideIndex ? { ...slide, ...updates } : slide
+						),
+					}
 					: chapter
 			),
 		}));
@@ -549,15 +549,15 @@ export function SlidesOutlineArtifact({
 					<NotepadText className="size-4 text-muted-foreground" />
 					<div className="flex flex-col flex-1">
 						<Input
-							value={content.outline.pptTitle}
+							value={content?.outline.pptTitle}
 							onChange={(e) => updateTitle(e.target.value)}
 							className="font-semibold text-base h-auto px-0 py-0 border-0 focus-visible:ring-0 bg-transparent mb-1 w-[90%]"
 						/>
 						<ArtifactDescription>
-							{content.outline.slidesCount} slide
-							{content.outline.slidesCount > 1 ? "s" : ""} •{" "}
-							{content.chapters.length} chapter
-							{content.chapters.length > 1 ? "s" : ""}
+							{content?.outline.slidesCount} slide
+							{content?.outline.slidesCount > 1 ? "s" : ""} •{" "}
+							{content?.chapters.length} chapter
+							{content?.chapters.length > 1 ? "s" : ""}
 						</ArtifactDescription>
 					</div>
 				</div>
@@ -594,11 +594,11 @@ export function SlidesOutlineArtifact({
 					onDragEnd={handleDragEnd}
 				>
 					<SortableContext
-						items={content.chapters.map((_, idx) => `chapter-${idx}`)}
+						items={content?.chapters.map((_, idx) => `chapter-${idx}`)}
 						strategy={verticalListSortingStrategy}
 					>
 						<div className="space-y-0">
-							{content.chapters.map((chapter, chapterIndex) => (
+							{content?.chapters.map((chapter, chapterIndex) => (
 								<SortableChapter
 									key={`chapter-${chapterIndex}`}
 									chapter={chapter}
