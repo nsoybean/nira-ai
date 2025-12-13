@@ -141,7 +141,7 @@ export const createSlidesOutlineTool = (options: {
 	writer: UIMessageStreamWriter<MyUIMessage>;
 }) =>
 	tool({
-		description: `Create a presentation outline by invoking a specialized planning agent. Analyzes conversation context to generate a structured slide deck outline with chapters and slides (title, text, bullets, image, chart types). Streams results for user review. Use when user requests PowerPoint/slides.`,
+		description: `Create a presentation outline by invoking a specialized planning agent. Use this when the user requests a PowerPoint/slide deck/create slides. Editable outline will be shown to the user via a UI, hence do not repeat the entire outline back to the user in text form.`,
 		// 		description: `Invoke a specialized AI agent to create a structured presentation outline with chapters and slides.
 
 		// This tool delegates to a presentation planning agent that analyzes the conversation context to generate:
@@ -189,8 +189,13 @@ export const createSlidesOutlineTool = (options: {
   chapters: [{ chapterTitle, slides: [{ slideNumber, slideTitle, slideContent, slideType }] }]
 }
 
+TERMINOLOGY:
+- When users say "pages", "screens", or "slides", they all mean the same thing: presentation slides
+- Always interpret slide count requests accordingly (e.g., "5 pages" = 5 slides)
+
 CONSTRAINTS:
-- Maximum 10 slides total (keep presentations concise and focused)
+- Default to maximum 10 slides for concise presentations
+- If user explicitly requests more slides, honor their request (e.g., "make me a 15-page presentation")
 - Maximum 10 chapters
 - slideNumber must be sequential across ALL chapters (1, 2, 3, 4...)
 - slidesCount must match actual number of slides generated
@@ -225,7 +230,7 @@ Chapter 2: "Performance Analysis"
   - Slide 4 (text): "Market Factors" explaining context
   - Slide 5 (image): "Customer Testimonials" describing visual layout
 
-Analyze the user's request carefully and create an outline that best serves their presentation goals.`,
+Analyze the user's request carefully and create an outline that best serves their presentation goals. If they specify a number of pages/slides, use exactly that number.`,
 					},
 					...messages,
 				],
