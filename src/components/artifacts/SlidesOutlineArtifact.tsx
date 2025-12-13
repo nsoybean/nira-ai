@@ -34,6 +34,7 @@ import {
 	rectIntersection,
 	CollisionDetection,
 	DragOverlay,
+	Modifier,
 } from "@dnd-kit/core";
 import {
 	arrayMove,
@@ -134,8 +135,6 @@ function SortableSlide({
 			className={cn(
 				"group relative w-full min-w-0",
 				isDragging && "opacity-40",
-				// Reduce height when this is a drop zone during drag
-				!isDragging && isAnyDragging && "py-1",
 				// Add padding right to extend the drop zone
 				"pr-4"
 			)}
@@ -154,13 +153,37 @@ function SortableSlide({
 			)}
 
 			<div className={cn(
-				"px-2 rounded-md transition-colors w-full py-2",
+				"relative px-2 rounded-md transition-colors w-full py-2",
 				// Only show hover state when not dragging anything and not collapsing
 				!isAnyDragging && !isCollapsing && "hover:bg-muted/90"
 			)}>
 				{/* Edited Indicator Dot */}
 				{isEdited && !isCollapsing && (
 					<div className="absolute -left-1 top-3 size-1.5 rounded-full bg-amber-500 animate-pulse" />
+				)}
+
+				{/* Actions on right - only visible on hover and when not collapsing */}
+				{!isCollapsing && (
+					<div className="absolute right-2 top-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={onAdd}
+							className="h-6 w-6 p-0"
+							title="Add slide below"
+						>
+							<PlusIcon className="size-3" />
+						</Button>
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={onDelete}
+							className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+							title="Delete slide"
+						>
+							<TrashIcon className="size-3" />
+						</Button>
+					</div>
 				)}
 
 				{/* Slide Content */}
@@ -193,30 +216,6 @@ function SortableSlide({
 						/>
 					)}
 				</div>
-
-				{/* Actions on right - only visible on hover and when not collapsing */}
-				{!isCollapsing && (
-					<div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-						<Button
-							size="sm"
-							variant="ghost"
-							onClick={onAdd}
-							className="h-6 w-6 p-0"
-							title="Add slide below"
-						>
-							<PlusIcon className="size-3" />
-						</Button>
-						<Button
-							size="sm"
-							variant="ghost"
-							onClick={onDelete}
-							className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-							title="Delete slide"
-						>
-							<TrashIcon className="size-3" />
-						</Button>
-					</div>
-				)}
 			</div>
 		</div>
 	);
@@ -290,8 +289,6 @@ function SortableChapter({
 			style={style}
 			className={cn(
 				"mb-3 group relative w-full min-w-0",
-				// Reduce spacing when this is a drop zone during drag
-				!isDragging && isAnyDragging && "mb-1",
 				// Add padding right to extend the drop zone
 				"pr-4"
 			)}
@@ -376,6 +373,14 @@ export function SlidesOutlineArtifact({
 		type: 'slide' | 'chapter';
 		title: string;
 	} | null>(null);
+
+	// Modifier to restrict drag to vertical axis only
+	const restrictToVerticalAxis: Modifier = ({ transform }) => {
+		return {
+			...transform,
+			x: 0, // Lock horizontal movement
+		};
+	};
 
 	// Set up sensors for drag and drop
 	const sensors = useSensors(
@@ -862,6 +867,7 @@ export function SlidesOutlineArtifact({
 					collisionDetection={customCollisionDetection}
 					onDragStart={handleDragStart}
 					onDragEnd={handleDragEnd}
+					modifiers={[restrictToVerticalAxis]}
 				>
 					<SortableContext
 						items={(content.chapters ?? []).map((_, idx) => `chapter-${idx}`)}
