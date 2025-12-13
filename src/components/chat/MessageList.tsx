@@ -391,7 +391,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 												return (
 													<div
 														key={`artifact-streaming-${part.id}-${msgIndex}`}
-														className="mt-2 mb-10"
+														className="mt-2 mb-10 max-w-[80%]"
 													>
 														<SlidesOutlineArtifact
 															artifactId={part.id ?? "unknown"}
@@ -410,7 +410,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 											return (
 												<div
 													key={`artifact-${part.output.artifactId}-${msgIndex}`}
-													className="mt-2 mb-10"
+													className="mt-2 mb-10 max-w-[80%]"
 												>
 													<SlidesOutlineArtifact
 														artifactId={part.output.artifactId}

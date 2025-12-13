@@ -92,6 +92,7 @@ function SortableSlide({
 	isEdited = false,
 }: SortableSlideProps) {
 	const [isCollapsing, setIsCollapsing] = useState(false);
+	const [isHovered, setIsHovered] = useState(false);
 	const {
 		attributes,
 		listeners,
@@ -141,75 +142,78 @@ function SortableSlide({
 			ref={setNodeRef}
 			style={style}
 			className={cn(
-				"group relative w-full min-w-0",
-				// Add padding right to extend the drop zone
-				"pr-4"
+				"relative w-full min-w-0"
 			)}
 		>
-			{/* Drag Handle - Positioned outside on the left, aligned with title */}
-			{/* Hide when collapsing (includes both mouseDown and actual drag states) */}
-			{!isCollapsing && (
-				<div
-					{...attributes}
-					{...listeners}
-					onMouseDown={handleMouseDown}
-					className="absolute -left-5 top-5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10"
-				>
-					<GripVerticalIcon className="size-4 text-muted-foreground/80" />
-				</div>
-			)}
-
-			<div className={cn(
-				"relative px-2 rounded-md transition-colors w-full py-2",
-				// Only show hover state when not dragging anything and not collapsing
-				!isAnyDragging && !isCollapsing && "hover:bg-muted/90"
-			)}>
+			<div
+				className={cn(
+					"relative px-2 rounded-md transition-colors w-full py-2",
+					// Only show hover state when not dragging anything and not collapsing
+					!isAnyDragging && !isCollapsing && isHovered && "bg-muted/90"
+				)}
+				onMouseEnter={() => setIsHovered(true)}
+				onMouseLeave={() => setIsHovered(false)}
+			>
 				{/* Edited Indicator Dot */}
 				{isEdited && !isCollapsing && (
 					<div className="absolute -left-1 top-3 size-1.5 rounded-full bg-amber-500 animate-pulse" />
 				)}
 
-				{/* Actions on right - only visible on hover and when not collapsing */}
-				{!isCollapsing && (
-					<div className="absolute right-2 top-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-						<Button
-							size="sm"
-							variant="ghost"
-							onClick={onAdd}
-							className="h-6 w-6 p-0"
-							title="Add slide below"
-						>
-							<PlusIcon className="size-3" />
-						</Button>
-						<Button
-							size="sm"
-							variant="ghost"
-							onClick={onDelete}
-							className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-							title="Delete slide"
-						>
-							<TrashIcon className="size-3" />
-						</Button>
-					</div>
-				)}
-
 				{/* Slide Content */}
 				<div className="w-full">
 					{/* Slide Title - Always visible, with collapsed styling when isCollapsing */}
-					{isCollapsing ? (
-						<div className="bg-muted/90 rounded-md px-3 py-2 border border-border">
-							<div className="font-medium text-sm truncate">
-								{slide.slideTitle || 'Untitled Slide'}
+					<div className="relative">
+						{/* Drag Handle - Positioned absolute on the left, aligned with title */}
+						{!isCollapsing && isHovered && (
+							<div
+								{...attributes}
+								{...listeners}
+								onMouseDown={handleMouseDown}
+								className="absolute -left-6 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-opacity z-10"
+							>
+								<GripVerticalIcon className="size-4 text-muted-foreground/80" />
 							</div>
-						</div>
-					) : (
-						<Input
-							value={slide.slideTitle ?? ""}
-							onChange={(e) => onUpdate({ slideTitle: e.target.value })}
-							className="font-medium text-sm h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2"
-							placeholder="Slide title..."
-						/>
-					)}
+						)}
+
+						{/* Actions on right - aligned with title */}
+						{!isCollapsing && isHovered && (
+							<div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity">
+								<Button
+									size="sm"
+									variant="ghost"
+									onClick={onAdd}
+									className="h-6 w-6 p-0"
+									title="Add slide below"
+								>
+									<PlusIcon className="size-3" />
+								</Button>
+								<Button
+									size="sm"
+									variant="ghost"
+									onClick={onDelete}
+									className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+									title="Delete slide"
+								>
+									<TrashIcon className="size-3" />
+								</Button>
+							</div>
+						)}
+
+						{isCollapsing ? (
+							<div className="bg-muted/90 rounded-md px-3 py-2 border border-border">
+								<div className="font-medium text-sm truncate">
+									{slide.slideTitle || 'Untitled Slide'}
+								</div>
+							</div>
+						) : (
+							<Input
+								value={slide.slideTitle ?? ""}
+								onChange={(e) => onUpdate({ slideTitle: e.target.value })}
+								className="font-medium text-sm h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2"
+								placeholder="Slide title..."
+							/>
+						)}
+					</div>
 
 					{/* Slide Content - Hide when collapsing */}
 					{!isCollapsing && (
@@ -249,6 +253,7 @@ function SortableChapter({
 	editedSlides,
 }: SortableChapterProps) {
 	const [isCollapsing, setIsCollapsing] = useState(false);
+	const [isHovered, setIsHovered] = useState(false);
 	const {
 		attributes,
 		listeners,
@@ -298,30 +303,32 @@ function SortableChapter({
 			ref={setNodeRef}
 			style={style}
 			className={cn(
-				"mb-3 group relative w-full min-w-0",
-				// Add padding right to extend the drop zone
-				"pr-4"
+				"mb-3 relative w-full min-w-0"
 			)}
 		>
-			{/* Drag Handle - Positioned outside on the left, aligned with title */}
-			{/* Hide when collapsing (includes both mouseDown and actual drag states) */}
-			{!isCollapsing && (
-				<div
-					{...attributes}
-					{...listeners}
-					onMouseDown={handleMouseDown}
-					className="absolute -left-5 top-5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10"
-				>
-					<GripVerticalIcon className="size-4 text-muted-foreground/80" />
-				</div>
-			)}
-
 			{/* Chapter Header - More compact */}
-			<div className={cn(
-				"flex items-center gap-2 px-2 w-full rounded-md transition-colors py-1.5 mb-1",
-				// Only show hover state when not dragging anything and not collapsing
-				!isAnyDragging && !isCollapsing && "hover:bg-muted/90"
-			)}>
+			<div
+				className={cn(
+					"relative flex items-center gap-2 px-2 w-full rounded-md transition-colors py-1.5 mb-1",
+					// Only show hover state when not dragging anything and not collapsing
+					!isAnyDragging && !isCollapsing && isHovered && "bg-muted/90"
+				)}
+				onMouseEnter={() => setIsHovered(true)}
+				onMouseLeave={() => setIsHovered(false)}
+			>
+				{/* Drag Handle - Positioned absolute on the left, vertically centered */}
+				{/* Hide when collapsing (includes both mouseDown and actual drag states) */}
+				{!isCollapsing && isHovered && (
+					<div
+						{...attributes}
+						{...listeners}
+						onMouseDown={handleMouseDown}
+						className="absolute -left-4 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing transition-opacity z-10"
+					>
+						<GripVerticalIcon className="size-4 text-muted-foreground/80" />
+					</div>
+				)}
+
 				{/* Chapter Title - Always visible, with collapsed styling when isCollapsing */}
 				{isCollapsing ? (
 					<div className="bg-muted/90 rounded-md px-3 py-2 border border-border w-full">
