@@ -69,6 +69,7 @@ export async function hydrateArtifactsInMessages(
 						return {
 							...part,
 							output: {
+								...part.output,
 								artifactId: latestArtifact.id,
 								type: latestArtifact.type,
 								version: latestArtifact.version,

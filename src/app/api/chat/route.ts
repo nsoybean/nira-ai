@@ -218,6 +218,9 @@ export const POST = withAuth(async (req, { userId }) => {
 						messageId: assistantMessageId,
 					},
 					model: `${modelConfig.provider}/${selectedModelId}`,
+					headers: {
+						"anthropic-beta": "fine-grained-tool-streaming-2025-05-14",
+					},
 					stopWhen: stepCountIs(5),
 					providerOptions: {
 						// anthropic

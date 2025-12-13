@@ -3,11 +3,11 @@ import {
 	DeepPartial,
 	generateId,
 	stepCountIs,
-	streamObject,
 	tool,
 	UIMessageStreamWriter,
 } from "ai";
 import { prisma } from "@/lib/prisma";
+import { jsonrepair } from "jsonrepair";
 
 /**
  * Slides Outline Artifact Types
@@ -97,6 +97,7 @@ export const slidesOutlineArtifactOutputSchema = z.object({
 	version: z.string(),
 	error: z.string(),
 	systemMessage: z.string(),
+	content: slidesOutlineArtifactSchema.optional(),
 });
 export type SlidesOutlineArtifactOutput = z.infer<
 	typeof slidesOutlineArtifactOutputSchema
@@ -114,62 +115,95 @@ export function parseSlidesOutlineArtifact(
 }
 
 /**
- * Creates a presentation outline by delegating to a specialized AI agent.
+ * Safely parses incremental/partial slides outline data
+ * Validates nested structures individually to extract as much valid data as possible
+ * Returns partial data even if full validation fails
+ */
+export function safeParsePartialOutline(
+	data: unknown
+): DeepPartial<SlidesOutlineArtifact> {
+	if (!data || typeof data !== "object") {
+		return {};
+	}
+
+	const obj = data as any;
+	const result: DeepPartial<SlidesOutlineArtifact> = {};
+
+	// Try to parse outline metadata
+	if (obj.outline && typeof obj.outline === "object") {
+		const outlineResult = presentationOutlineSchema.safeParse(obj.outline);
+		result.outline = outlineResult.success
+			? outlineResult.data
+			: (obj.outline as any);
+	}
+
+	// Try to parse chapters array
+	if (Array.isArray(obj.chapters)) {
+		result.chapters = obj.chapters
+			.map((chapter: any) => {
+				// Try to validate each chapter individually
+				const chapterResult = chapterSchema.safeParse(chapter);
+				if (chapterResult.success) {
+					return chapterResult.data;
+				}
+
+				// If chapter validation fails, still try to extract what we can
+				if (chapter && typeof chapter === "object") {
+					const partialChapter: DeepPartial<Chapter> = {};
+
+					if (typeof chapter.chapterTitle === "string") {
+						partialChapter.chapterTitle = chapter.chapterTitle;
+					}
+
+					// Try to parse slides within the chapter
+					if (Array.isArray(chapter.slides)) {
+						partialChapter.slides = chapter.slides
+							.map((slide: any) => {
+								const slideResult = slideSchema.safeParse(slide);
+								return slideResult.success ? slideResult.data : slide;
+							})
+							.filter((slide: any) => slide && typeof slide === "object");
+					}
+
+					return partialChapter;
+				}
+
+				return chapter;
+			})
+			.filter((chapter: any) => chapter && typeof chapter === "object");
+	}
+
+	return result;
+}
+
+/**
+ * Creates a presentation outline with streaming input validation.
  *
  * Architecture:
- * - Takes no direct parameters (uses conversation messages as context)
- * - Invokes Sonnet 4.5 with specialized presentation planning prompt
- * - Streams outline generation with UI updates (starting → in_progress → completed)
+ * - Main agent generates the outline using this tool with inputSchema: slidesOutlineArtifactSchema
+ * - Tool execution validates and persists the input from the agent
+ * - Uses onInputDelta() to stream the input delta back to client
+ * - Streams UI updates (starting → in_progress → completed)
  * - Persists artifact to database
  * - Returns artifact reference for message parts
- *
- * The nested agent generates structured outlines with chapters and slides,
- * validates slide counts/numbering, and returns JSON matching slidesOutlineArtifactSchema.
  */
 export const createSlidesOutlineTool = (options: {
 	conversationId: string;
 	messageId: string;
 	userId?: string;
 	writer: UIMessageStreamWriter<MyUIMessage>;
-}) =>
-	tool({
-		description: `Create a presentation outline by invoking a specialized planning agent. Use this when the user requests a PowerPoint/slide deck/create slides. Editable outline will be shown to the user via a UI, hence do not repeat the entire outline back to the user in text form.`,
-		inputSchema: z.object({}),
-		outputSchema: slidesOutlineArtifactOutputSchema,
-		execute: async (_, { messages }) => {
-			const { conversationId, messageId, userId, writer } = options;
-			const outlineId = createIdGenerator({
-				prefix: "artifact",
-				size: 16,
-			})();
+}) => {
+	const { conversationId, messageId, userId, writer } = options;
+	const outlineId = createIdGenerator({
+		prefix: "artifact",
+		size: 16,
+	})();
 
-			writer.write({
-				type: "data-slidesOutline",
-				id: outlineId,
-				data: {
-					status: "starting",
-					content: undefined,
-				},
-			});
+	// Accumulator for concatenating input deltas
+	let accumulatedInput = "";
 
-			// stream object
-			const { partialObjectStream } = streamObject({
-				schema: slidesOutlineArtifactSchema,
-				// model: `anthropic/claude-haiku-4-5`,
-				model: `anthropic/claude-sonnet-4-5`,
-				// https://ai-sdk.dev/providers/ai-sdk-providers/anthropic#structured-outputs-and-tool-input-streaming
-				headers: {
-					"anthropic-beta": "fine-grained-tool-streaming-2025-05-14",
-				},
-				messages: [
-					{
-						role: "system",
-						content: `You are a presentation planning expert. Analyze the user's request and create a structured presentation outline following this JSON schema:
-
-{
-  outline: { pptTitle, slidesCount, overallRequirements },
-  chapters: [{ chapterTitle, slides: [{ slideNumber, slideTitle, slideContent, slideType }] }]
-}
+	return tool({
+		description: `Create a presentation outline. Use this when the user requests a PowerPoint/slide deck/create slides.
 
 TERMINOLOGY:
 - When users say "pages", "screens", or "slides", they all mean the same thing: presentation slides
@@ -202,41 +236,13 @@ CONTENT GUIDELINES:
   * "title" slides: Just a subtitle or tagline (1 sentence)
   * "image"/"chart" slides: Brief description of what visual should show
 
-EXAMPLE STRUCTURE:
-Chapter 1: "Introduction"
-  - Slide 1 (title): "Project Alpha: Q4 Results" 
-  - Slide 2 (bullets): "Key Achievements" with 4 bullet points
-
-Chapter 2: "Performance Analysis"  
-  - Slide 3 (chart): "Revenue Growth Trends"
-  - Slide 4 (text): "Market Factors" explaining context
-  - Slide 5 (image): "Customer Testimonials" describing visual layout
-
-Analyze the user's request carefully and create an outline that best serves their presentation goals. If they specify a number of pages/slides, use exactly that number.`,
-					},
-					...messages,
-				],
-			});
-
+Editable outline will be shown to the user via a UI, hence do not repeat the entire outline back to the user in text form.`,
+		inputSchema: slidesOutlineArtifactSchema,
+		outputSchema: slidesOutlineArtifactOutputSchema,
+		execute: async (input) => {
 			try {
-				let finalObject: DeepPartial<SlidesOutlineArtifact> | undefined;
-
-				for await (const partialObject of partialObjectStream) {
-					writer.write({
-						type: "data-slidesOutline",
-						id: outlineId,
-						data: {
-							status: "in_progress",
-							content: partialObject,
-						},
-					});
-
-					finalObject = partialObject; // Capture the last/complete object
-				}
-
-				if (!finalObject) {
-					throw new Error("No outline object was generated");
-				}
+				// Validate the input
+				const validatedInput = slidesOutlineArtifactSchema.parse(input);
 
 				// Save artifact to database
 				const artifact = await prisma.artifact.create({
@@ -246,17 +252,18 @@ Analyze the user's request carefully and create an outline that best serves thei
 						messageId,
 						userId: userId || null,
 						type: "slidesOutline",
-						content: finalObject as any,
+						content: validatedInput as any,
 						version: "1",
 					},
 				});
 
+				// Send completed status
 				writer.write({
 					type: "data-slidesOutline",
 					id: outlineId,
 					data: {
 						status: "completed",
-						content: finalObject,
+						content: validatedInput,
 					},
 				});
 
@@ -267,13 +274,15 @@ Analyze the user's request carefully and create an outline that best serves thei
 				// Return artifact with ID as tool output
 				return {
 					artifactId: artifact.id,
-					type: "slidesOutline",
+					type: "slidesOutline" as const,
 					version: "1",
-					systemMessage: `Created slides outline. Simply acknowledge the creation of outline`,
+					error: "",
+					systemMessage: `Created slides outline. Simply acknowledge the creation of outline.`,
 				};
 			} catch (error) {
 				console.error("[slidesOutlineTool] Error:", error);
 
+				// Send error status
 				writer.write({
 					type: "data-slidesOutline",
 					id: outlineId,
@@ -284,8 +293,60 @@ Analyze the user's request carefully and create an outline that best serves thei
 					},
 				});
 
-				// Return error message or throw
-				throw new Error(`Failed to create slides outline: ${error}`);
+				// Return error in output schema format
+				return {
+					artifactId: outlineId,
+					type: "slidesOutline" as const,
+					version: "1",
+					error: error instanceof Error ? error.message : "Unknown error",
+					systemMessage: `Failed to create slides outline: ${error instanceof Error ? error.message : "Unknown error"}`,
+				};
+			}
+		},
+		onInputStart: async () => {
+			writer.write({
+				type: "data-slidesOutline",
+				id: outlineId,
+				data: {
+					status: "starting",
+					content: undefined,
+				},
+			});
+		},
+		onInputDelta: async (delta) => {
+			// Accumulate the delta
+			accumulatedInput += delta.inputTextDelta;
+
+			// Parse the accumulated input using jsonrepair
+			try {
+				const repairedJson = jsonrepair(accumulatedInput);
+				const parsed = JSON.parse(repairedJson);
+
+				// Use safeParsePartialOutline to extract as much valid data as possible
+				const partialContent = safeParsePartialOutline(parsed);
+
+				console.log("🚀 onInputDelta partial content", {
+					accumulatedLength: accumulatedInput.length,
+					hasOutline: !!partialContent.outline,
+					chaptersCount: partialContent.chapters?.length || 0,
+				});
+
+				// Stream the partial input back to client
+				writer.write({
+					type: "data-slidesOutline",
+					id: outlineId,
+					data: {
+						status: "in_progress",
+						content: partialContent,
+					},
+				});
+			} catch (error) {
+				// Ignore parse errors during streaming - partial JSON may be incomplete
+				console.debug(
+					"[slidesOutlineTool] Failed to parse accumulated input:",
+					error
+				);
 			}
 		},
 	});
+};
