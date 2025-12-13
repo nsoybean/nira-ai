@@ -8,6 +8,7 @@ import {
 } from "ai";
 import { prisma } from "@/lib/prisma";
 import { jsonrepair } from "jsonrepair";
+import { createLogger } from "@/lib/logger";
 
 /**
  * Slides Outline Artifact Types
@@ -199,6 +200,13 @@ export const createSlidesOutlineTool = (options: {
 		size: 16,
 	})();
 
+	// Create logger instance with metadata
+	const logger = createLogger({ prefix: "slidesOutlineTool" }).withMetadata({
+		conversationId,
+		messageId,
+		artifactId: outlineId,
+	});
+
 	// Accumulator for concatenating input deltas
 	let accumulatedInput = "";
 
@@ -267,9 +275,7 @@ Editable outline will be shown to the user via a UI, hence do not repeat the ent
 					},
 				});
 
-				console.log(
-					`[slidesOutlineTool] Created artifact ${artifact.id} for message ${messageId}`
-				);
+				logger.log(`Created artifact ${artifact.id}`);
 
 				// Return artifact with ID as tool output
 				return {
@@ -280,7 +286,7 @@ Editable outline will be shown to the user via a UI, hence do not repeat the ent
 					systemMessage: `Created slides outline. Simply acknowledge the creation of outline.`,
 				};
 			} catch (error) {
-				console.error("[slidesOutlineTool] Error:", error);
+				logger.error("Failed to create artifact", undefined, error as Error);
 
 				// Send error status
 				writer.write({
@@ -325,7 +331,7 @@ Editable outline will be shown to the user via a UI, hence do not repeat the ent
 				// Use safeParsePartialOutline to extract as much valid data as possible
 				const partialContent = safeParsePartialOutline(parsed);
 
-				console.log("🚀 onInputDelta partial content", {
+				logger.debug("Streaming partial content", {
 					accumulatedLength: accumulatedInput.length,
 					hasOutline: !!partialContent.outline,
 					chaptersCount: partialContent.chapters?.length || 0,
@@ -342,10 +348,10 @@ Editable outline will be shown to the user via a UI, hence do not repeat the ent
 				});
 			} catch (error) {
 				// Ignore parse errors during streaming - partial JSON may be incomplete
-				console.debug(
-					"[slidesOutlineTool] Failed to parse accumulated input:",
-					error
-				);
+				logger.debug("Failed to parse accumulated input", {
+					error: error instanceof Error ? error.message : String(error),
+					accumulatedLength: accumulatedInput.length,
+				});
 			}
 		},
 	});
