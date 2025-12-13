@@ -144,15 +144,20 @@ function SortableSlide({
 			className={cn(
 				"relative w-full min-w-0"
 			)}
+			onMouseEnter={() => setIsHovered(true)}
+			onMouseLeave={() => setIsHovered(false)}
 		>
+			{/* Extended hover zone for grip icon */}
+			<div className="absolute -left-8 top-0 bottom-0 w-8"
+				onMouseEnter={() => setIsHovered(true)}
+			/>
+
 			<div
 				className={cn(
 					"relative px-2 rounded-md transition-colors w-full py-2",
 					// Only show hover state when not dragging anything and not collapsing
 					!isAnyDragging && !isCollapsing && isHovered && "bg-muted/90"
 				)}
-				onMouseEnter={() => setIsHovered(true)}
-				onMouseLeave={() => setIsHovered(false)}
 			>
 				{/* Edited Indicator Dot */}
 				{isEdited && !isCollapsing && (
@@ -316,6 +321,10 @@ function SortableChapter({
 				onMouseEnter={() => setIsHovered(true)}
 				onMouseLeave={() => setIsHovered(false)}
 			>
+				{/* Extended hover zone for grip icon */}
+				<div className="absolute -left-6 top-0 bottom-0 w-6"
+					onMouseEnter={() => setIsHovered(true)}
+				/>
 				{/* Drag Handle - Positioned absolute on the left, vertically centered */}
 				{/* Hide when collapsing (includes both mouseDown and actual drag states) */}
 				{!isCollapsing && isHovered && (
