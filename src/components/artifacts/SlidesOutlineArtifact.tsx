@@ -209,7 +209,7 @@ function SortableSlide({
 							<Input
 								value={slide.slideTitle ?? ""}
 								onChange={(e) => onUpdate({ slideTitle: e.target.value })}
-								className="font-medium text-sm h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2"
+								className="font-medium text-sm h-auto px-1 py-0.5 border-0 hover:ring-1 hover:ring-border focus-visible:ring-1 focus-visible:ring-border focus-visible:ring-offset-0 shadow-none bg-transparent mb-1 p-2 rounded-md transition-shadow"
 								placeholder="Slide title..."
 							/>
 						)}
@@ -221,7 +221,7 @@ function SortableSlide({
 							maxLength={2000}
 							value={slide.slideContent ?? ""}
 							onChange={(e) => onUpdate({ slideContent: e.target.value })}
-							className="text-xs text-muted-foreground resize-none border-0 focus-visible:ring-0 bg-transparent p-2 leading-relaxed"
+							className="text-xs text-muted-foreground resize-none border-0 hover:ring-1 hover:ring-border focus-visible:ring-1 focus-visible:ring-border focus-visible:ring-offset-0 shadow-none bg-transparent p-2 leading-relaxed rounded-md transition-shadow"
 							placeholder="Slide content..."
 							rows={2}
 						/>
@@ -340,7 +340,7 @@ function SortableChapter({
 					<Input
 						value={chapter.chapterTitle ?? ""}
 						onChange={(e) => onUpdateTitle(e.target.value)}
-						className="flex-1 font-semibold text-base h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent p-2"
+						className="flex-1 font-semibold text-base h-auto px-1 py-0.5 border-0 hover:ring-1 hover:ring-border focus-visible:ring-1 focus-visible:ring-border focus-visible:ring-offset-0 shadow-none bg-transparent p-2 rounded-md transition-shadow"
 						placeholder="Chapter title..."
 					/>
 				)}
@@ -850,7 +850,7 @@ export function SlidesOutlineArtifact({
 						<Input
 							value={content.outline?.pptTitle ?? ""}
 							onChange={(e) => updateTitle(e.target.value)}
-							className="font-semibold text-base h-auto px-0 py-0 border-0 focus-visible:ring-0 bg-transparent mb-1 w-[90%]"
+							className="font-semibold text-base h-auto px-2 py-1 border-0 hover:ring-1 hover:ring-border focus-visible:ring-1 focus-visible:ring-border focus-visible:ring-offset-0 shadow-none bg-transparent mb-1 w-[90%] rounded-md transition-shadow"
 						/>
 						<ArtifactDescription>
 							{content.outline?.slidesCount ?? 0} slide
