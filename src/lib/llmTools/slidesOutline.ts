@@ -95,6 +95,8 @@ export const slidesOutlineArtifactOutputSchema = z.object({
 	artifactId: z.string(),
 	type: z.literal("slidesOutline"),
 	version: z.string(),
+	error: z.string(),
+	systemMessage: z.string(),
 });
 export type SlidesOutlineArtifactOutput = z.infer<
 	typeof slidesOutlineArtifactOutputSchema
