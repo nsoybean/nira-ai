@@ -20,6 +20,7 @@ import {
 	PromptInputButton,
 	PromptInputSubmit,
 	PromptInputMessage,
+	usePromptInputAttachments,
 } from "../ai-elements/prompt-input";
 import { useConversations } from "@/contexts/ConversationsContext";
 import { useMutation } from "@tanstack/react-query";
@@ -196,6 +197,34 @@ export function ChatInput({
 		onSubmit(message, event, { useWebSearch, useExtendedThinking });
 	};
 
+	// Component to conditionally render header only when attachments exist
+	const ConditionalHeader = () => {
+		const attachments = usePromptInputAttachments();
+		const hasAttachments = attachments.files.length > 0;
+		const hasPendingFiles = isCreatingConversation && pendingFiles.length > 0;
+
+		if (!hasAttachments && !hasPendingFiles) {
+			return null;
+		}
+
+		return (
+			<PromptInputHeader className="rounded-2xl">
+				{/* Show pending files during conversation creation */}
+				{hasPendingFiles ? (
+					<div className="flex flex-wrap gap-2 p-2">
+						{pendingFiles.map((file, index) => (
+							<PromptInputAttachment key={index} data={file} />
+						))}
+					</div>
+				) : (
+					<PromptInputAttachments>
+						{(attachment) => <PromptInputAttachment data={attachment} />}
+					</PromptInputAttachments>
+				)}
+			</PromptInputHeader>
+		);
+	};
+
 	return (
 		<>
 			<PromptInput
@@ -205,21 +234,8 @@ export function ChatInput({
 				multiple
 				accept="image/*"
 			>
-				{/* header */}
-				<PromptInputHeader className="rounded-2xl">
-					{/* Show pending files during conversation creation */}
-					{isCreatingConversation && pendingFiles.length > 0 ? (
-						<div className="flex flex-wrap gap-2 p-2">
-							{pendingFiles.map((file, index) => (
-								<PromptInputAttachment key={index} data={file} />
-							))}
-						</div>
-					) : (
-						<PromptInputAttachments>
-							{(attachment) => <PromptInputAttachment data={attachment} />}
-						</PromptInputAttachments>
-					)}
-				</PromptInputHeader>
+				{/* header - only shown when there are attachments */}
+				<ConditionalHeader />
 
 				<PromptInputBody>
 					<PromptInputTextarea
