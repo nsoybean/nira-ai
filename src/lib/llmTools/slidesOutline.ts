@@ -175,6 +175,10 @@ export const createSlidesOutlineTool = (options: {
 				schema: slidesOutlineArtifactSchema,
 				// model: `anthropic/claude-haiku-4-5`,
 				model: `anthropic/claude-sonnet-4-5`,
+				// https://ai-sdk.dev/providers/ai-sdk-providers/anthropic#structured-outputs-and-tool-input-streaming
+				headers: {
+					"anthropic-beta": "fine-grained-tool-streaming-2025-05-14",
+				},
 				messages: [
 					{
 						role: "system",

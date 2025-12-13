@@ -30,6 +30,10 @@ import {
 	useSensors,
 	DragEndEvent,
 	DragStartEvent,
+	pointerWithin,
+	rectIntersection,
+	CollisionDetection,
+	DragOverlay,
 } from "@dnd-kit/core";
 import {
 	arrayMove,
@@ -85,6 +89,7 @@ function SortableSlide({
 	onDelete,
 	isEdited = false,
 }: SortableSlideProps) {
+	const [isCollapsing, setIsCollapsing] = useState(false);
 	const {
 		attributes,
 		listeners,
@@ -92,88 +97,126 @@ function SortableSlide({
 		transform,
 		transition,
 		isDragging,
+		active,
 	} = useSortable({ id: `slide-${chapterIndex}-${slideIndex}` });
+
+	// Check if any item is being dragged (not just this one)
+	const isAnyDragging = active !== null;
+
+	// Handle mouse up to expand the element
+	const handleMouseDown = () => {
+		setIsCollapsing(true);
+	};
+
+	const handleMouseUp = () => {
+		setIsCollapsing(false);
+	};
+
+	// Add global mouse up listener to catch mouse release anywhere
+	useEffect(() => {
+		if (isCollapsing) {
+			window.addEventListener('mouseup', handleMouseUp);
+			return () => window.removeEventListener('mouseup', handleMouseUp);
+		}
+	}, [isCollapsing]);
 
 	const style: React.CSSProperties = {
 		transform: CSS.Transform.toString(transform),
 		transition,
-		...(isDragging && {
-			// Prevent text distortion during drag
-			WebkitFontSmoothing: "subpixel-antialiased" as const,
-			textRendering: "optimizeLegibility" as const,
-		}),
+		// Hide the original element when dragging (DragOverlay shows instead)
+		visibility: isDragging ? 'hidden' : 'visible',
 	};
 
 	return (
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={cn("group relative", isDragging && "opacity-40")}
+			className={cn(
+				"group relative w-full min-w-0",
+				isDragging && "opacity-40",
+				// Reduce height when this is a drop zone during drag
+				!isDragging && isAnyDragging && "py-1",
+				// Add padding right to extend the drop zone
+				"pr-4"
+			)}
 		>
-			<div className="flex items-start gap-2 py-2 px-2 hover:bg-muted/90 rounded-md transition-colors">
-				{/* Edited Indicator Dot */}
-				{isEdited && (
-					<div className="absolute -left-1 top-3 size-1.5 rounded-full bg-amber-500 animate-pulse" />
-				)}
-
-				{/* Drag Handle */}
+			{/* Drag Handle - Positioned outside on the left, aligned with title */}
+			{/* Hide when collapsing (includes both mouseDown and actual drag states) */}
+			{!isCollapsing && (
 				<div
 					{...attributes}
 					{...listeners}
-					className="cursor-grab active:cursor-grabbing mt-1"
+					onMouseDown={handleMouseDown}
+					className="absolute -left-5 top-5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10"
 				>
-					<GripVerticalIcon className="size-3.5 text-muted-foreground/40" />
+					<GripVerticalIcon className="size-4 text-muted-foreground/80" />
 				</div>
+			)}
 
-				{/* Slide Number - Subtle square badge */}
-				<div className="shrink-0 w-5 h-5 rounded bg-accent flex items-center justify-center mt-0.5">
-					<span className="text-[10px] font-medium text-muted-foreground">
-						{slide.slideNumber ?? "?"}
-					</span>
-				</div>
+			<div className={cn(
+				"px-2 rounded-md transition-colors w-full py-2",
+				// Only show hover state when not dragging anything and not collapsing
+				!isAnyDragging && !isCollapsing && "hover:bg-muted/90"
+			)}>
+				{/* Edited Indicator Dot */}
+				{isEdited && !isCollapsing && (
+					<div className="absolute -left-1 top-3 size-1.5 rounded-full bg-amber-500 animate-pulse" />
+				)}
 
 				{/* Slide Content */}
-				<div className="flex-1 min-w-0">
-					{/* Slide Title */}
-					<Input
-						value={slide.slideTitle ?? ""}
-						onChange={(e) => onUpdate({ slideTitle: e.target.value })}
-						className="font-medium text-sm h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2"
-						placeholder="Slide title..."
-					/>
+				<div className="w-full">
+					{/* Slide Title - Always visible, with collapsed styling when isCollapsing */}
+					{isCollapsing ? (
+						<div className="bg-muted/90 rounded-md px-3 py-2 border border-border">
+							<div className="font-medium text-sm truncate">
+								{slide.slideTitle || 'Untitled Slide'}
+							</div>
+						</div>
+					) : (
+						<Input
+							value={slide.slideTitle ?? ""}
+							onChange={(e) => onUpdate({ slideTitle: e.target.value })}
+							className="font-medium text-sm h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2"
+							placeholder="Slide title..."
+						/>
+					)}
 
-					{/* Slide Content */}
-					<Textarea
-						maxLength={2000}
-						value={slide.slideContent ?? ""}
-						onChange={(e) => onUpdate({ slideContent: e.target.value })}
-						className="text-xs text-muted-foreground resize-none border-0 focus-visible:ring-0 bg-transparent p-1 leading-relaxed p-2"
-						placeholder="Slide content..."
-						rows={2}
-					/>
+					{/* Slide Content - Hide when collapsing */}
+					{!isCollapsing && (
+						<Textarea
+							maxLength={2000}
+							value={slide.slideContent ?? ""}
+							onChange={(e) => onUpdate({ slideContent: e.target.value })}
+							className="text-xs text-muted-foreground resize-none border-0 focus-visible:ring-0 bg-transparent p-2 leading-relaxed"
+							placeholder="Slide content..."
+							rows={2}
+						/>
+					)}
 				</div>
 
-				{/* Actions on right - only visible on hover */}
-				<div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-					<Button
-						size="sm"
-						variant="ghost"
-						onClick={onAdd}
-						className="h-6 w-6 p-0"
-						title="Add slide below"
-					>
-						<PlusIcon className="size-3" />
-					</Button>
-					<Button
-						size="sm"
-						variant="ghost"
-						onClick={onDelete}
-						className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-						title="Delete slide"
-					>
-						<TrashIcon className="size-3" />
-					</Button>
-				</div>
+				{/* Actions on right - only visible on hover and when not collapsing */}
+				{!isCollapsing && (
+					<div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={onAdd}
+							className="h-6 w-6 p-0"
+							title="Add slide below"
+						>
+							<PlusIcon className="size-3" />
+						</Button>
+						<Button
+							size="sm"
+							variant="ghost"
+							onClick={onDelete}
+							className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+							title="Delete slide"
+						>
+							<TrashIcon className="size-3" />
+						</Button>
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -199,6 +242,7 @@ function SortableChapter({
 	onDeleteSlide,
 	editedSlides,
 }: SortableChapterProps) {
+	const [isCollapsing, setIsCollapsing] = useState(false);
 	const {
 		attributes,
 		listeners,
@@ -206,17 +250,34 @@ function SortableChapter({
 		transform,
 		transition,
 		isDragging,
+		active,
 	} = useSortable({ id: `chapter-${chapterIndex}` });
+
+	// Check if any item is being dragged (not just this one)
+	const isAnyDragging = active !== null;
+
+	// Handle mouse up to expand the element
+	const handleMouseDown = () => {
+		setIsCollapsing(true);
+	};
+
+	const handleMouseUp = () => {
+		setIsCollapsing(false);
+	};
+
+	// Add global mouse up listener to catch mouse release anywhere
+	useEffect(() => {
+		if (isCollapsing) {
+			window.addEventListener('mouseup', handleMouseUp);
+			return () => window.removeEventListener('mouseup', handleMouseUp);
+		}
+	}, [isCollapsing]);
 
 	const style: React.CSSProperties = {
 		transform: CSS.Transform.toString(transform),
 		transition,
-		opacity: isDragging ? 0.4 : 1,
-		...(isDragging && {
-			// Prevent text distortion during drag
-			WebkitFontSmoothing: "subpixel-antialiased" as const,
-			textRendering: "optimizeLegibility" as const,
-		}),
+		// Hide the original element when dragging (DragOverlay shows instead)
+		visibility: isDragging ? 'hidden' : 'visible',
 	};
 
 	const slideIds = (chapter.slides ?? []).map(
@@ -224,47 +285,78 @@ function SortableChapter({
 	);
 
 	return (
-		<div ref={setNodeRef} style={style} className="mb-3">
-			{/* Chapter Header - More compact */}
-			<div className="flex items-center gap-2 py-1.5 px-2 mb-1">
+		<div
+			ref={setNodeRef}
+			style={style}
+			className={cn(
+				"mb-3 group relative w-full min-w-0",
+				// Reduce spacing when this is a drop zone during drag
+				!isDragging && isAnyDragging && "mb-1",
+				// Add padding right to extend the drop zone
+				"pr-4"
+			)}
+		>
+			{/* Drag Handle - Positioned outside on the left, aligned with title */}
+			{/* Hide when collapsing (includes both mouseDown and actual drag states) */}
+			{!isCollapsing && (
 				<div
 					{...attributes}
 					{...listeners}
-					className="cursor-grab active:cursor-grabbing"
+					onMouseDown={handleMouseDown}
+					className="absolute -left-5 top-5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10"
 				>
-					<GripVerticalIcon className="size-3.5 text-muted-foreground/40" />
+					<GripVerticalIcon className="size-4 text-muted-foreground/80" />
 				</div>
-				<Input
-					value={chapter.chapterTitle ?? ""}
-					onChange={(e) => onUpdateTitle(e.target.value)}
-					className="flex-1 font-semibold text-base h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent p-2"
-					placeholder="Chapter title..."
-				/>
+			)}
+
+			{/* Chapter Header - More compact */}
+			<div className={cn(
+				"flex items-center gap-2 px-2 w-full rounded-md transition-colors py-1.5 mb-1",
+				// Only show hover state when not dragging anything and not collapsing
+				!isAnyDragging && !isCollapsing && "hover:bg-muted/90"
+			)}>
+				{/* Chapter Title - Always visible, with collapsed styling when isCollapsing */}
+				{isCollapsing ? (
+					<div className="bg-muted/90 rounded-md px-3 py-2 border border-border w-full">
+						<div className="font-semibold text-base truncate">
+							{chapter.chapterTitle || 'Untitled Chapter'}
+						</div>
+					</div>
+				) : (
+					<Input
+						value={chapter.chapterTitle ?? ""}
+						onChange={(e) => onUpdateTitle(e.target.value)}
+						className="flex-1 font-semibold text-base h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent p-2"
+						placeholder="Chapter title..."
+					/>
+				)}
 			</div>
 
-			{/* Chapter Slides - Tighter spacing */}
-			<div className="pl-1">
-				<SortableContext
-					items={slideIds}
-					strategy={verticalListSortingStrategy}
-				>
-					{(chapter.slides ?? []).map((slide, slideIndex) => {
-						const slideKey = `slide-${chapterIndex}-${slideIndex}`;
-						return (
-							<SortableSlide
-								key={slideKey}
-								slide={slide as Slide}
-								chapterIndex={chapterIndex}
-								slideIndex={slideIndex}
-								onUpdate={(updates) => onUpdateSlide(slideIndex, updates)}
-								onAdd={() => onAddSlide(slideIndex)}
-								onDelete={() => onDeleteSlide(slideIndex)}
-								isEdited={editedSlides.has(slideKey)}
-							/>
-						);
-					})}
-				</SortableContext>
-			</div>
+			{/* Chapter Slides - Hide when collapsing */}
+			{!isCollapsing && (
+				<div className="pl-1">
+					<SortableContext
+						items={slideIds}
+						strategy={verticalListSortingStrategy}
+					>
+						{(chapter.slides ?? []).map((slide, slideIndex) => {
+							const slideKey = `slide-${chapterIndex}-${slideIndex}`;
+							return (
+								<SortableSlide
+									key={slideKey}
+									slide={slide as Slide}
+									chapterIndex={chapterIndex}
+									slideIndex={slideIndex}
+									onUpdate={(updates) => onUpdateSlide(slideIndex, updates)}
+									onAdd={() => onAddSlide(slideIndex)}
+									onDelete={() => onDeleteSlide(slideIndex)}
+									isEdited={editedSlides.has(slideKey)}
+								/>
+							);
+						})}
+					</SortableContext>
+				</div>
+			)}
 		</div>
 	);
 }
@@ -280,18 +372,40 @@ export function SlidesOutlineArtifact({
 	const [hasChanges, setHasChanges] = useState(false);
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [editedSlides, setEditedSlides] = useState<Set<string>>(new Set());
+	const [draggedItem, setDraggedItem] = useState<{
+		type: 'slide' | 'chapter';
+		title: string;
+	} | null>(null);
 
 	// Set up sensors for drag and drop
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
-				distance: 8, // 8px movement required before drag starts
+				distance: 5, // Reduced from 8px for more immediate response
 			},
 		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
 		})
 	);
+
+	// Custom collision detection that's more sensitive to vertical movement
+	const customCollisionDetection: CollisionDetection = (args) => {
+		// First try pointer within for immediate response
+		const pointerCollisions = pointerWithin(args);
+		if (pointerCollisions.length > 0) {
+			return pointerCollisions;
+		}
+
+		// Fall back to rect intersection for broader detection
+		const rectCollisions = rectIntersection(args);
+		if (rectCollisions.length > 0) {
+			return rectCollisions;
+		}
+
+		// Finally use closest center as last resort
+		return closestCenter(args);
+	};
 
 	// Sync content when initialContent changes (for streaming updates)
 	useEffect(() => {
@@ -494,8 +608,31 @@ export function SlidesOutlineArtifact({
 
 	// Handle drag start
 	const handleDragStart = (event: DragStartEvent) => {
-		setActiveId(event.active.id as string);
-		console.log("[DnD] Drag started:", event.active.id);
+		const id = event.active.id as string;
+		setActiveId(id);
+
+		// Determine what's being dragged and get its title
+		if (id.startsWith('chapter-')) {
+			const chapterIndex = parseInt(id.split('-')[1]);
+			const chapter = content?.chapters?.[chapterIndex];
+			if (chapter) {
+				setDraggedItem({
+					type: 'chapter',
+					title: (chapter as Chapter).chapterTitle || 'Untitled Chapter',
+				});
+			}
+		} else if (id.startsWith('slide-')) {
+			const [, chapterIdx, slideIdx] = id.split('-').map(Number);
+			const slide = content?.chapters?.[chapterIdx]?.slides?.[slideIdx];
+			if (slide) {
+				setDraggedItem({
+					type: 'slide',
+					title: (slide as Slide).slideTitle || 'Untitled Slide',
+				});
+			}
+		}
+
+		console.log("[DnD] Drag started:", id);
 	};
 
 	// Handle drag end
@@ -509,6 +646,7 @@ export function SlidesOutlineArtifact({
 		});
 
 		setActiveId(null);
+		setDraggedItem(null);
 
 		if (!over || active.id === over.id) return;
 
@@ -717,11 +855,11 @@ export function SlidesOutlineArtifact({
 				</ArtifactActions>
 			</ArtifactHeader>
 
-			<ArtifactContent className="space-y-1">
+			<ArtifactContent className="space-y-1 pl-8">
 				{/* Chapters with Drag and Drop - Compact Layout */}
 				<DndContext
 					sensors={sensors}
-					collisionDetection={closestCenter}
+					collisionDetection={customCollisionDetection}
 					onDragStart={handleDragStart}
 					onDragEnd={handleDragEnd}
 				>
@@ -729,7 +867,7 @@ export function SlidesOutlineArtifact({
 						items={(content.chapters ?? []).map((_, idx) => `chapter-${idx}`)}
 						strategy={verticalListSortingStrategy}
 					>
-						<div className="space-y-0">
+						<div className="space-y-0 w-full">
 							{(content.chapters ?? []).map((chapter, chapterIndex) => (
 								chapter && (
 									<SortableChapter
@@ -754,6 +892,20 @@ export function SlidesOutlineArtifact({
 							))}
 						</div>
 					</SortableContext>
+
+					{/* Custom Drag Overlay - Fixed UI that doesn't distort */}
+					<DragOverlay>
+						{draggedItem && (
+							<div className="bg-muted/90 rounded-md px-3 py-2 shadow-lg border border-border">
+								<div className={cn(
+									"font-medium truncate",
+									draggedItem.type === 'chapter' ? "text-base" : "text-sm"
+								)}>
+									{draggedItem.title}
+								</div>
+							</div>
+						)}
+					</DragOverlay>
 				</DndContext>
 
 				{/* Template Selection */}
