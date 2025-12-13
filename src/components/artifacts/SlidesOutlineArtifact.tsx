@@ -35,6 +35,8 @@ import {
 	CollisionDetection,
 	DragOverlay,
 	Modifier,
+	DropAnimation,
+	defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
 import {
 	arrayMove,
@@ -369,10 +371,6 @@ export function SlidesOutlineArtifact({
 	const [hasChanges, setHasChanges] = useState(false);
 	const [activeId, setActiveId] = useState<string | null>(null);
 	const [editedSlides, setEditedSlides] = useState<Set<string>>(new Set());
-	const [draggedItem, setDraggedItem] = useState<{
-		type: 'slide' | 'chapter';
-		title: string;
-	} | null>(null);
 
 	// Modifier to restrict drag to vertical axis only
 	const restrictToVerticalAxis: Modifier = ({ transform }) => {
@@ -380,6 +378,19 @@ export function SlidesOutlineArtifact({
 			...transform,
 			x: 0, // Lock horizontal movement
 		};
+	};
+
+	// Drop animation configuration - this is the key to preventing flicker
+	const dropAnimationConfig: DropAnimation = {
+		sideEffects: defaultDropAnimationSideEffects({
+			styles: {
+				active: {
+					opacity: '0.4',
+				},
+			},
+		}),
+		duration: 200,
+		easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
 	};
 
 	// Set up sensors for drag and drop
@@ -615,28 +626,6 @@ export function SlidesOutlineArtifact({
 	const handleDragStart = (event: DragStartEvent) => {
 		const id = event.active.id as string;
 		setActiveId(id);
-
-		// Determine what's being dragged and get its title
-		if (id.startsWith('chapter-')) {
-			const chapterIndex = parseInt(id.split('-')[1]);
-			const chapter = content?.chapters?.[chapterIndex];
-			if (chapter) {
-				setDraggedItem({
-					type: 'chapter',
-					title: (chapter as Chapter).chapterTitle || 'Untitled Chapter',
-				});
-			}
-		} else if (id.startsWith('slide-')) {
-			const [, chapterIdx, slideIdx] = id.split('-').map(Number);
-			const slide = content?.chapters?.[chapterIdx]?.slides?.[slideIdx];
-			if (slide) {
-				setDraggedItem({
-					type: 'slide',
-					title: (slide as Slide).slideTitle || 'Untitled Slide',
-				});
-			}
-		}
-
 		console.log("[DnD] Drag started:", id);
 	};
 
@@ -650,10 +639,11 @@ export function SlidesOutlineArtifact({
 			isSame: active.id === over?.id,
 		});
 
-		setActiveId(null);
-		setDraggedItem(null);
-
-		if (!over || active.id === over.id) return;
+		if (!over || active.id === over.id) {
+			// Clear drag state immediately - no actual move happened
+			setActiveId(null);
+			return;
+		}
 
 		const activeId = active.id as string;
 		const overId = over.id as string;
@@ -751,7 +741,30 @@ export function SlidesOutlineArtifact({
 				});
 			}
 		}
+
+		// Clear drag state after handling the move - dropAnimation handles the visual transition
+		setActiveId(null);
 	};
+
+	// Derive dragged item info from activeId to avoid redundant state
+	const draggedItem = activeId ? (() => {
+		if (activeId.startsWith('chapter-')) {
+			const chapterIndex = parseInt(activeId.split('-')[1]);
+			const chapter = content?.chapters?.[chapterIndex];
+			return chapter ? {
+				type: 'chapter' as const,
+				title: (chapter as Chapter).chapterTitle || 'Untitled Chapter',
+			} : null;
+		} else if (activeId.startsWith('slide-')) {
+			const [, chapterIdx, slideIdx] = activeId.split('-').map(Number);
+			const slide = content?.chapters?.[chapterIdx]?.slides?.[slideIdx];
+			return slide ? {
+				type: 'slide' as const,
+				title: (slide as Slide).slideTitle || 'Untitled Slide',
+			} : null;
+		}
+		return null;
+	})() : null;
 
 	// Show loading state if fetching from DB
 	if (isLoading && !content) {
@@ -900,7 +913,7 @@ export function SlidesOutlineArtifact({
 					</SortableContext>
 
 					{/* Custom Drag Overlay - Fixed UI that doesn't distort */}
-					<DragOverlay>
+					<DragOverlay dropAnimation={dropAnimationConfig}>
 						{draggedItem && (
 							<div className="bg-muted/90 rounded-md px-3 py-2 shadow-lg border border-border">
 								<div className={cn(
