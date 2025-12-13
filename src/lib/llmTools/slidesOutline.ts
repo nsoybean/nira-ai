@@ -122,25 +122,17 @@ export function parseSlidesOutlineArtifact(
 }
 
 /**
- * Create Slides Outline Tool
- *
- * This tool allows the AI to generate a structured presentation outline that will be
- * displayed to the user in the chat UI before the actual PowerPoint is created.
+ * Creates a presentation outline by delegating to a specialized AI agent.
  *
  * Architecture:
- * - Shares Zod schemas with @/lib/types/slides-outline for DRY principles
- * - Validates slide count and sequential numbering
- * - Auto-corrects mismatches and logs warnings
- * - Persists artifact to database with unique ID
- * - Returns artifact reference for UI rendering
+ * - Takes no direct parameters (uses conversation messages as context)
+ * - Invokes Sonnet 4.5 with specialized presentation planning prompt
+ * - Streams outline generation with UI updates (starting → in_progress → completed)
+ * - Persists artifact to database
+ * - Returns artifact reference for message parts
  *
- * Usage:
- * - AI analyzes user's request for a presentation
- * - AI calls this tool with the complete outline structure
- * - Tool validates and saves artifact to database
- * - Returns artifact ID + content for message part
- * - Frontend renders the outline with chapter/slide navigation
- * - User can edit, and edits are saved with new version
+ * The nested agent generates structured outlines with chapters and slides,
+ * validates slide counts/numbering, and returns JSON matching slidesOutlineArtifactSchema.
  */
 export const createSlidesOutlineTool = (options: {
 	conversationId: string;
@@ -149,7 +141,17 @@ export const createSlidesOutlineTool = (options: {
 	writer: UIMessageStreamWriter<MyUIMessage>;
 }) =>
 	tool({
-		description: `Create a structured presentation outline with chapters and slides. Use this when the user requests a PowerPoint presentation or slide deck.`,
+		description: `Create a presentation outline by invoking a specialized planning agent. Analyzes conversation context to generate a structured slide deck outline with chapters and slides (title, text, bullets, image, chart types). Streams results for user review. Use when user requests PowerPoint/slides.`,
+		// 		description: `Invoke a specialized AI agent to create a structured presentation outline with chapters and slides.
+
+		// This tool delegates to a presentation planning agent that analyzes the conversation context to generate:
+		// - Logical chapters/sections
+		// - Individual slides with appropriate types (title, text, bullets, image, chart)
+		// - Sequential slide numbering and metadata
+
+		// The outline is streamed to the UI for user review before final PowerPoint generation. Use this when the user requests a PowerPoint presentation, slide deck, or asks to create slides.
+
+		// Note: This tool uses conversation context (no explicit parameters needed).`,
 		inputSchema: z.object({}),
 		outputSchema: slidesOutlineArtifactOutputSchema,
 		execute: async (_, { messages }) => {
@@ -176,19 +178,50 @@ export const createSlidesOutlineTool = (options: {
 				messages: [
 					{
 						role: "system",
-						content: `Create a structured presentation outline. Structure the outline into logical chapters/sections, with each slide having clear titles and content. The outline will be displayed to the user for review.
-Slide types:
-- "title": Title/intro slides with minimal text (for opening or section dividers)
-- "text": Standard content slides with paragraph text
-- "bullets": Bullet point list slides
-- "image": Slides that should include images/graphics/visuals
-- "chart": Slides with data visualizations or graphs
+						content: `You are a presentation planning expert. Analyze the user's request and create a structured presentation outline following this JSON schema:
 
-Requirements:
-- slideNumber must be sequential across all chapters (1, 2, 3...)
-- slidesCount must match the total number of slides
-- Each slide should have concise, focused content (1-3 key points)
-- Organize slides into logical chapters/sections`,
+{
+  outline: { pptTitle, slidesCount, overallRequirements },
+  chapters: [{ chapterTitle, slides: [{ slideNumber, slideTitle, slideContent, slideType }] }]
+}
+
+CONSTRAINTS:
+- Maximum 10 slides total (keep presentations concise and focused)
+- Maximum 10 chapters
+- slideNumber must be sequential across ALL chapters (1, 2, 3, 4...)
+- slidesCount must match actual number of slides generated
+
+SLIDE TYPES - Choose appropriately:
+- "title": Opening slide or chapter dividers (minimal text, just title + subtitle)
+- "text": Explanatory content with 2-4 sentences of paragraph text
+- "bullets": Lists of items, steps, or key points (3-5 bullet points)
+- "image": When visual examples, diagrams, or photos would enhance understanding
+- "chart": For data, statistics, comparisons, or trends that need visualization
+
+CHAPTER ORGANIZATION:
+- Group related slides into logical sections (3-5 slides per chapter typically)
+- Create new chapter when topic/theme shifts
+- Chapter titles should be broad themes; slide titles should be specific
+
+CONTENT GUIDELINES:
+- Slide titles: Clear, specific, action-oriented (5-8 words)
+- Slide content: Concise and scannable
+  * "text" slides: 2-4 complete sentences explaining a concept
+  * "bullets" slides: 3-5 short bullet points (5-10 words each)
+  * "title" slides: Just a subtitle or tagline (1 sentence)
+  * "image"/"chart" slides: Brief description of what visual should show
+
+EXAMPLE STRUCTURE:
+Chapter 1: "Introduction"
+  - Slide 1 (title): "Project Alpha: Q4 Results" 
+  - Slide 2 (bullets): "Key Achievements" with 4 bullet points
+
+Chapter 2: "Performance Analysis"  
+  - Slide 3 (chart): "Revenue Growth Trends"
+  - Slide 4 (text): "Market Factors" explaining context
+  - Slide 5 (image): "Customer Testimonials" describing visual layout
+
+Analyze the user's request carefully and create an outline that best serves their presentation goals.`,
 					},
 					...messages,
 				],
