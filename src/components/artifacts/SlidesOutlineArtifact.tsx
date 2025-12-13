@@ -142,7 +142,7 @@ function SortableSlide({
 			ref={setNodeRef}
 			style={style}
 			className={cn(
-				"relative w-full min-w-0"
+				"relative w-full min-w-0 pl-4"
 			)}
 			onMouseEnter={() => setIsHovered(true)}
 			onMouseLeave={() => setIsHovered(false)}
@@ -246,6 +246,7 @@ interface SortableChapterProps {
 	onAddSlide: (afterIndex?: number) => void;
 	onDeleteSlide: (slideIndex: number) => void;
 	editedSlides: Set<string>;
+	isLast: boolean;
 }
 
 function SortableChapter({
@@ -256,6 +257,7 @@ function SortableChapter({
 	onAddSlide,
 	onDeleteSlide,
 	editedSlides,
+	isLast
 }: SortableChapterProps) {
 	const [isCollapsing, setIsCollapsing] = useState(false);
 	const [isHovered, setIsHovered] = useState(false);
@@ -308,7 +310,7 @@ function SortableChapter({
 			ref={setNodeRef}
 			style={style}
 			className={cn(
-				"mb-3 relative w-full min-w-0"
+				"mb-3 relative w-full min-w-0", !isLast ? "pb-2 border-b" : ""
 			)}
 		>
 			{/* Chapter Header - More compact */}
@@ -893,7 +895,7 @@ export function SlidesOutlineArtifact({
 				</ArtifactActions>
 			</ArtifactHeader>
 
-			<ArtifactContent className="space-y-1 pl-8">
+			<ArtifactContent className="space-y-1 pl-6">
 				{/* Chapters with Drag and Drop - Compact Layout */}
 				<DndContext
 					sensors={sensors}
@@ -926,6 +928,7 @@ export function SlidesOutlineArtifact({
 											deleteSlide(chapterIndex, slideIndex)
 										}
 										editedSlides={editedSlides}
+										isLast={chapterIndex === (content.chapters?.length ?? 0) - 1}
 									/>
 								)
 							))}
