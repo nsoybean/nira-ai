@@ -382,7 +382,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 														className="mt-2 mb-10 text-muted-foreground"
 													>
 														<Shimmer>
-															Starting slides generation...
+															Generating slide outline ...
 														</Shimmer>
 													</div>
 												);

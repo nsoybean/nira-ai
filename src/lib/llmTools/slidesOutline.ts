@@ -101,16 +101,6 @@ export type SlidesOutlineArtifactOutput = z.infer<
 >;
 
 /**
- * Type guard to check if an object is a valid SlidesOutlineArtifact
- * Uses Zod for validation
- */
-export function isSlidesOutlineArtifact(
-	obj: unknown
-): obj is SlidesOutlineArtifact {
-	return slidesOutlineArtifactSchema.safeParse(obj).success;
-}
-
-/**
  * Validates and parses a slides outline artifact from unknown data
  * Uses Zod for validation and returns the parsed result or null
  */
@@ -273,12 +263,11 @@ Analyze the user's request carefully and create an outline that best serves thei
 				);
 
 				// Return artifact with ID as tool output
-				// is string better?
-				// return `<created_slides_outline id="${artifact.id}" version="1"/>`;
 				return {
 					artifactId: artifact.id,
 					type: "slidesOutline",
 					version: "1",
+					systemMessage: `Created slides outline. Simply acknowledge the creation of outline`,
 				};
 			} catch (error) {
 				console.error("[slidesOutlineTool] Error:", error);
@@ -288,7 +277,8 @@ Analyze the user's request carefully and create an outline that best serves thei
 					id: outlineId,
 					data: {
 						status: "error",
-						content: undefined, // or include error details if needed
+						content: undefined,
+						error: error instanceof Error ? error.message : "Unknown error",
 					},
 				});
 

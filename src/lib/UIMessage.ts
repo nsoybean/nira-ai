@@ -17,6 +17,8 @@ export type MyUIMessage = UIMessage<
 		slidesOutline: {
 			status: "starting" | "in_progress" | "completed" | "error";
 			content: DeepPartial<SlidesOutlineArtifact> | undefined;
+			error?: string;
+			systemMessage?: string;
 		};
 	},
 	// UI tools
