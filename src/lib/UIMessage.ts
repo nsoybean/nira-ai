@@ -15,7 +15,7 @@ export type MyUIMessage = UIMessage<
 			value: string;
 		};
 		slidesOutline: {
-			status: "started" | "in_progress" | "completed" | "error";
+			status: "starting" | "in_progress" | "completed" | "error";
 			content: DeepPartial<SlidesOutlineArtifact> | undefined;
 		};
 	},
@@ -34,7 +34,7 @@ export type MyUIMessage = UIMessage<
 			output: { result: string };
 		};
 		createSlidesOutline: {
-			input: SlidesOutlineArtifact;
+			input: string;
 			output: SlidesOutlineArtifactOutput;
 		};
 	}

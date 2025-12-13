@@ -42,13 +42,27 @@ import { CSS } from "@dnd-kit/utilities";
 import {
 	Chapter,
 	Slide,
-	SlidesOutlineArtifactOutput,
+	SlidesOutlineArtifact as SlidesOutlineArtifactType,
 } from "@/lib/llmTools/slidesOutline";
+import { DeepPartial } from "ai";
 
 interface SlidesOutlineArtifactProps {
 	artifactId: string;
-	initialContent: SlidesOutlineArtifactOutput["content"];
+	initialContent?: DeepPartial<SlidesOutlineArtifactType>
 	version: string;
+}
+
+// Type guard to safely check if content is fully loaded
+function isFullContent(
+	content: DeepPartial<SlidesOutlineArtifactType> | undefined
+): content is SlidesOutlineArtifactType {
+	return !!(
+		content?.outline?.pptTitle &&
+		content?.outline?.slidesCount !== undefined &&
+		content?.chapters &&
+		Array.isArray(content.chapters) &&
+		content.chapters.length > 0
+	);
 }
 
 // Sortable Slide Component
@@ -114,7 +128,7 @@ function SortableSlide({
 				{/* Slide Number - Subtle square badge */}
 				<div className="shrink-0 w-5 h-5 rounded bg-accent flex items-center justify-center mt-0.5">
 					<span className="text-[10px] font-medium text-muted-foreground">
-						{slide.slideNumber}
+						{slide.slideNumber ?? "?"}
 					</span>
 				</div>
 
@@ -122,7 +136,7 @@ function SortableSlide({
 				<div className="flex-1 min-w-0">
 					{/* Slide Title */}
 					<Input
-						value={slide.slideTitle}
+						value={slide.slideTitle ?? ""}
 						onChange={(e) => onUpdate({ slideTitle: e.target.value })}
 						className="font-medium text-sm h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent mb-1 p-2"
 						placeholder="Slide title..."
@@ -131,7 +145,7 @@ function SortableSlide({
 					{/* Slide Content */}
 					<Textarea
 						maxLength={2000}
-						value={slide.slideContent}
+						value={slide.slideContent ?? ""}
 						onChange={(e) => onUpdate({ slideContent: e.target.value })}
 						className="text-xs text-muted-foreground resize-none border-0 focus-visible:ring-0 bg-transparent p-1 leading-relaxed p-2"
 						placeholder="Slide content..."
@@ -205,7 +219,7 @@ function SortableChapter({
 		}),
 	};
 
-	const slideIds = chapter.slides.map(
+	const slideIds = (chapter.slides ?? []).map(
 		(_, idx) => `slide-${chapterIndex}-${idx}`
 	);
 
@@ -221,7 +235,7 @@ function SortableChapter({
 					<GripVerticalIcon className="size-3.5 text-muted-foreground/40" />
 				</div>
 				<Input
-					value={chapter.chapterTitle}
+					value={chapter.chapterTitle ?? ""}
 					onChange={(e) => onUpdateTitle(e.target.value)}
 					className="flex-1 font-semibold text-base h-auto px-1 py-0.5 border-0 focus-visible:ring-0 bg-transparent p-2"
 					placeholder="Chapter title..."
@@ -234,12 +248,12 @@ function SortableChapter({
 					items={slideIds}
 					strategy={verticalListSortingStrategy}
 				>
-					{chapter.slides.map((slide, slideIndex) => {
+					{(chapter.slides ?? []).map((slide, slideIndex) => {
 						const slideKey = `slide-${chapterIndex}-${slideIndex}`;
 						return (
 							<SortableSlide
 								key={slideKey}
-								slide={slide}
+								slide={slide as Slide}
 								chapterIndex={chapterIndex}
 								slideIndex={slideIndex}
 								onUpdate={(updates) => onUpdateSlide(slideIndex, updates)}
@@ -260,7 +274,8 @@ export function SlidesOutlineArtifact({
 	initialContent,
 	version,
 }: SlidesOutlineArtifactProps) {
-	const [content, setContent] = useState(initialContent);
+	const [content, setContent] = useState<DeepPartial<SlidesOutlineArtifactType> | undefined>(initialContent);
+	const [isLoading, setIsLoading] = useState(!initialContent);
 	const [isSaving, setIsSaving] = useState(false);
 	const [hasChanges, setHasChanges] = useState(false);
 	const [activeId, setActiveId] = useState<string | null>(null);
@@ -278,14 +293,24 @@ export function SlidesOutlineArtifact({
 		})
 	);
 
+	// Sync content when initialContent changes (for streaming updates)
+	useEffect(() => {
+		if (initialContent) {
+			setContent(initialContent);
+		}
+	}, [initialContent]);
+
 	// Fetch latest version on mount (handles page refresh)
 	useEffect(() => {
 		async function fetchLatest() {
+			if (!artifactId) {
+				return;
+			}
+
+			// Only set loading if we don't have initial content
+			if (!initialContent) setIsLoading(true);
+
 			try {
-				if (!artifactId) {
-					console.log("skipping");
-					return;
-				}
 				const res = await fetch(`/api/artifacts/${artifactId}`);
 				if (res.ok) {
 					const artifact = await res.json();
@@ -293,10 +318,12 @@ export function SlidesOutlineArtifact({
 				}
 			} catch (error) {
 				console.error("Failed to fetch latest artifact:", error);
+			} finally {
+				setIsLoading(false);
 			}
 		}
 		fetchLatest();
-	}, [artifactId]);
+	}, [artifactId, initialContent]);
 
 	const handleSave = async () => {
 		setIsSaving(true);
@@ -321,29 +348,39 @@ export function SlidesOutlineArtifact({
 
 	const updateContent = (
 		updater: (
-			prev: SlidesOutlineArtifactOutput["content"]
-		) => SlidesOutlineArtifactOutput["content"]
+			prev: DeepPartial<SlidesOutlineArtifactType> | undefined
+		) => DeepPartial<SlidesOutlineArtifactType> | undefined
 	) => {
-		setContent(updater);
+		setContent((prev) => {
+			if (!prev) return prev;
+			return updater(prev);
+		});
 		setHasChanges(true);
 	};
 
 	// Update title
 	const updateTitle = (newTitle: string) => {
-		updateContent((prev) => ({
-			...prev,
-			outline: { ...prev.outline, pptTitle: newTitle },
-		}));
+		updateContent((prev) => {
+			if (!prev?.outline) return prev;
+			return {
+				...prev,
+				outline: { ...prev.outline, pptTitle: newTitle },
+			};
+		});
 	};
 
 	// Update chapter title
 	const updateChapterTitle = (chapterIndex: number, newTitle: string) => {
-		updateContent((prev) => ({
-			...prev,
-			chapters: prev.chapters.map((chapter, i) =>
-				i === chapterIndex ? { ...chapter, chapterTitle: newTitle } : chapter
-			),
-		}));
+		updateContent((prev) => {
+			if (!prev?.chapters || !Array.isArray(prev.chapters)) return prev;
+
+			return {
+				...prev,
+				chapters: prev.chapters.map((chapter, i) =>
+					i === chapterIndex && chapter ? { ...chapter, chapterTitle: newTitle } : chapter
+				),
+			};
+		});
 	};
 
 	// Update slide
@@ -356,25 +393,30 @@ export function SlidesOutlineArtifact({
 		const slideKey = `slide-${chapterIndex}-${slideIndex}`;
 		setEditedSlides((prev) => new Set(prev).add(slideKey));
 
-		updateContent((prev) => ({
-			...prev,
-			chapters: prev.chapters.map((chapter, cIdx) =>
-				cIdx === chapterIndex
-					? {
-						...chapter,
-						slides: chapter.slides.map((slide, sIdx) =>
-							sIdx === slideIndex ? { ...slide, ...updates } : slide
-						),
-					}
-					: chapter
-			),
-		}));
+		updateContent((prev) => {
+			if (!prev || !prev.chapters || !Array.isArray(prev.chapters)) return prev;
+			return {
+				...prev,
+				chapters: prev.chapters.map((chapter, cIdx) =>
+					cIdx === chapterIndex && chapter?.slides && Array.isArray(chapter.slides)
+						? {
+							...chapter,
+							slides: chapter.slides.map((slide, sIdx) =>
+								sIdx === slideIndex && slide ? { ...slide, ...updates } : slide
+							),
+						}
+						: chapter
+				),
+			};
+		});
 	};
 
 	// Add new slide
 	const addSlide = (chapterIndex: number, afterIndex?: number) => {
 		updateContent((prev) => {
-			const newSlideNumber = prev.outline.slidesCount + 1;
+			if (!prev || !prev.outline || !prev.chapters || !Array.isArray(prev.chapters)) return prev;
+
+			const newSlideNumber = (prev.outline.slidesCount ?? 0) + 1;
 			const newSlide: Slide = {
 				slideNumber: newSlideNumber,
 				slideTitle: "New Slide",
@@ -383,7 +425,7 @@ export function SlidesOutlineArtifact({
 			};
 
 			const chapters = prev.chapters.map((chapter, cIdx) => {
-				if (cIdx === chapterIndex) {
+				if (cIdx === chapterIndex && chapter?.slides && Array.isArray(chapter.slides)) {
 					const slides = [...chapter.slides];
 					const insertIndex =
 						afterIndex !== undefined ? afterIndex + 1 : slides.length;
@@ -396,9 +438,13 @@ export function SlidesOutlineArtifact({
 			// Renumber all slides
 			let counter = 1;
 			chapters.forEach((chapter) => {
-				chapter.slides.forEach((slide) => {
-					slide.slideNumber = counter++;
-				});
+				if (chapter?.slides && Array.isArray(chapter.slides)) {
+					chapter.slides.forEach((slide) => {
+						if (slide && typeof slide === 'object') {
+							slide.slideNumber = counter++;
+						}
+					});
+				}
 			});
 
 			return {
@@ -412,9 +458,11 @@ export function SlidesOutlineArtifact({
 	// Delete slide
 	const deleteSlide = (chapterIndex: number, slideIndex: number) => {
 		updateContent((prev) => {
+			if (!prev || !prev.chapters || !prev.outline || !Array.isArray(prev.chapters)) return prev;
+
 			const chapters = prev.chapters
 				.map((chapter, cIdx) => {
-					if (cIdx === chapterIndex) {
+					if (cIdx === chapterIndex && chapter?.slides && Array.isArray(chapter.slides)) {
 						return {
 							...chapter,
 							slides: chapter.slides.filter((_, sIdx) => sIdx !== slideIndex),
@@ -422,14 +470,18 @@ export function SlidesOutlineArtifact({
 					}
 					return chapter;
 				})
-				.filter((chapter) => chapter.slides.length > 0); // Remove empty chapters
+				.filter((chapter) => chapter?.slides && Array.isArray(chapter.slides) && chapter.slides.length > 0); // Remove empty chapters
 
 			// Renumber all slides
 			let counter = 1;
 			chapters.forEach((chapter) => {
-				chapter.slides.forEach((slide) => {
-					slide.slideNumber = counter++;
-				});
+				if (chapter?.slides && Array.isArray(chapter.slides)) {
+					chapter.slides.forEach((slide) => {
+						if (slide && typeof slide === 'object') {
+							slide.slideNumber = counter++;
+						}
+					});
+				}
 			});
 
 			return {
@@ -471,19 +523,25 @@ export function SlidesOutlineArtifact({
 			console.log("[DnD] Reordering chapters:", { oldIndex, newIndex });
 
 			updateContent((prev) => {
+				if (!prev || !prev.chapters || !prev.outline || !Array.isArray(prev.chapters)) return prev;
+
 				const chapters = arrayMove([...prev.chapters], oldIndex, newIndex);
 
 				// Renumber all slides
 				let counter = 1;
 				chapters.forEach((chapter) => {
-					chapter.slides.forEach((slide) => {
-						slide.slideNumber = counter++;
-					});
+					if (chapter?.slides && Array.isArray(chapter.slides)) {
+						chapter.slides.forEach((slide: any) => {
+							if (slide && typeof slide === 'object') {
+								slide.slideNumber = counter++;
+							}
+						});
+					}
 				});
 
 				console.log(
 					"[DnD] Chapters reordered, new order:",
-					chapters.map((c) => c.chapterTitle)
+					chapters.map((c) => c?.chapterTitle)
 				);
 
 				return {
@@ -509,11 +567,17 @@ export function SlidesOutlineArtifact({
 			if (activeChapter === overChapter) {
 				// Same chapter - use arrayMove
 				updateContent((prev) => {
+					if (!prev || !prev.chapters || !prev.outline || !Array.isArray(prev.chapters)) return prev;
+
 					const chapters = [...prev.chapters];
+					const targetChapter = chapters[activeChapter];
+
+					if (!targetChapter?.slides || !Array.isArray(targetChapter.slides)) return prev;
+
 					chapters[activeChapter] = {
-						...chapters[activeChapter],
+						...targetChapter,
 						slides: arrayMove(
-							[...chapters[activeChapter].slides],
+							[...targetChapter.slides],
 							activeSlide,
 							overSlide
 						),
@@ -522,14 +586,18 @@ export function SlidesOutlineArtifact({
 					// Renumber all slides
 					let counter = 1;
 					chapters.forEach((chapter) => {
-						chapter.slides.forEach((slide) => {
-							slide.slideNumber = counter++;
-						});
+						if (chapter?.slides && Array.isArray(chapter.slides)) {
+							chapter.slides.forEach((slide: any) => {
+								if (slide && typeof slide === 'object') {
+									slide.slideNumber = counter++;
+								}
+							});
+						}
 					});
 
 					console.log(
 						"[DnD] Slides reordered, new slide order:",
-						chapters[activeChapter].slides.map((s) => s.slideTitle)
+						chapters[activeChapter]?.slides?.map((s: any) => s?.slideTitle)
 					);
 
 					return {
@@ -542,6 +610,70 @@ export function SlidesOutlineArtifact({
 		}
 	};
 
+	// Show loading state if fetching from DB
+	if (isLoading && !content) {
+		return (
+			<Artifact className="max-w-4xl">
+				<ArtifactContent className="flex items-center justify-center py-8">
+					<div className="text-muted-foreground">Loading artifact...</div>
+				</ArtifactContent>
+			</Artifact>
+		);
+	}
+
+	// Show error if no content after loading
+	if (!content) {
+		return (
+			<Artifact className="max-w-4xl">
+				<ArtifactContent className="flex items-center justify-center py-8">
+					<div className="text-destructive">Failed to load artifact</div>
+				</ArtifactContent>
+			</Artifact>
+		);
+	}
+
+	// Show streaming placeholder for partial content
+	if (!isFullContent(content)) {
+		return (
+			<Artifact className="max-w-4xl">
+				<ArtifactHeader>
+					<div className="flex items-center gap-4 flex-1">
+						<NotepadText className="size-4 text-muted-foreground" />
+						<div className="flex flex-col flex-1">
+							<div className="font-semibold text-base text-muted-foreground animate-pulse">
+								{content?.outline?.pptTitle || "Generating outline..."}
+							</div>
+							<ArtifactDescription>
+								Streaming content...
+							</ArtifactDescription>
+						</div>
+					</div>
+				</ArtifactHeader>
+				<ArtifactContent className="space-y-4">
+					<div className="text-sm text-muted-foreground animate-pulse">
+						Receiving slides outline from AI...
+					</div>
+					{content?.chapters && content.chapters.length > 0 && (
+						<div className="space-y-2">
+							{content.chapters.map((chapter, idx) => (
+								<div key={idx} className="p-2 border rounded-md">
+									<div className="font-medium">
+										{chapter?.chapterTitle || "Loading chapter..."}
+									</div>
+									{chapter?.slides && chapter.slides.length > 0 && (
+										<div className="text-xs text-muted-foreground mt-1">
+											{chapter.slides.length} slide{chapter.slides.length > 1 ? "s" : ""}
+										</div>
+									)}
+								</div>
+							))}
+						</div>
+					)}
+				</ArtifactContent>
+			</Artifact>
+		);
+	}
+
 	return (
 		<Artifact className="max-w-4xl">
 			<ArtifactHeader>
@@ -549,15 +681,15 @@ export function SlidesOutlineArtifact({
 					<NotepadText className="size-4 text-muted-foreground" />
 					<div className="flex flex-col flex-1">
 						<Input
-							value={content?.outline.pptTitle}
+							value={content.outline?.pptTitle ?? ""}
 							onChange={(e) => updateTitle(e.target.value)}
 							className="font-semibold text-base h-auto px-0 py-0 border-0 focus-visible:ring-0 bg-transparent mb-1 w-[90%]"
 						/>
 						<ArtifactDescription>
-							{content?.outline.slidesCount} slide
-							{content?.outline.slidesCount > 1 ? "s" : ""} •{" "}
-							{content?.chapters.length} chapter
-							{content?.chapters.length > 1 ? "s" : ""}
+							{content.outline?.slidesCount ?? 0} slide
+							{(content.outline?.slidesCount ?? 0) > 1 ? "s" : ""} •{" "}
+							{content.chapters?.length ?? 0} chapter
+							{(content.chapters?.length ?? 0) > 1 ? "s" : ""}
 						</ArtifactDescription>
 					</div>
 				</div>
@@ -594,29 +726,31 @@ export function SlidesOutlineArtifact({
 					onDragEnd={handleDragEnd}
 				>
 					<SortableContext
-						items={content?.chapters.map((_, idx) => `chapter-${idx}`)}
+						items={(content.chapters ?? []).map((_, idx) => `chapter-${idx}`)}
 						strategy={verticalListSortingStrategy}
 					>
 						<div className="space-y-0">
-							{content?.chapters.map((chapter, chapterIndex) => (
-								<SortableChapter
-									key={`chapter-${chapterIndex}`}
-									chapter={chapter}
-									chapterIndex={chapterIndex}
-									onUpdateTitle={(title) =>
-										updateChapterTitle(chapterIndex, title)
-									}
-									onUpdateSlide={(slideIndex, updates) =>
-										updateSlide(chapterIndex, slideIndex, updates)
-									}
-									onAddSlide={(afterIndex) =>
-										addSlide(chapterIndex, afterIndex)
-									}
-									onDeleteSlide={(slideIndex) =>
-										deleteSlide(chapterIndex, slideIndex)
-									}
-									editedSlides={editedSlides}
-								/>
+							{(content.chapters ?? []).map((chapter, chapterIndex) => (
+								chapter && (
+									<SortableChapter
+										key={`chapter-${chapterIndex}`}
+										chapter={chapter as Chapter}
+										chapterIndex={chapterIndex}
+										onUpdateTitle={(title) =>
+											updateChapterTitle(chapterIndex, title)
+										}
+										onUpdateSlide={(slideIndex, updates) =>
+											updateSlide(chapterIndex, slideIndex, updates)
+										}
+										onAddSlide={(afterIndex) =>
+											addSlide(chapterIndex, afterIndex)
+										}
+										onDeleteSlide={(slideIndex) =>
+											deleteSlide(chapterIndex, slideIndex)
+										}
+										editedSlides={editedSlides}
+									/>
+								)
 							))}
 						</div>
 					</SortableContext>

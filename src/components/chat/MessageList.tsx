@@ -38,15 +38,27 @@ import {
 	SourcesContent,
 	SourcesTrigger,
 } from "../ai-elements/sources";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
 import { Image } from "../ai-elements/image";
 import { SlidesOutlineArtifact } from "../artifacts/SlidesOutlineArtifact";
 import { MyUIMessage } from "@/lib/UIMessage";
+import { Shimmer } from "../ai-elements/shimmer";
+
+// Helper function to parse artifact XML output
+function parseArtifactXML(
+	xmlString: string
+): { id: string; version: string } | null {
+	try {
+		const idMatch = xmlString.match(/id="([^"]+)"/);
+		const versionMatch = xmlString.match(/version="([^"]+)"/);
+
+		if (idMatch && versionMatch) {
+			return { id: idMatch[1], version: versionMatch[1] };
+		}
+	} catch (error) {
+		console.error("Failed to parse artifact XML:", error);
+	}
+	return null;
+}
 
 interface MessageListProps {
 	messages: MyUIMessage[];
@@ -69,7 +81,6 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 				setCopiedMessageId(null);
 			}, 2000);
 		};
-
 
 		return (
 			<Conversation>
@@ -359,33 +370,55 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 											)
 										);
 
+									// rendering data parts: https://ai-sdk.dev/docs/ai-sdk-ui/streaming-data#rendering-persistent-data-parts
+									// note: ephemeral data parts, not stored in message.parts, simply for streaming
+									case "data-slidesOutline":
+										const artifact = part.data;
+										switch (artifact.status) {
+											case "starting":
+												return (
+													<div
+														key={`artifact-loading-${part.id}-${msgIndex}`}
+														className="mt-2 mb-10 text-muted-foreground"
+													>
+														<Shimmer>
+															Starting slides generation...
+														</Shimmer>
+													</div>
+												);
 
+											case "in_progress":
+												return (
+													<div
+														key={`artifact-streaming-${part.id}-${msgIndex}`}
+														className="mt-2 mb-10"
+													>
+														<SlidesOutlineArtifact
+															artifactId={part.id ?? "unknown"}
+															initialContent={artifact.content}
+															version="1"
+														/>
+													</div>
+												);
 
-									case 'data-slidesOutline':
-										const artifact = part.data
-										if (artifact.status === 'in_progress') {
-											return <> wa some data coming in</>
+											default:
+												return null;
 										}
-										break
 
 									case "tool-createSlidesOutline":
-										if (part.type === "tool-createSlidesOutline") {
-											const artifact = part.output;
-
-											if (artifact) {
-												// return (
-												// 	<div key={`artifact-${artifact.artifactId}-${msgIndex}`} className="mt-2 mb-10">
-												// 		<SlidesOutlineArtifact
-												// 			key={`artifact-${artifact.artifactId}-${msgIndex}`}
-												// 			artifactId={artifact.artifactId}
-												// 			initialContent={artifact.content}
-												// 			version={artifact.version}
-												// 		/>
-												// 	</div>
-												// );
-											}
+										if (part.state === "output-available" && part.output) {
+											return (
+												<div
+													key={`artifact-${part.output.artifactId}-${msgIndex}`}
+													className="mt-2 mb-10"
+												>
+													<SlidesOutlineArtifact
+														artifactId={part.output.artifactId}
+														version={part.output.version}
+													/>
+												</div>
+											);
 										}
-										return null;
 
 									default:
 										return null;

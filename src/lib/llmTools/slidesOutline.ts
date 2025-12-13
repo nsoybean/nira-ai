@@ -93,9 +93,8 @@ export type SlidesOutlineArtifact = z.infer<typeof slidesOutlineArtifactSchema>;
 
 export const slidesOutlineArtifactOutputSchema = z.object({
 	artifactId: z.string(),
-	type: z.string(),
+	type: z.literal("slidesOutline"),
 	version: z.string(),
-	content: slidesOutlineArtifactSchema,
 });
 export type SlidesOutlineArtifactOutput = z.infer<
 	typeof slidesOutlineArtifactOutputSchema
@@ -152,7 +151,7 @@ export const createSlidesOutlineTool = (options: {
 	tool({
 		description: `Create a structured presentation outline with chapters and slides. Use this when the user requests a PowerPoint presentation or slide deck.`,
 		inputSchema: z.object({}),
-		outputSchema: z.string(),
+		outputSchema: slidesOutlineArtifactOutputSchema,
 		execute: async (_, { messages }) => {
 			const { conversationId, messageId, userId, writer } = options;
 			const outlineId = createIdGenerator({
@@ -160,10 +159,20 @@ export const createSlidesOutlineTool = (options: {
 				size: 16,
 			})();
 
+			writer.write({
+				type: "data-slidesOutline",
+				id: outlineId,
+				data: {
+					status: "starting",
+					content: undefined,
+				},
+			});
+
 			// stream object
 			const { partialObjectStream } = streamObject({
 				schema: slidesOutlineArtifactSchema,
-				model: `anthropic/claude-haiku-4-5`,
+				// model: `anthropic/claude-haiku-4-5`,
+				model: `anthropic/claude-sonnet-4-5`,
 				messages: [
 					{
 						role: "system",
@@ -198,7 +207,6 @@ Requirements:
 						},
 					});
 
-					console.log(partialObject);
 					finalObject = partialObject; // Capture the last/complete object
 				}
 
@@ -213,7 +221,7 @@ Requirements:
 						conversationId,
 						messageId,
 						userId: userId || null,
-						type: "artifact_type_slides_outline",
+						type: "slidesOutline",
 						content: finalObject as any,
 						version: "1",
 					},
@@ -232,8 +240,14 @@ Requirements:
 					`[slidesOutlineTool] Created artifact ${artifact.id} for message ${messageId}`
 				);
 
-				// Return artifact with ID for frontend reference
-				return `<created_slides_outline id="${artifact.id}" version="1"/>`;
+				// Return artifact with ID as tool output
+				// is string better?
+				// return `<created_slides_outline id="${artifact.id}" version="1"/>`;
+				return {
+					artifactId: artifact.id,
+					type: "slidesOutline",
+					version: "1",
+				};
 			} catch (error) {
 				console.error("[slidesOutlineTool] Error:", error);
 
