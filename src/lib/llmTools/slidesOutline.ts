@@ -142,16 +142,6 @@ export const createSlidesOutlineTool = (options: {
 }) =>
 	tool({
 		description: `Create a presentation outline by invoking a specialized planning agent. Use this when the user requests a PowerPoint/slide deck/create slides. Editable outline will be shown to the user via a UI, hence do not repeat the entire outline back to the user in text form.`,
-		// 		description: `Invoke a specialized AI agent to create a structured presentation outline with chapters and slides.
-
-		// This tool delegates to a presentation planning agent that analyzes the conversation context to generate:
-		// - Logical chapters/sections
-		// - Individual slides with appropriate types (title, text, bullets, image, chart)
-		// - Sequential slide numbering and metadata
-
-		// The outline is streamed to the UI for user review before final PowerPoint generation. Use this when the user requests a PowerPoint presentation, slide deck, or asks to create slides.
-
-		// Note: This tool uses conversation context (no explicit parameters needed).`,
 		inputSchema: z.object({}),
 		outputSchema: slidesOutlineArtifactOutputSchema,
 		execute: async (_, { messages }) => {
