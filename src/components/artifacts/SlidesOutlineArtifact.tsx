@@ -36,7 +36,6 @@ import {
 	DragOverlay,
 	Modifier,
 	DropAnimation,
-	defaultDropAnimationSideEffects,
 } from "@dnd-kit/core";
 import {
 	arrayMove,
@@ -101,7 +100,11 @@ function SortableSlide({
 		transition,
 		isDragging,
 		active,
-	} = useSortable({ id: `slide-${chapterIndex}-${slideIndex}` });
+	} = useSortable({
+		id: `slide-${chapterIndex}-${slideIndex}`,
+		// Use a stable identifier for React reconciliation
+		animateLayoutChanges: () => false, // Disable layout animations to prevent flicker
+	});
 
 	// Check if any item is being dragged (not just this one)
 	const isAnyDragging = active !== null;
@@ -124,10 +127,13 @@ function SortableSlide({
 	}, [isCollapsing]);
 
 	const style: React.CSSProperties = {
-		transform: CSS.Transform.toString(transform),
-		transition,
+		// Only apply transform when not dragging (let DragOverlay handle it while dragging)
+		transform: isDragging ? undefined : CSS.Transform.toString(transform),
+		// Apply transition for smooth reordering of other items
+		transition: transition || undefined,
 		// Hide the original element when dragging (DragOverlay shows instead)
-		visibility: isDragging ? 'hidden' : 'visible',
+		// Use opacity instead of visibility to prevent flicker during drop animation
+		opacity: isDragging ? 0 : 1,
 	};
 
 	return (
@@ -136,7 +142,6 @@ function SortableSlide({
 			style={style}
 			className={cn(
 				"group relative w-full min-w-0",
-				isDragging && "opacity-40",
 				// Add padding right to extend the drop zone
 				"pr-4"
 			)}
@@ -275,10 +280,13 @@ function SortableChapter({
 	}, [isCollapsing]);
 
 	const style: React.CSSProperties = {
-		transform: CSS.Transform.toString(transform),
-		transition,
+		// Only apply transform when not dragging (let DragOverlay handle it while dragging)
+		transform: isDragging ? undefined : CSS.Transform.toString(transform),
+		// Apply transition for smooth reordering of other items
+		transition: transition || undefined,
 		// Hide the original element when dragging (DragOverlay shows instead)
-		visibility: isDragging ? 'hidden' : 'visible',
+		// Keep it hidden if ANY item is being dragged to prevent flicker during drop animation
+		opacity: isDragging ? 0 : 1,
 	};
 
 	const slideIds = (chapter.slides ?? []).map(
@@ -339,11 +347,14 @@ function SortableChapter({
 						strategy={verticalListSortingStrategy}
 					>
 						{(chapter.slides ?? []).map((slide, slideIndex) => {
+							const typedSlide = slide as Slide;
 							const slideKey = `slide-${chapterIndex}-${slideIndex}`;
+							// Use slide title as stable React key to prevent component re-mounting
+							const reactKey = `${typedSlide.slideTitle}-${slideIndex}`;
 							return (
 								<SortableSlide
-									key={slideKey}
-									slide={slide as Slide}
+									key={reactKey}
+									slide={typedSlide}
 									chapterIndex={chapterIndex}
 									slideIndex={slideIndex}
 									onUpdate={(updates) => onUpdateSlide(slideIndex, updates)}
@@ -380,18 +391,10 @@ export function SlidesOutlineArtifact({
 		};
 	};
 
-	// Drop animation configuration - this is the key to preventing flicker
-	const dropAnimationConfig: DropAnimation = {
-		sideEffects: defaultDropAnimationSideEffects({
-			styles: {
-				active: {
-					opacity: '0.4',
-				},
-			},
-		}),
-		duration: 200,
-		easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-	};
+	// Drop animation configuration - disable to prevent backward animation
+	// The issue: DragOverlay animates to the ORIGINAL position, not the NEW position
+	// Solution: Disable drop animation and let the sortable transition handle it
+	const dropAnimationConfig: DropAnimation | null = null;
 
 	// Set up sensors for drag and drop
 	const sensors = useSensors(
@@ -519,7 +522,7 @@ export function SlidesOutlineArtifact({
 		slideIndex: number,
 		updates: Partial<Slide>
 	) => {
-		// Mark this slide as edited
+		// Mark this slide as edited using position-based key
 		const slideKey = `slide-${chapterIndex}-${slideIndex}`;
 		setEditedSlides((prev) => new Set(prev).add(slideKey));
 
@@ -639,8 +642,9 @@ export function SlidesOutlineArtifact({
 			isSame: active.id === over?.id,
 		});
 
+		// If no valid drop target or dropped in same position
 		if (!over || active.id === over.id) {
-			// Clear drag state immediately - no actual move happened
+			// Clear immediately - no reordering happened
 			setActiveId(null);
 			return;
 		}
@@ -742,7 +746,7 @@ export function SlidesOutlineArtifact({
 			}
 		}
 
-		// Clear drag state after handling the move - dropAnimation handles the visual transition
+		// Clear activeId immediately - the DragOverlay will handle the drop animation
 		setActiveId(null);
 	};
 
