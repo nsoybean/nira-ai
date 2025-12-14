@@ -97,7 +97,7 @@ export const slidesOutlineArtifactOutputSchema = z.object({
 	type: z.literal("slidesOutline"),
 	version: z.string(),
 	error: z.string(),
-	systemMessage: z.string(),
+	message: z.string(),
 	content: slidesOutlineArtifactSchema.optional(),
 });
 export type SlidesOutlineArtifactOutput = z.infer<
@@ -283,7 +283,7 @@ Editable outline will be shown to the user via a UI, hence do not repeat the ent
 					type: "slidesOutline" as const,
 					version: "1",
 					error: "",
-					systemMessage: `Created slides outline. Simply acknowledge the creation of outline.`,
+					message: `Created slides outline. Simply acknowledge the creation of outline.`,
 				};
 			} catch (error) {
 				logger.error("Failed to create artifact", undefined, error as Error);
@@ -305,7 +305,7 @@ Editable outline will be shown to the user via a UI, hence do not repeat the ent
 					type: "slidesOutline" as const,
 					version: "1",
 					error: error instanceof Error ? error.message : "Unknown error",
-					systemMessage: `Failed to create slides outline: ${error instanceof Error ? error.message : "Unknown error"}`,
+					message: `Failed to create slides outline: ${error instanceof Error ? error.message : "Unknown error"}`,
 				};
 			}
 		},
