@@ -327,8 +327,6 @@ Editable outline will be shown to the user via a UI, hence do not repeat the ent
 			try {
 				const repairedJson = jsonrepair(accumulatedInput);
 				const parsed = JSON.parse(repairedJson);
-
-				// Use safeParsePartialOutline to extract as much valid data as possible
 				const partialContent = safeParsePartialOutline(parsed);
 
 				logger.debug("Streaming partial content", {

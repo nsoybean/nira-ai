@@ -1,5 +1,6 @@
 "use client";
 
+import { FileMdIcon } from "@phosphor-icons/react";
 import { ChatStatus, UIMessage } from "ai";
 import {
 	Loader2,
@@ -12,6 +13,8 @@ import {
 	ChevronDownIcon,
 	XIcon,
 	BrainIcon,
+	FileTextIcon,
+	DownloadIcon,
 } from "lucide-react";
 import { forwardRef, useState } from "react";
 import {
@@ -40,6 +43,9 @@ import {
 } from "../ai-elements/sources";
 import { Image } from "../ai-elements/image";
 import { SlidesOutlineArtifact } from "../artifacts/SlidesOutlineArtifact";
+import { MarkdownArtifact } from "../artifacts/MarkdownArtifact";
+import { StreamingTextArtifact } from "../artifacts/StreamingTextArtifact";
+import { ArtifactAction } from "../ai-elements/artifact";
 import { MyUIMessage } from "@/lib/UIMessage";
 import { Shimmer } from "../ai-elements/shimmer";
 
@@ -381,9 +387,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 														key={`artifact-loading-${part.id}-${msgIndex}`}
 														className="mt-2 mb-10 text-muted-foreground"
 													>
-														<Shimmer>
-															Generating slide outline ...
-														</Shimmer>
+														<Shimmer>Generating slide outline ...</Shimmer>
 													</div>
 												);
 
@@ -419,6 +423,109 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 												</div>
 											);
 										}
+
+									case "data-markdown":
+										if (part.type === "data-markdown") {
+											const markdownArtifact = part.data;
+											switch (markdownArtifact.status) {
+												case "starting":
+													return (
+														<div
+															key={`artifact-loading-${part.id}-${msgIndex}`}
+															className="mt-2 mb-10 text-muted-foreground"
+														>
+															<Shimmer>Generating markdown document...</Shimmer>
+
+														</div>
+													);
+
+												case "in_progress":
+												case 'completed':
+													return (
+														<div
+															key={`markdown-streaming-${part.id}-${msgIndex}`}
+															className="mt-2 mb-10 max-w-[80%]"
+														>
+															<StreamingTextArtifact
+																icon={FileMdIcon}
+																status={markdownArtifact.status === 'in_progress' ? 'streaming' : 'completed'}
+																title={part.data.content?.title || 'Creating Document...'}
+																description={part.data.content?.description}
+																content={part.data.content?.content || ''}
+																maxHeight={'200px'}
+																actions={
+																	<>
+																		<ArtifactAction
+																			icon={CopyIcon}
+																			label="Copy"
+																			onClick={() => {
+																				if (part.data.content?.content) {
+																					navigator.clipboard.writeText(part.data.content.content);
+																				}
+																			}}
+																			tooltip="Copy to clipboard"
+																		/>
+																		<ArtifactAction
+																			icon={DownloadIcon}
+																			label="Download"
+																			onClick={() => {
+																				if (part.data.content?.content) {
+																					const blob = new Blob([part.data.content.content], { type: "text/markdown" });
+																					const url = URL.createObjectURL(blob);
+																					const a = document.createElement("a");
+																					a.href = url;
+																					a.download = `${(part.data.content?.title || 'document').replace(/[^a-z0-9]/gi, "_").toLowerCase()}.md`;
+																					document.body.appendChild(a);
+																					a.click();
+																					document.body.removeChild(a);
+																					URL.revokeObjectURL(url);
+																				}
+																			}}
+																			tooltip="Download as .md file"
+																		/>
+																	</>
+																}
+															/>
+														</div>
+													);
+
+												case 'error':
+													return (
+														<div
+															key={`markdown-error-${part.id}-${msgIndex}`}
+															className="mt-2 mb-10 text-destructive"
+														>
+															Failed to generate markdown document.
+														</div>
+													);
+
+												default:
+													return null;
+											}
+										}
+										return null;
+
+									case "tool-createMarkdownFile":
+										if (
+											part.type === "tool-createMarkdownFile" &&
+											part.state === "output-available" &&
+											part.output
+										) {
+											return (
+												<div
+													key={`markdown-artifact-${part.output.artifactId}-${msgIndex}`}
+													className="mt-2 mb-10 max-w-[80%]"
+												>
+													<MarkdownArtifact
+														artifactId={part.output.artifactId}
+														version={part.output.version}
+														initialContent={part.input as any}
+													/>
+
+												</div>
+											);
+										}
+										return null;
 
 									default:
 										return null;

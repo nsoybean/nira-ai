@@ -2,7 +2,11 @@ import { DeepPartial, UIMessage } from "ai";
 import {
 	SlidesOutlineArtifact,
 	SlidesOutlineArtifactOutput,
-} from "./llmTools/slidesOutline";
+} from "./llmTools/createSlidesOutline";
+import {
+	MarkdownArtifact,
+	MarkdownArtifactOutput,
+} from "./llmTools/createMarkdownFile";
 
 // Define your custom message type with data part schemas
 export type MyUIMessage = UIMessage<
@@ -17,6 +21,12 @@ export type MyUIMessage = UIMessage<
 		slidesOutline: {
 			status: "starting" | "in_progress" | "completed" | "error";
 			content: DeepPartial<SlidesOutlineArtifact> | undefined;
+			error?: string;
+			message?: string;
+		};
+		markdown: {
+			status: "starting" | "in_progress" | "completed" | "error";
+			content: DeepPartial<MarkdownArtifact> | undefined;
 			error?: string;
 			message?: string;
 		};
@@ -38,6 +48,10 @@ export type MyUIMessage = UIMessage<
 		createSlidesOutline: {
 			input: string;
 			output: SlidesOutlineArtifactOutput;
+		};
+		createMarkdownFile: {
+			input: string;
+			output: MarkdownArtifactOutput;
 		};
 	}
 >;

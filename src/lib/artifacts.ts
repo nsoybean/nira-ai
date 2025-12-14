@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { SlidesOutlineArtifact } from "./llmTools/slidesOutline";
+import { SlidesOutlineArtifact } from "./llmTools/createSlidesOutline";
 import { MyUIMessage } from "./UIMessage";
 
 /**

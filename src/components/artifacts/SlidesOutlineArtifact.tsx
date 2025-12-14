@@ -49,12 +49,12 @@ import {
 	Chapter,
 	Slide,
 	SlidesOutlineArtifact as SlidesOutlineArtifactType,
-} from "@/lib/llmTools/slidesOutline";
+} from "@/lib/llmTools/createSlidesOutline";
 import { DeepPartial } from "ai";
 
 interface SlidesOutlineArtifactProps {
 	artifactId: string;
-	initialContent?: DeepPartial<SlidesOutlineArtifactType>
+	initialContent?: DeepPartial<SlidesOutlineArtifactType>;
 	version: string;
 }
 
@@ -122,8 +122,8 @@ function SortableSlide({
 	// Add global mouse up listener to catch mouse release anywhere
 	useEffect(() => {
 		if (isCollapsing) {
-			window.addEventListener('mouseup', handleMouseUp);
-			return () => window.removeEventListener('mouseup', handleMouseUp);
+			window.addEventListener("mouseup", handleMouseUp);
+			return () => window.removeEventListener("mouseup", handleMouseUp);
 		}
 	}, [isCollapsing]);
 
@@ -141,14 +141,13 @@ function SortableSlide({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={cn(
-				"relative w-full min-w-0 pl-4"
-			)}
+			className={cn("relative w-full min-w-0 pl-4")}
 			onMouseEnter={() => setIsHovered(true)}
 			onMouseLeave={() => setIsHovered(false)}
 		>
 			{/* Extended hover zone for grip icon */}
-			<div className="absolute -left-8 top-0 bottom-0 w-8"
+			<div
+				className="absolute -left-8 top-0 bottom-0 w-8"
 				onMouseEnter={() => setIsHovered(true)}
 			/>
 
@@ -207,7 +206,7 @@ function SortableSlide({
 						{isCollapsing ? (
 							<div className="bg-muted/90 rounded-md px-3 py-2 border border-border">
 								<div className="font-medium text-sm truncate">
-									{slide.slideTitle || 'Untitled Slide'}
+									{slide.slideTitle || "Untitled Slide"}
 								</div>
 							</div>
 						) : (
@@ -257,7 +256,7 @@ function SortableChapter({
 	onAddSlide,
 	onDeleteSlide,
 	editedSlides,
-	isLast
+	isLast,
 }: SortableChapterProps) {
 	const [isCollapsing, setIsCollapsing] = useState(false);
 	const [isHovered, setIsHovered] = useState(false);
@@ -286,8 +285,8 @@ function SortableChapter({
 	// Add global mouse up listener to catch mouse release anywhere
 	useEffect(() => {
 		if (isCollapsing) {
-			window.addEventListener('mouseup', handleMouseUp);
-			return () => window.removeEventListener('mouseup', handleMouseUp);
+			window.addEventListener("mouseup", handleMouseUp);
+			return () => window.removeEventListener("mouseup", handleMouseUp);
 		}
 	}, [isCollapsing]);
 
@@ -310,7 +309,8 @@ function SortableChapter({
 			ref={setNodeRef}
 			style={style}
 			className={cn(
-				"mb-3 relative w-full min-w-0", !isLast ? "pb-2 border-b" : ""
+				"mb-3 relative w-full min-w-0",
+				!isLast ? "pb-2 border-b" : ""
 			)}
 		>
 			{/* Chapter Header - More compact */}
@@ -324,7 +324,8 @@ function SortableChapter({
 				onMouseLeave={() => setIsHovered(false)}
 			>
 				{/* Extended hover zone for grip icon */}
-				<div className="absolute -left-6 top-0 bottom-0 w-6"
+				<div
+					className="absolute -left-6 top-0 bottom-0 w-6"
 					onMouseEnter={() => setIsHovered(true)}
 				/>
 				{/* Drag Handle - Positioned absolute on the left, vertically centered */}
@@ -344,7 +345,7 @@ function SortableChapter({
 				{isCollapsing ? (
 					<div className="bg-muted/90 rounded-md px-3 py-2 border border-border w-full">
 						<div className="font-semibold text-base truncate">
-							{chapter.chapterTitle || 'Untitled Chapter'}
+							{chapter.chapterTitle || "Untitled Chapter"}
 						</div>
 					</div>
 				) : (
@@ -394,7 +395,9 @@ export function SlidesOutlineArtifact({
 	initialContent,
 	version,
 }: SlidesOutlineArtifactProps) {
-	const [content, setContent] = useState<DeepPartial<SlidesOutlineArtifactType> | undefined>(initialContent);
+	const [content, setContent] = useState<
+		DeepPartial<SlidesOutlineArtifactType> | undefined
+	>(initialContent);
 	const [isLoading, setIsLoading] = useState(!initialContent);
 	const [isSaving, setIsSaving] = useState(false);
 	const [hasChanges, setHasChanges] = useState(false);
@@ -528,7 +531,9 @@ export function SlidesOutlineArtifact({
 			return {
 				...prev,
 				chapters: prev.chapters.map((chapter, i) =>
-					i === chapterIndex && chapter ? { ...chapter, chapterTitle: newTitle } : chapter
+					i === chapterIndex && chapter
+						? { ...chapter, chapterTitle: newTitle }
+						: chapter
 				),
 			};
 		});
@@ -549,11 +554,15 @@ export function SlidesOutlineArtifact({
 			return {
 				...prev,
 				chapters: prev.chapters.map((chapter, cIdx) =>
-					cIdx === chapterIndex && chapter?.slides && Array.isArray(chapter.slides)
+					cIdx === chapterIndex &&
+						chapter?.slides &&
+						Array.isArray(chapter.slides)
 						? {
 							...chapter,
 							slides: chapter.slides.map((slide, sIdx) =>
-								sIdx === slideIndex && slide ? { ...slide, ...updates } : slide
+								sIdx === slideIndex && slide
+									? { ...slide, ...updates }
+									: slide
 							),
 						}
 						: chapter
@@ -565,7 +574,13 @@ export function SlidesOutlineArtifact({
 	// Add new slide
 	const addSlide = (chapterIndex: number, afterIndex?: number) => {
 		updateContent((prev) => {
-			if (!prev || !prev.outline || !prev.chapters || !Array.isArray(prev.chapters)) return prev;
+			if (
+				!prev ||
+				!prev.outline ||
+				!prev.chapters ||
+				!Array.isArray(prev.chapters)
+			)
+				return prev;
 
 			const newSlideNumber = (prev.outline.slidesCount ?? 0) + 1;
 			const newSlide: Slide = {
@@ -576,7 +591,11 @@ export function SlidesOutlineArtifact({
 			};
 
 			const chapters = prev.chapters.map((chapter, cIdx) => {
-				if (cIdx === chapterIndex && chapter?.slides && Array.isArray(chapter.slides)) {
+				if (
+					cIdx === chapterIndex &&
+					chapter?.slides &&
+					Array.isArray(chapter.slides)
+				) {
 					const slides = [...chapter.slides];
 					const insertIndex =
 						afterIndex !== undefined ? afterIndex + 1 : slides.length;
@@ -591,7 +610,7 @@ export function SlidesOutlineArtifact({
 			chapters.forEach((chapter) => {
 				if (chapter?.slides && Array.isArray(chapter.slides)) {
 					chapter.slides.forEach((slide) => {
-						if (slide && typeof slide === 'object') {
+						if (slide && typeof slide === "object") {
 							slide.slideNumber = counter++;
 						}
 					});
@@ -609,11 +628,21 @@ export function SlidesOutlineArtifact({
 	// Delete slide
 	const deleteSlide = (chapterIndex: number, slideIndex: number) => {
 		updateContent((prev) => {
-			if (!prev || !prev.chapters || !prev.outline || !Array.isArray(prev.chapters)) return prev;
+			if (
+				!prev ||
+				!prev.chapters ||
+				!prev.outline ||
+				!Array.isArray(prev.chapters)
+			)
+				return prev;
 
 			const chapters = prev.chapters
 				.map((chapter, cIdx) => {
-					if (cIdx === chapterIndex && chapter?.slides && Array.isArray(chapter.slides)) {
+					if (
+						cIdx === chapterIndex &&
+						chapter?.slides &&
+						Array.isArray(chapter.slides)
+					) {
 						return {
 							...chapter,
 							slides: chapter.slides.filter((_, sIdx) => sIdx !== slideIndex),
@@ -621,14 +650,19 @@ export function SlidesOutlineArtifact({
 					}
 					return chapter;
 				})
-				.filter((chapter) => chapter?.slides && Array.isArray(chapter.slides) && chapter.slides.length > 0); // Remove empty chapters
+				.filter(
+					(chapter) =>
+						chapter?.slides &&
+						Array.isArray(chapter.slides) &&
+						chapter.slides.length > 0
+				); // Remove empty chapters
 
 			// Renumber all slides
 			let counter = 1;
 			chapters.forEach((chapter) => {
 				if (chapter?.slides && Array.isArray(chapter.slides)) {
 					chapter.slides.forEach((slide) => {
-						if (slide && typeof slide === 'object') {
+						if (slide && typeof slide === "object") {
 							slide.slideNumber = counter++;
 						}
 					});
@@ -678,7 +712,13 @@ export function SlidesOutlineArtifact({
 			console.log("[DnD] Reordering chapters:", { oldIndex, newIndex });
 
 			updateContent((prev) => {
-				if (!prev || !prev.chapters || !prev.outline || !Array.isArray(prev.chapters)) return prev;
+				if (
+					!prev ||
+					!prev.chapters ||
+					!prev.outline ||
+					!Array.isArray(prev.chapters)
+				)
+					return prev;
 
 				const chapters = arrayMove([...prev.chapters], oldIndex, newIndex);
 
@@ -687,7 +727,7 @@ export function SlidesOutlineArtifact({
 				chapters.forEach((chapter) => {
 					if (chapter?.slides && Array.isArray(chapter.slides)) {
 						chapter.slides.forEach((slide: any) => {
-							if (slide && typeof slide === 'object') {
+							if (slide && typeof slide === "object") {
 								slide.slideNumber = counter++;
 							}
 						});
@@ -722,12 +762,19 @@ export function SlidesOutlineArtifact({
 			if (activeChapter === overChapter) {
 				// Same chapter - use arrayMove
 				updateContent((prev) => {
-					if (!prev || !prev.chapters || !prev.outline || !Array.isArray(prev.chapters)) return prev;
+					if (
+						!prev ||
+						!prev.chapters ||
+						!prev.outline ||
+						!Array.isArray(prev.chapters)
+					)
+						return prev;
 
 					const chapters = [...prev.chapters];
 					const targetChapter = chapters[activeChapter];
 
-					if (!targetChapter?.slides || !Array.isArray(targetChapter.slides)) return prev;
+					if (!targetChapter?.slides || !Array.isArray(targetChapter.slides))
+						return prev;
 
 					chapters[activeChapter] = {
 						...targetChapter,
@@ -743,7 +790,7 @@ export function SlidesOutlineArtifact({
 					chapters.forEach((chapter) => {
 						if (chapter?.slides && Array.isArray(chapter.slides)) {
 							chapter.slides.forEach((slide: any) => {
-								if (slide && typeof slide === 'object') {
+								if (slide && typeof slide === "object") {
 									slide.slideNumber = counter++;
 								}
 							});
@@ -769,24 +816,30 @@ export function SlidesOutlineArtifact({
 	};
 
 	// Derive dragged item info from activeId to avoid redundant state
-	const draggedItem = activeId ? (() => {
-		if (activeId.startsWith('chapter-')) {
-			const chapterIndex = parseInt(activeId.split('-')[1]);
-			const chapter = content?.chapters?.[chapterIndex];
-			return chapter ? {
-				type: 'chapter' as const,
-				title: (chapter as Chapter).chapterTitle || 'Untitled Chapter',
-			} : null;
-		} else if (activeId.startsWith('slide-')) {
-			const [, chapterIdx, slideIdx] = activeId.split('-').map(Number);
-			const slide = content?.chapters?.[chapterIdx]?.slides?.[slideIdx];
-			return slide ? {
-				type: 'slide' as const,
-				title: (slide as Slide).slideTitle || 'Untitled Slide',
-			} : null;
-		}
-		return null;
-	})() : null;
+	const draggedItem = activeId
+		? (() => {
+			if (activeId.startsWith("chapter-")) {
+				const chapterIndex = parseInt(activeId.split("-")[1]);
+				const chapter = content?.chapters?.[chapterIndex];
+				return chapter
+					? {
+						type: "chapter" as const,
+						title: (chapter as Chapter).chapterTitle || "Untitled Chapter",
+					}
+					: null;
+			} else if (activeId.startsWith("slide-")) {
+				const [, chapterIdx, slideIdx] = activeId.split("-").map(Number);
+				const slide = content?.chapters?.[chapterIdx]?.slides?.[slideIdx];
+				return slide
+					? {
+						type: "slide" as const,
+						title: (slide as Slide).slideTitle || "Untitled Slide",
+					}
+					: null;
+			}
+			return null;
+		})()
+		: null;
 
 	// Show loading state if fetching from DB
 	if (isLoading && !content) {
@@ -821,9 +874,7 @@ export function SlidesOutlineArtifact({
 							<div className="font-semibold text-base text-muted-foreground animate-pulse">
 								{content?.outline?.pptTitle || "Generating outline..."}
 							</div>
-							<ArtifactDescription>
-								Streaming content...
-							</ArtifactDescription>
+							<ArtifactDescription>Streaming content...</ArtifactDescription>
 						</div>
 					</div>
 				</ArtifactHeader>
@@ -840,7 +891,8 @@ export function SlidesOutlineArtifact({
 									</div>
 									{chapter?.slides && chapter.slides.length > 0 && (
 										<div className="text-xs text-muted-foreground mt-1">
-											{chapter.slides.length} slide{chapter.slides.length > 1 ? "s" : ""}
+											{chapter.slides.length} slide
+											{chapter.slides.length > 1 ? "s" : ""}
 										</div>
 									)}
 								</div>
@@ -909,29 +961,32 @@ export function SlidesOutlineArtifact({
 						strategy={verticalListSortingStrategy}
 					>
 						<div className="space-y-0 w-full">
-							{(content.chapters ?? []).map((chapter, chapterIndex) => (
-								chapter && (
-									<SortableChapter
-										key={`chapter-${chapterIndex}`}
-										chapter={chapter as Chapter}
-										chapterIndex={chapterIndex}
-										onUpdateTitle={(title) =>
-											updateChapterTitle(chapterIndex, title)
-										}
-										onUpdateSlide={(slideIndex, updates) =>
-											updateSlide(chapterIndex, slideIndex, updates)
-										}
-										onAddSlide={(afterIndex) =>
-											addSlide(chapterIndex, afterIndex)
-										}
-										onDeleteSlide={(slideIndex) =>
-											deleteSlide(chapterIndex, slideIndex)
-										}
-										editedSlides={editedSlides}
-										isLast={chapterIndex === (content.chapters?.length ?? 0) - 1}
-									/>
-								)
-							))}
+							{(content.chapters ?? []).map(
+								(chapter, chapterIndex) =>
+									chapter && (
+										<SortableChapter
+											key={`chapter-${chapterIndex}`}
+											chapter={chapter as Chapter}
+											chapterIndex={chapterIndex}
+											onUpdateTitle={(title) =>
+												updateChapterTitle(chapterIndex, title)
+											}
+											onUpdateSlide={(slideIndex, updates) =>
+												updateSlide(chapterIndex, slideIndex, updates)
+											}
+											onAddSlide={(afterIndex) =>
+												addSlide(chapterIndex, afterIndex)
+											}
+											onDeleteSlide={(slideIndex) =>
+												deleteSlide(chapterIndex, slideIndex)
+											}
+											editedSlides={editedSlides}
+											isLast={
+												chapterIndex === (content.chapters?.length ?? 0) - 1
+											}
+										/>
+									)
+							)}
 						</div>
 					</SortableContext>
 
@@ -939,10 +994,12 @@ export function SlidesOutlineArtifact({
 					<DragOverlay dropAnimation={dropAnimationConfig}>
 						{draggedItem && (
 							<div className="bg-muted/90 rounded-md px-3 py-2 shadow-lg border border-border">
-								<div className={cn(
-									"font-medium truncate",
-									draggedItem.type === 'chapter' ? "text-base" : "text-sm"
-								)}>
+								<div
+									className={cn(
+										"font-medium truncate",
+										draggedItem.type === "chapter" ? "text-base" : "text-sm"
+									)}
+								>
 									{draggedItem.title}
 								</div>
 							</div>

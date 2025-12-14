@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/auth-server";
 import z from "zod";
-import { slidesOutlineArtifactSchema } from "@/lib/llmTools/slidesOutline";
+import { slidesOutlineArtifactSchema } from "@/lib/llmTools/createSlidesOutline";
 
 /**
  * GET /api/artifacts/[id]

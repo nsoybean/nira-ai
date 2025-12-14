@@ -23,4 +23,7 @@ export const tavilyExtractTool = tavilyExtract({
 });
 
 // Slides outline tool factory
-export { createSlidesOutlineTool as createSlidesOutlineToolFactory } from "./slidesOutline";
+export { createSlidesOutlineTool as createSlidesOutlineToolFactory } from "./createSlidesOutline";
+
+// Markdown file tool factory
+export { createMarkdownFileTool as createMarkdownFileToolFactory } from "./createMarkdownFile";

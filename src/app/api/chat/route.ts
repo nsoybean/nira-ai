@@ -1,5 +1,9 @@
 import { AnthropicProviderOptions } from "@ai-sdk/anthropic";
-import { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import {
+	createOpenAI,
+	openai,
+	OpenAIResponsesProviderOptions,
+} from "@ai-sdk/openai";
 import {
 	streamText,
 	convertToModelMessages,
@@ -15,6 +19,7 @@ import {
 	tavilyExtractTool,
 	tavilySearchTool,
 	createSlidesOutlineToolFactory,
+	createMarkdownFileToolFactory,
 } from "@/lib/llmTools";
 import { mergeConversationSettings } from "@/lib/conversationSettings";
 import { MyUIMessage } from "@/lib/UIMessage";
@@ -201,14 +206,10 @@ export const POST = withAuth(async (req, { userId }) => {
 					size: 16,
 				})();
 
-				// Create slides outline tool with context
-				const slidesOutlineTool = createSlidesOutlineToolFactory({
-					conversationId,
-					userId,
-					messageId: assistantMessageId,
-					writer,
-				});
-
+				console.log(
+					"🚀 ~ settings.extendedThinking:",
+					settings.extendedThinking
+				);
 				// Stream the chat completion
 				const result = streamText({
 					// to be implemented
@@ -217,7 +218,8 @@ export const POST = withAuth(async (req, { userId }) => {
 						userId,
 						messageId: assistantMessageId,
 					},
-					model: `${modelConfig.provider}/${selectedModelId}`,
+					// model: `${modelConfig.provider}/${selectedModelId}`,
+					model: openai("gpt-5-nano"),
 					headers: {
 						"anthropic-beta": "fine-grained-tool-streaming-2025-05-14",
 					},
@@ -244,7 +246,20 @@ export const POST = withAuth(async (req, { userId }) => {
 						}),
 
 						// slides outline tool
-						createSlidesOutline: slidesOutlineTool,
+						createSlidesOutline: createSlidesOutlineToolFactory({
+							conversationId,
+							userId,
+							messageId: assistantMessageId,
+							writer,
+						}),
+
+						// markdown file tool
+						createMarkdownFile: createMarkdownFileToolFactory({
+							conversationId,
+							messageId: assistantMessageId,
+							userId,
+							writer: writer,
+						}),
 
 						// ...(modelConfig.provider === 'openai' && { image_generation: openai.tools.imageGeneration({ outputFormat: 'png' }), })
 					},
