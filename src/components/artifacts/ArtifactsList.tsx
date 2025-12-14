@@ -36,7 +36,7 @@ export function ArtifactsList() {
 	// List view
 	return (
 		<ScrollArea className="flex-1">
-			<div className="flex flex-col">
+			<div className="flex flex-col p-2">
 				{artifacts.map((artifact) => (
 					<ArtifactListItem
 						key={artifact.id}

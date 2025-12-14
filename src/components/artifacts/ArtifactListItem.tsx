@@ -19,31 +19,30 @@ export function ArtifactListItem({
 	isSelected = false,
 	onClick,
 }: ArtifactListItemProps) {
-	const Icon = getArtifactIcon(artifact.type);
-	const title = getArtifactTitle(artifact);
-	const formattedDate = formatArtifactDate(artifact.createdAt);
 
 	return (
 		<button
 			onClick={onClick}
 			className={cn(
-				"w-full p-4 flex items-start gap-3 border-b transition-colors",
+				"w-full p-2 flex items-start gap-3 transition-colors rounded-md",
 				"hover:bg-accent cursor-pointer text-left",
 				isSelected && "bg-accent/50 border-l-2 border-l-primary"
 			)}
 		>
 			{/* Icon */}
-			<div className="mt-0.5 shrink-0">
-				<Icon className="h-5 w-5 text-muted-foreground" />
+			<div className="mt-0.5 shrink-0 flex items-center justify-center">
+				<div className="">
+					{getArtifactIcon(artifact.type)}
+				</div>
 			</div>
 
 			{/* Content */}
 			<div className="flex-1 min-w-0">
 				<div className="font-medium text-sm text-foreground truncate">
-					{title}
+					{getArtifactTitle(artifact)}
 				</div>
 				<div className="text-xs text-muted-foreground mt-1">
-					{formattedDate}
+					{formatArtifactDate(artifact.createdAt)}
 				</div>
 			</div>
 		</button>
