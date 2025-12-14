@@ -416,8 +416,9 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 											return (
 												<div
 													key={`artifact-${part.output.artifactId}-${msgIndex}`}
-													className="mt-2 mb-10 max-w-[80%] cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 rounded-lg"
-													onClick={() => openPanel(part.output.artifactId)}
+													// className="mt-2 mb-10 max-w-[80%] cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 rounded-lg"
+													className="mt-2 mb-10 max-w-[80%] cursor-pointer rounded-lg"
+												// onClick={() => openPanel(part.output.artifactId)}
 												>
 													<SlidesOutlineArtifact
 														artifactId={part.output.artifactId}
