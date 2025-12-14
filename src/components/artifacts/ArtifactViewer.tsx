@@ -23,9 +23,7 @@ const ARTIFACT_RENDERERS: Record<
 	}>
 > = {
 	slidesOutline: SlidesOutlineArtifact,
-	artifact_type_slides_outline: SlidesOutlineArtifact,
 	markdown: MarkdownArtifact,
-	artifact_type_document: MarkdownArtifact,
 };
 
 export function ArtifactViewer({ artifactId }: ArtifactViewerProps) {

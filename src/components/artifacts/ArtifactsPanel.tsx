@@ -15,7 +15,7 @@ export function ArtifactsPanel() {
 		return (
 			<div className="flex flex-col h-full bg-background">
 				{/* Header with back button */}
-				<div className="flex items-center gap-2 p-4 border-b shrink-0">
+				<div className="flex items-center gap-2 p-2 shrink-0">
 					<Button
 						variant="ghost"
 						size="icon"
@@ -28,7 +28,9 @@ export function ArtifactsPanel() {
 				</div>
 
 				{/* Artifact viewer */}
-				<ArtifactViewer artifactId={selectedArtifactId} />
+				<div className="p-2">
+					<ArtifactViewer artifactId={selectedArtifactId} />
+				</div>
 			</div>
 		);
 	}
