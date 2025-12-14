@@ -206,10 +206,6 @@ export const POST = withAuth(async (req, { userId }) => {
 					size: 16,
 				})();
 
-				console.log(
-					"🚀 ~ settings.extendedThinking:",
-					settings.extendedThinking
-				);
 				// Stream the chat completion
 				const result = streamText({
 					// to be implemented
