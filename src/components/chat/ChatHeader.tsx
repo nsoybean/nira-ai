@@ -13,13 +13,21 @@ import {
 	DropdownMenuTrigger,
 	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { PanelLeft, Share2, Trash2, Edit3, HamburgerIcon } from "lucide-react";
+import {
+	PanelLeft,
+	Share2,
+	Trash2,
+	Edit3,
+	HamburgerIcon,
+	ShapesIcon,
+} from "lucide-react";
 import { useState, memo, useRef, useEffect } from "react";
 import { DeleteConversationDialog } from "./DeleteConversationDialog";
 import { RenameConversationDialog } from "./RenameConversationDialog";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useConversations } from "@/contexts/ConversationsContext";
+import { useArtifacts } from "@/contexts/ArtifactsContext";
 
 interface ChatHeaderProps {
 	sidebarOpen: boolean;
@@ -39,6 +47,7 @@ export const ChatHeader = memo(function ChatHeader({
 	onRename,
 }: ChatHeaderProps) {
 	const { conversations } = useConversations();
+	const { openPanel, artifacts, isPanelOpen, closePanel } = useArtifacts();
 
 	// Get title from context
 	const chatTitle =
@@ -218,6 +227,30 @@ export const ChatHeader = memo(function ChatHeader({
 							</DropdownMenu>
 						)}
 					</div>
+				</div>
+
+				{/* Artifacts toggle button */}
+				<div className="flex items-center gap-2">
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								variant="ghost"
+								className="h-8 w-8 shrink-0 hover:bg-accent relative"
+								onClick={() => (isPanelOpen ? closePanel() : openPanel())}
+							>
+								<ShapesIcon className="text-muted-foreground" />
+								{artifacts.length > 0 && (
+									<span className="absolute top-0 -right-1 h-4 w-4 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
+										{artifacts.length}
+									</span>
+								)}
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							{artifacts.length > 0 ? artifacts.length : ""} artifact
+							{artifacts.length !== 1 ? "s" : ""} in chat
+						</TooltipContent>
+					</Tooltip>
 				</div>
 			</header>
 

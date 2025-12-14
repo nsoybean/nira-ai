@@ -48,6 +48,7 @@ import { StreamingTextArtifact } from "../artifacts/StreamingTextArtifact";
 import { ArtifactAction } from "../ai-elements/artifact";
 import { MyUIMessage } from "@/lib/UIMessage";
 import { Shimmer } from "../ai-elements/shimmer";
+import { useArtifacts } from "@/contexts/ArtifactsContext";
 
 // Helper function to parse artifact XML output
 function parseArtifactXML(
@@ -79,6 +80,7 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 	) => {
 		const isLoading = status === "submitted" || status === "streaming";
 		const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+		const { openPanel } = useArtifacts();
 
 		const handleCopy = (text: string, messageId: string) => {
 			navigator.clipboard.writeText(text);
@@ -414,7 +416,8 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 											return (
 												<div
 													key={`artifact-${part.output.artifactId}-${msgIndex}`}
-													className="mt-2 mb-10 max-w-[80%]"
+													className="mt-2 mb-10 max-w-[80%] cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 rounded-lg"
+													onClick={() => openPanel(part.output.artifactId)}
 												>
 													<SlidesOutlineArtifact
 														artifactId={part.output.artifactId}
@@ -514,7 +517,8 @@ export const MessageList = forwardRef<HTMLDivElement, MessageListProps>(
 											return (
 												<div
 													key={`markdown-artifact-${part.output.artifactId}-${msgIndex}`}
-													className="mt-2 mb-10 max-w-[80%]"
+													className="mt-2 mb-10 max-w-[80%] cursor-pointer transition-all hover:ring-2 hover:ring-primary/50 rounded-lg"
+													onClick={() => openPanel(part.output.artifactId)}
 												>
 													<MarkdownArtifact
 														artifactId={part.output.artifactId}

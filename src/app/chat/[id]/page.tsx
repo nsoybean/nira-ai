@@ -15,6 +15,10 @@ import { DEFAULT_MODEL_ID } from "@/lib/models";
 import { MyUIMessage } from "@/lib/UIMessage";
 import { useConversations } from "@/contexts/ConversationsContext";
 import { PanelLeft } from "lucide-react";
+import { ArtifactsProvider, useArtifacts } from "@/contexts/ArtifactsContext";
+import { ArtifactsPanel } from "@/components/artifacts/ArtifactsPanel";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function ChatPage() {
 	const params = useParams();
@@ -235,6 +239,91 @@ export default function ChatPage() {
 
 	// Check if chat is empty (no messages and not loading)
 	const isChatEmpty = messages.length === 0 && !isLoadingMessages;
+	const isMobile = useIsMobile();
+
+	return (
+		<ArtifactsProvider conversationId={conversationId}>
+			<ChatPageContent
+				sidebarOpen={sidebarOpen}
+				setSidebarOpen={setSidebarOpen}
+				conversationId={conversationId}
+				isChatEmpty={isChatEmpty}
+				handleNewChat={handleNewChat}
+				handleDelete={handleDelete}
+				handleClearAll={handleClearAll}
+				handleRename={handleRename}
+				conversations={conversations}
+				isLoadingConversations={isLoadingConversations}
+				messages={messages}
+				status={status}
+				isLoadingMessages={isLoadingMessages}
+				scrollAreaRef={scrollAreaRef}
+				input={input}
+				setInput={setInput}
+				handleSubmit={handleSubmit}
+				isCreatingConversation={isCreatingConversation}
+				selectedModel={selectedModel}
+				setSelectedModel={setSelectedModel}
+				initialWebSearch={initialWebSearch}
+				initialExtendedThinking={initialExtendedThinking}
+				isMobile={isMobile}
+			/>
+		</ArtifactsProvider>
+	);
+}
+
+interface ChatPageContentProps {
+	sidebarOpen: boolean;
+	setSidebarOpen: (open: boolean) => void;
+	conversationId: string;
+	isChatEmpty: boolean;
+	handleNewChat: () => void;
+	handleDelete: (id: string) => Promise<boolean>;
+	handleClearAll: () => Promise<boolean>;
+	handleRename: (id: string, title: string) => Promise<boolean>;
+	conversations: any[];
+	isLoadingConversations: boolean;
+	messages: any[];
+	status: any;
+	isLoadingMessages: boolean;
+	scrollAreaRef: React.RefObject<HTMLDivElement | null>;
+	input: string;
+	setInput: (input: string) => void;
+	handleSubmit: (message: any, settings: any) => void;
+	isCreatingConversation: boolean;
+	selectedModel: string;
+	setSelectedModel: (model: string) => void;
+	initialWebSearch: boolean;
+	initialExtendedThinking: boolean;
+	isMobile: boolean;
+}
+
+function ChatPageContent({
+	sidebarOpen,
+	setSidebarOpen,
+	conversationId,
+	isChatEmpty,
+	handleNewChat,
+	handleDelete,
+	handleClearAll,
+	handleRename,
+	conversations,
+	isLoadingConversations,
+	messages,
+	status,
+	isLoadingMessages,
+	scrollAreaRef,
+	input,
+	setInput,
+	handleSubmit,
+	isCreatingConversation,
+	selectedModel,
+	setSelectedModel,
+	initialWebSearch,
+	initialExtendedThinking,
+	isMobile,
+}: ChatPageContentProps) {
+	const { isPanelOpen, closePanel } = useArtifacts();
 
 	return (
 		<div className="flex h-screen bg-background">
@@ -249,64 +338,68 @@ export default function ChatPage() {
 				onClearAll={handleClearAll}
 				onRename={handleRename}
 			/>
+			{/* flex-1 remaining of space after sidebar */}
 			<div className="flex-1 flex flex-col p-2 bg-sidebar">
-				<div className="flex-1 flex flex-col bg-background rounded-md overflow-hidden">
-					{/* Show header for specific chat */}
-					{!isChatEmpty && (
-						<ChatHeader
-							sidebarOpen={sidebarOpen}
-							onToggleSidebar={() => setSidebarOpen(true)}
-							conversationId={conversationId}
-							isNew={false}
-							onDelete={handleDelete}
-							onRename={handleRename}
-						/>
-					)}
+				<div className="flex flex-row bg-background rounded-md border overflow-hidden h-full">
+					{/* chat */}
+					<div className="flex flex-col flex-1 overflow-hidden min-w-0">
+						{/* Show header for specific chat */}
+						{!isChatEmpty && (
+							<ChatHeader
+								sidebarOpen={sidebarOpen}
+								onToggleSidebar={() => setSidebarOpen(true)}
+								conversationId={conversationId}
+								isNew={false}
+								onDelete={handleDelete}
+								onRename={handleRename}
+							/>
+						)}
 
-					{/* Centered layout for empty chat */}
-					{isChatEmpty ? (
-						<div className="flex-1 flex flex-col items-center justify-center px-4">
-							{/* Toggle sidebar button for empty state */}
-							{!sidebarOpen && (
-								<button
-									onClick={() => setSidebarOpen(true)}
-									className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground"
-								>
-									<PanelLeft />
-								</button>
-							)}
+						{/* Centered layout for empty chat */}
+						{isChatEmpty ? (
+							<div className="flex-1 flex flex-col items-center justify-center px-4">
+								{/* Toggle sidebar button for empty state */}
+								{!sidebarOpen && (
+									<button
+										onClick={() => setSidebarOpen(true)}
+										className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground"
+									>
+										<PanelLeft />
+									</button>
+								)}
 
-							{/* Centered input */}
-							<div className="w-full max-w-3xl">
-								<ChatInput
-									input={input}
-									onInputChange={setInput}
-									onSubmit={(message, event, settings) => {
-										handleSubmit(message, settings);
-									}}
-									status={status}
-									isCreatingConversation={isCreatingConversation}
-									selectedModel={selectedModel}
-									onModelChange={setSelectedModel}
-									conversationId={conversationId}
-									isNewChat={false}
-									initialWebSearch={initialWebSearch}
-									initialExtendedThinking={initialExtendedThinking}
-								/>
-							</div>
-						</div>
-					) : (
-						/* Standard layout with messages */
-						<div className="flex-1 overflow-hidden">
-							<div className="mx-auto p-2 relative h-full">
-								<div className="flex flex-col h-full gap-2">
-									<MessageList
-										ref={scrollAreaRef}
-										messages={messages}
+								{/* Centered input */}
+								<div className="w-full max-w-3xl">
+									<ChatInput
+										input={input}
+										onInputChange={setInput}
+										onSubmit={(message, event, settings) => {
+											handleSubmit(message, settings);
+										}}
 										status={status}
-										isLoadingChatMessage={isLoadingMessages}
+										isCreatingConversation={isCreatingConversation}
+										selectedModel={selectedModel}
+										onModelChange={setSelectedModel}
+										conversationId={conversationId}
+										isNewChat={false}
+										initialWebSearch={initialWebSearch}
+										initialExtendedThinking={initialExtendedThinking}
 									/>
-									<div className="flex flex-col gap-1">
+								</div>
+							</div>
+						) : (
+							/* Standard layout with messages */
+							<div className="flex flex-col flex-1 min-h-0">
+								<div className="flex flex-col h-full gap-2 p-2">
+									<div className="flex-1 overflow-y-auto">
+										<MessageList
+											ref={scrollAreaRef}
+											messages={messages}
+											status={status}
+											isLoadingChatMessage={isLoadingMessages}
+										/>
+									</div>
+									<div className="flex flex-col gap-1 shrink-0">
 										<ChatInput
 											input={input}
 											onInputChange={setInput}
@@ -329,10 +422,27 @@ export default function ChatPage() {
 									</div>
 								</div>
 							</div>
+						)}
+					</div>
+
+					{/* Desktop: Artifacts panel (slides from right) */}
+					{!isMobile && isPanelOpen && (
+						// add animate out
+						<div className="w-1/2 border-l animate-in slide-in-from-right duration-300 overflow-hidden">
+							<ArtifactsPanel />
 						</div>
 					)}
 				</div>
 			</div>
+
+			{/* Mobile: Sheet overlay from bottom */}
+			{isMobile && (
+				<Sheet open={isPanelOpen} onOpenChange={closePanel}>
+					<SheetContent side="bottom" className="h-[80vh]">
+						<ArtifactsPanel />
+					</SheetContent>
+				</Sheet>
+			)}
 		</div>
 	);
 }
